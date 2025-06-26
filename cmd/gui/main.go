@@ -17,8 +17,7 @@ import (
 )
 
 func main() {
-	// needs to be called once before you can start using the QWidgets
-	app := widgets.NewQApplication(len(os.Args), os.Args)
+
 	var ip string
 	if len(os.Args) > 1 {
 		ip = os.Args[1]
@@ -32,6 +31,8 @@ func main() {
 
 	ip_this := tcpip.MyIP
 	ip_str := net.IPv4(ip_this[0], ip_this[1], ip_this[2], ip_this[3])
+	// needs to be called once before you can start using the QWidgets
+	app := widgets.NewQApplication(len(os.Args), os.Args)
 	// create a window
 	window := widgets.NewQTabWidget(nil)
 	window.SetMinimumSize2(900, 700)

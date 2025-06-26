@@ -3,6 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
+	rand2 "math/rand"
+	"sync"
+
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/crypto/oqs/rand"
 	"github.com/okuralabs/okura-node/logger"
@@ -11,8 +14,7 @@ import (
 	"github.com/okuralabs/okura-node/statistics"
 	"github.com/okuralabs/okura-node/transactionsDefinition"
 	"github.com/okuralabs/okura-node/wallet"
-	rand2 "math/rand"
-	"sync"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"os"
 	"time"
@@ -29,7 +31,12 @@ func main() {
 		ip = "127.0.0.1"
 	}
 	go clientrpc.ConnectRPC(ip)
-	wallet.InitActiveWallet(0, "a")
+	fmt.Print("Enter password: ")
+	password, err := terminal.ReadPassword(0)
+	if err != nil {
+		logger.GetLogger().Fatal(err)
+	}
+	wallet.InitActiveWallet(0, string(password))
 	MainWallet = wallet.GetActiveWallet()
 
 	for range 2 {
