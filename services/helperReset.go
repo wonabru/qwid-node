@@ -16,7 +16,7 @@ func AdjustShiftInPastInReset(height int64) {
 		common.ShiftToPastInReset = 1
 		return
 	}
-	common.ShiftToPastInReset *= 2
+	common.ShiftToPastInReset += 1
 	if common.ShiftToPastInReset > height {
 		common.ShiftToPastInReset = height
 	}
@@ -43,6 +43,10 @@ func RevertVMToBlockHeight(height int64) bool {
 }
 
 func ResetAccountsAndBlocksSync(height int64) {
+	if height <= common.CurrentHeightOfNetwork {
+		logger.GetLogger().Println("reset ignored due to previous height obtained")
+		return
+	}
 	if height < 0 {
 		logger.GetLogger().Println("try to reset from negative height")
 		height = 0
