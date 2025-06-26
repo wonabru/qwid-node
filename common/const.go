@@ -176,6 +176,7 @@ func init() {
 	ch, err := strconv.Atoi(os.Getenv("HEIGHT_OF_NETWORK"))
 	if err != nil {
 		logger.GetLogger().Panicln("Warning no declaration of HEIGHT_OF_NETWORK")
+	} else {
+		CurrentHeightOfNetwork = int64(ch)
 	}
-	CurrentHeightOfNetwork = int64(ch)
 }
