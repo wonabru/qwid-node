@@ -353,8 +353,11 @@ func InitGenesis(processTransactions bool) {
 	if err != nil {
 		logger.GetLogger().Fatal(err)
 	}
-	setInitParams(genesis)
-	if processTransactions {
+	if !processTransactions {
+
+		setInitParams(genesis)
+	} else {
+		setInitParams(genesis)
 		genesisBlock := CreateBlockFromGenesis(genesis)
 		reward := account.GetReward(common.InitSupply)
 		err = blocks.ProcessBlockTransfers(genesisBlock, reward)

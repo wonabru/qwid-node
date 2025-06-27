@@ -54,7 +54,7 @@ type AnyWallet interface {
 
 func InitActiveWallet(walletNumber uint8, password string) {
 	var err error
-	activeWallet, err = Load(walletNumber, password)
+	activeWallet, err = LoadJSON(walletNumber, password)
 	if err != nil {
 		logger.GetLogger().Println("wrong password")
 		os.Exit(1)
@@ -780,7 +780,7 @@ func (w *Wallet) ChangePassword(password, newPassword string) error {
 		logger.GetLogger().Println("Can not store new wallet")
 		return err
 	}
-	_, err = Load(w2.WalletNumber, newPassword)
+	_, err = LoadJSON(w2.WalletNumber, newPassword)
 	if err != nil {
 		return err
 	}

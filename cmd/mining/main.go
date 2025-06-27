@@ -45,8 +45,9 @@ func main() {
 	wallet.InitActiveWallet(0, string(password))
 
 	// Initialize genesis block
-	logger.GetLogger().Println("Initializing genesis block without processing transactions...")
+	logger.GetLogger().Println("Initializing genesis block for setting init params...")
 	genesis.InitGenesis(false)
+
 	// Load accounts
 	logger.GetLogger().Println("Loading accounts...")
 	err = account.LoadAccounts(-1)
@@ -130,6 +131,10 @@ func main() {
 		account.StoreStakingAccounts(-1)
 	}()
 
+	// Initialize state database
+	logger.GetLogger().Println("Initializing state database...")
+	blocks.InitStateDB()
+
 	// Initialize transaction pool and merkle tree
 	logger.GetLogger().Println("Initializing transaction pool and merkle tree...")
 	transactionsPool.InitPermanentTrie()
@@ -137,10 +142,6 @@ func main() {
 
 	// Initialize statistics
 	statistics.InitStatsManager()
-
-	// Initialize state database
-	logger.GetLogger().Println("Initializing state database...")
-	blocks.InitStateDB()
 
 	//Load Main Blockchain
 	services.SetBlockHeightAfterCheck()
