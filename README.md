@@ -14,6 +14,7 @@ Install prerequisites
     sudo apt install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
     sudo apt install astyle cmake gcc ninja-build libssl-dev python3-pytest python3-pytest-xdist unzip xsltproc doxygen graphviz python3-yaml valgrind
     sudo apt install nano
+    git config --global credential.helper store
 
 Install OQS library:
 
@@ -40,7 +41,6 @@ Clone project source code
 
     git clone https://github.com/okuralabs/okura-node.git
     cd okura-node
-    git config credential.helper store
 
 install go modules
 
@@ -83,3 +83,27 @@ Run Node:
 Run GUI:
 
     go run cmd/gui/main.go
+    
+    
+Docker container to run node:
+
+
+Build the image
+
+    sudo docker build -t okura-node .
+
+To modify the `.env` file inside the container:
+
+    sudo docker exec -it okura-node nano ~/.okura/.env
+
+
+Run the container
+
+    sudo docker run -d \
+    --name okura-node \
+    -p 19023:19023 \
+    -p 18023:18023 \
+    -p 17023:17023 \
+    -p 16023:16023 \
+    -p 19009:19009 \
+    okura-node
