@@ -2,26 +2,29 @@ package main
 
 import (
 	"fmt"
-	"github.com/okuralabs/okura-node/logger"
-	"github.com/okuralabs/okura-node/wallet"
-	"golang.org/x/crypto/ssh/terminal"
+	"github.com/okuralabs/okura-node/blocks"
+	"github.com/okuralabs/okura-node/services"
+	"github.com/okuralabs/okura-node/statistics"
+	"github.com/okuralabs/okura-node/transactionsPool"
 	"strconv"
 	"strings"
 
+	"github.com/okuralabs/okura-node/logger"
+	"github.com/okuralabs/okura-node/wallet"
+	"golang.org/x/crypto/ssh/terminal"
+
+	_ "net/http/pprof"
+	"os"
+	"time"
+
 	"github.com/okuralabs/okura-node/account"
-	"github.com/okuralabs/okura-node/blocks"
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/genesis"
 	serverrpc "github.com/okuralabs/okura-node/rpc/server"
 	nonceService "github.com/okuralabs/okura-node/services/nonceService"
 	syncServices "github.com/okuralabs/okura-node/services/syncService"
 	"github.com/okuralabs/okura-node/services/transactionServices"
-	"github.com/okuralabs/okura-node/statistics"
 	"github.com/okuralabs/okura-node/tcpip"
-	"github.com/okuralabs/okura-node/transactionsPool"
-	_ "net/http/pprof"
-	"os"
-	"time"
 )
 
 func main() {
@@ -40,58 +43,59 @@ func main() {
 	// Initialize wallet
 	logger.GetLogger().Println("Initializing wallet...")
 	wallet.InitActiveWallet(0, string(password))
-	addrbytes := [common.AddressLength]byte{}
-	copy(addrbytes[:], wallet.GetActiveWallet().Address.GetBytes())
-	// Initialize accounts
-	a := account.Account{
-		Balance: 0,
-		Address: addrbytes,
-	}
-	allAccounts := map[[20]byte]account.Account{}
-	allAccounts[addrbytes] = a
-	account.Accounts = account.AccountsType{AllAccounts: allAccounts}
-	err = account.StoreAccounts(0)
-	if err != nil {
-		logger.GetLogger().Fatal("Failed to store accounts:", err)
-	}
 
-	// Initialize DEX accounts
-	logger.GetLogger().Println("Initializing DEX accounts...")
-	allDexAccounts := map[[20]byte]account.DexAccount{}
-	account.DexAccounts = account.DexAccountsType{AllDexAccounts: allDexAccounts}
-	err = account.StoreDexAccounts(0)
+	// Initialize genesis block
+	logger.GetLogger().Println("Initializing genesis block without processing transactions...")
+	genesis.InitGenesis(false)
+	// Load accounts
+	logger.GetLogger().Println("Loading accounts...")
+	err = account.LoadAccounts(-1)
 	if err != nil {
-		logger.GetLogger().Fatal("Failed to store DEX accounts:", err)
-	}
-
-	// Initialize staking accounts
-	logger.GetLogger().Println("Setting up staking accounts...")
-	for i := 1; i < 256; i++ {
-		del := common.GetDelegatedAccountAddress(int16(i))
-		delbytes := [common.AddressLength]byte{}
-		copy(delbytes[:], del.GetBytes())
-		sa := account.StakingAccount{
-			StakedBalance:    0,
-			StakingRewards:   0,
-			DelegatedAccount: delbytes,
-			StakingDetails:   nil,
+		addrbytes := [common.AddressLength]byte{}
+		copy(addrbytes[:], wallet.GetActiveWallet().Address.GetBytes())
+		// Initialize accounts
+		a := account.Account{
+			Balance: 0,
+			Address: addrbytes,
 		}
-		allStakingAccounts := map[[20]byte]account.StakingAccount{}
-		allStakingAccounts[addrbytes] = sa
-		account.StakingAccounts[i] = account.StakingAccountsType{AllStakingAccounts: allStakingAccounts}
-	}
-	err = account.StoreStakingAccounts(0)
-	if err != nil {
-		logger.GetLogger().Fatal("Failed to store staking accounts:", err)
-	}
+		allAccounts := map[[20]byte]account.Account{}
+		allAccounts[addrbytes] = a
+		account.Accounts = account.AccountsType{AllAccounts: allAccounts}
+		err = account.StoreAccounts(0)
+		if err != nil {
+			logger.GetLogger().Fatal("Failed to store accounts:", err)
+		}
 
-	// Initialize transaction pool and merkle tree
-	logger.GetLogger().Println("Initializing transaction pool and merkle tree...")
-	transactionsPool.InitPermanentTrie()
-	defer transactionsPool.GlobalMerkleTree.Destroy()
+		// Initialize DEX accounts
+		logger.GetLogger().Println("Initializing DEX accounts...")
+		allDexAccounts := map[[20]byte]account.DexAccount{}
+		account.DexAccounts = account.DexAccountsType{AllDexAccounts: allDexAccounts}
+		err = account.StoreDexAccounts(0)
+		if err != nil {
+			logger.GetLogger().Fatal("Failed to store DEX accounts:", err)
+		}
 
-	// Initialize statistics
-	statistics.InitStatsManager()
+		// Initialize staking accounts
+		logger.GetLogger().Println("Setting up staking accounts...")
+		for i := 1; i < 256; i++ {
+			del := common.GetDelegatedAccountAddress(int16(i))
+			delbytes := [common.AddressLength]byte{}
+			copy(delbytes[:], del.GetBytes())
+			sa := account.StakingAccount{
+				StakedBalance:    0,
+				StakingRewards:   0,
+				DelegatedAccount: delbytes,
+				StakingDetails:   nil,
+			}
+			allStakingAccounts := map[[20]byte]account.StakingAccount{}
+			allStakingAccounts[addrbytes] = sa
+			account.StakingAccounts[i] = account.StakingAccountsType{AllStakingAccounts: allStakingAccounts}
+		}
+		err = account.StoreStakingAccounts(0)
+		if err != nil {
+			logger.GetLogger().Fatal("Failed to store staking accounts:", err)
+		}
+	}
 
 	// Load accounts
 	logger.GetLogger().Println("Loading accounts...")
@@ -126,13 +130,26 @@ func main() {
 		account.StoreStakingAccounts(-1)
 	}()
 
+	// Initialize transaction pool and merkle tree
+	logger.GetLogger().Println("Initializing transaction pool and merkle tree...")
+	transactionsPool.InitPermanentTrie()
+	defer transactionsPool.GlobalMerkleTree.Destroy()
+
+	// Initialize statistics
+	statistics.InitStatsManager()
+
 	// Initialize state database
 	logger.GetLogger().Println("Initializing state database...")
 	blocks.InitStateDB()
 
-	// Initialize genesis block
-	logger.GetLogger().Println("Initializing genesis block...")
-	genesis.InitGenesis()
+	//Load Main Blockchain
+	services.SetBlockHeightAfterCheck()
+
+	if common.GetHeight() < 0 {
+		// Initialize genesis block
+		logger.GetLogger().Println("Initializing genesis block with processing transactions...")
+		genesis.InitGenesis(true)
+	}
 
 	// Initialize services
 	logger.GetLogger().Println("Initializing transaction service...")

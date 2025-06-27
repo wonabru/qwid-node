@@ -340,7 +340,7 @@ func GenesisTransaction(sender common.Address, recipient common.Address, genTx G
 }
 
 // InitGenesis sets initial values written in genesis conf file
-func InitGenesis() {
+func InitGenesis(processTransactions bool) {
 	pathhome, err := os.UserHomeDir()
 	if err != nil {
 		logger.GetLogger().Fatal(err)
@@ -350,25 +350,27 @@ func InitGenesis() {
 		logger.GetLogger().Fatal(err)
 	}
 	setInitParams(genesis)
-	genesisBlock := CreateBlockFromGenesis(genesis)
-	reward := account.GetReward(common.InitSupply)
-	err = blocks.ProcessBlockTransfers(genesisBlock, reward)
-	if err != nil {
-		logger.GetLogger().Fatalf("cannot process transactions in genesis block %v", err)
-	}
-	err = genesisBlock.StoreBlock()
-	if err != nil {
-		logger.GetLogger().Fatal(err)
-	}
-	err = account.StoreAccounts(0)
-	if err != nil {
-		logger.GetLogger().Fatal(err)
-	}
-	err = account.StoreStakingAccounts(0)
-	if err != nil {
-		logger.GetLogger().Fatal(err)
-	}
+	if processTransactions {
+		genesisBlock := CreateBlockFromGenesis(genesis)
+		reward := account.GetReward(common.InitSupply)
+		err = blocks.ProcessBlockTransfers(genesisBlock, reward)
+		if err != nil {
+			logger.GetLogger().Fatalf("cannot process transactions in genesis block %v", err)
+		}
+		err = genesisBlock.StoreBlock()
 
+		if err != nil {
+			logger.GetLogger().Fatal(err)
+		}
+		err = account.StoreAccounts(0)
+		if err != nil {
+			logger.GetLogger().Fatal(err)
+		}
+		err = account.StoreStakingAccounts(0)
+		if err != nil {
+			logger.GetLogger().Fatal(err)
+		}
+	}
 }
 
 func setInitParams(genesisConfig Genesis) {

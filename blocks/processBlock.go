@@ -3,6 +3,7 @@ package blocks
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/okuralabs/okura-node/account"
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/crypto/oqs"
@@ -148,7 +149,7 @@ func IsAllTransactions(block Block) [][]byte {
 	return hashes
 }
 
-func CheckBlockTransfers(block Block, lastBlock Block) (int64, int64, error) {
+func CheckBlockTransfers(block Block, lastBlock Block, onlyCheck bool) (int64, int64, error) {
 	txs := block.TransactionsHashes
 	lastSupply := lastBlock.GetBlockSupply()
 	accounts := map[[common.AddressLength]byte]account.Account{}
@@ -246,8 +247,8 @@ func CheckBlockTransfers(block Block, lastBlock Block) (int64, int64, error) {
 
 	}
 	reward := account.GetReward(lastSupply)
-	lastSupply += reward
-	if lastSupply != block.GetBlockSupply() {
+
+	if lastSupply+reward != block.GetBlockSupply() {
 		logger.GetLogger().Println("lastSupply:", lastSupply, "block.GetBlockSupply()", block.GetBlockSupply())
 		return 0, 0, fmt.Errorf("block supply checking fails: CheckBlockTransfers")
 	}
@@ -377,6 +378,46 @@ func EvaluateSmartContracts(bl *Block) bool {
 	return true
 }
 
+func CheckBlockAndTransactions(newBlock *Block, lastBlock Block, merkleTrie *transactionsPool.MerkleTree, checkFinal bool) error {
+
+	defer RemoveAllTransactionsRelatedToBlock(*newBlock)
+	n, err := account.IntDelegatedAccountFromAddress(newBlock.GetHeader().DelegatedAccount)
+	if err != nil || n < 1 || n > 255 {
+		return fmt.Errorf("wrong delegated account: CheckBlockAndTransferFunds")
+	}
+	opAccBlockAddr := newBlock.GetHeader().OperatorAccount
+	if _, sumStaked, opAcc := account.GetStakedInDelegatedAccount(n); int64(sumStaked) < common.MinStakingForNode || !bytes.Equal(opAcc.Address[:], opAccBlockAddr.GetBytes()) {
+		return fmt.Errorf("not enough staked coins to be a node or not valid operetional account: CheckBlockAndTransferFunds")
+	}
+
+	reward, totalFee, err := CheckBlockTransfers(*newBlock, lastBlock, true)
+	if err != nil {
+		return err
+	}
+	newBlock.BlockFee = totalFee + lastBlock.BlockFee
+
+	if EvaluateSmartContracts(newBlock) == false {
+		return fmt.Errorf("evaluation of smart contracts in block fails: CheckBlockAndTransferFunds")
+	}
+
+	staked, rewarded := GetSupplyInStakedAccounts()
+	//coinsInDex := account.GetCoinLiquidityInDex()
+	if checkFinal && GetSupplyInAccounts()+staked+rewarded+lastBlock.BlockFee != newBlock.GetBlockSupply() {
+		logger.GetLogger().Println("GetSupplyInAccounts()", GetSupplyInAccounts())
+		logger.GetLogger().Println("staked:", staked)
+		logger.GetLogger().Println("rewarded", rewarded)
+		logger.GetLogger().Println("lastBlock.BlockFee", lastBlock.BlockFee)
+		logger.GetLogger().Println("GetSupplyInAccounts()+staked+rewarded+reward+lastBlock.BlockFee:", GetSupplyInAccounts()+staked+rewarded+reward+lastBlock.BlockFee, "newBlock.GetBlockSupply():", newBlock.GetBlockSupply())
+		return fmt.Errorf("block supply checking fails vs account balances: CheckBlockAndTransferFunds")
+	}
+
+	head := newBlock.GetHeader()
+	if head.Verify() == false {
+		return fmt.Errorf("header fails to verify: CheckBlockAndTransferFunds")
+	}
+	return nil
+}
+
 func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *transactionsPool.MerkleTree) error {
 
 	defer RemoveAllTransactionsRelatedToBlock(*newBlock)
@@ -389,7 +430,7 @@ func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *tr
 		return fmt.Errorf("not enough staked coins to be a node or not valid operetional account: CheckBlockAndTransferFunds")
 	}
 
-	reward, totalFee, err := CheckBlockTransfers(*newBlock, lastBlock)
+	reward, totalFee, err := CheckBlockTransfers(*newBlock, lastBlock, false)
 	if err != nil {
 		return err
 	}

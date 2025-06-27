@@ -162,7 +162,7 @@ func OnMessage(addr [4]byte, m []byte) {
 		}
 
 		if newBlock.CheckProofOfSynergy() {
-			_, _, err := blocks.CheckBlockTransfers(newBlock, lastBlock)
+			_, _, err := blocks.CheckBlockTransfers(newBlock, lastBlock, false)
 			if err == nil {
 				services.BroadcastBlock(newBlock)
 			} else {
