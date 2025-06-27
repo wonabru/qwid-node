@@ -43,30 +43,34 @@ type GenesisTransactions struct {
 
 // Genesis represents the genesis file.
 type Genesis struct {
-	Timestamp               int64                 `json:"date"`
-	ChainID                 int16                 `json:"chain_id"`   // The chain id represents an unique id for this running instance.
-	Difficulty              int32                 `json:"difficulty"` // How difficult it needs to be to solve the work problem.
-	RewardRatio             float64               `json:"reward_ratio"`
-	BlockTimeInterval       float32               `json:"block_time_interval"`
-	MaxTotalSupply          int64                 `json:"max_total_supply"`
-	InitSupply              int64                 `json:"init_supply"`
-	DifficultyMultiplier    int32                 `json:"difficulty_multiplier"`
-	DifficultyChange        float32               `json:"difficulty_change"`
-	MaxGasUsage             int64                 `json:"max_gas_usage"`
-	MaxGasPrice             int64                 `json:"max_gas_price"`
-	MaxTransactionsPerBlock int16                 `json:"max_transactions_per_block"`
-	MaxTransactionInPool    int                   `json:"max_transaction_in_pool"`
-	MaxPeersConnected       int                   `json:"max_peers_connected"`
-	NumberOfHashesInBucket  int64                 `json:"number_of_hashes_in_bucket"`
-	NumberOfBlocksInBucket  int64                 `json:"number_of_blocks_in_bucket"`
-	MinStakingForNode       int64                 `json:"min_staking_for_node"`
-	MinStakingUser          int64                 `json:"min_staking_user"`
-	OraclesHeightDistance   int64                 `json:"oracles_height_distance"`
-	VotingHeightDistance    int64                 `json:"voting_height_distance"`
-	StakedBalances          []GenesisStaking      `json:"staked_balances"`
-	Transactions            []GenesisTransactions `json:"transactions"`
-	Signature               string                `json:"signature"`
-	OperatorPubKey          string                `json:"operator_pub_key"`
+	Timestamp                    int64                 `json:"date"`
+	ChainID                      int16                 `json:"chain_id"`   // The chain id represents an unique id for this running instance.
+	Difficulty                   int32                 `json:"difficulty"` // How difficult it needs to be to solve the work problem.
+	RewardRatio                  float64               `json:"reward_ratio"`
+	BlockTimeInterval            float32               `json:"block_time_interval"`
+	MaxTotalSupply               int64                 `json:"max_total_supply"`
+	InitSupply                   int64                 `json:"init_supply"`
+	DifficultyMultiplier         int32                 `json:"difficulty_multiplier"`
+	DifficultyChange             float32               `json:"difficulty_change"`
+	MaxGasUsage                  int64                 `json:"max_gas_usage"`
+	MaxGasPrice                  int64                 `json:"max_gas_price"`
+	MaxTransactionsPerBlock      int16                 `json:"max_transactions_per_block"`
+	MaxTransactionInPool         int                   `json:"max_transaction_in_pool"`
+	MaxPeersConnected            int                   `json:"max_peers_connected"`
+	NumberOfHashesInBucket       int64                 `json:"number_of_hashes_in_bucket"`
+	NumberOfBlocksInBucket       int64                 `json:"number_of_blocks_in_bucket"`
+	MinStakingForNode            int64                 `json:"min_staking_for_node"`
+	MinStakingUser               int64                 `json:"min_staking_user"`
+	OraclesHeightDistance        int64                 `json:"oracles_height_distance"`
+	VotingHeightDistance         int64                 `json:"voting_height_distance"`
+	StakedBalances               []GenesisStaking      `json:"staked_balances"`
+	Transactions                 []GenesisTransactions `json:"transactions"`
+	Signature                    string                `json:"signature"`
+	OperatorPubKey               string                `json:"operator_pub_key"`
+	MaxTransactionDelay          int64                 `json:"max_transaction_delay"`
+	MaxTransactionInMultiSigPool int64                 `json:"max_transaction_in_multi_sig_pool"`
+	MessageInitialization        []byte                `json:"message_initialization"`
+	MaxMessageSizeBytes          int32                 `json:"max_message_size_bytes"`
 }
 
 func storeGenesisPubKey(pubkeystr string, primary bool) common.PubKey {
@@ -395,6 +399,13 @@ func setInitParams(genesisConfig Genesis) {
 	common.MinStakingUser = genesisConfig.MinStakingUser
 	common.OraclesHeightDistance = genesisConfig.OraclesHeightDistance
 	common.VotingHeightDistance = genesisConfig.VotingHeightDistance
+	common.MaxTransactionDelay = genesisConfig.MaxTransactionDelay
+	common.MaxTransactionInMultiSigPool = genesisConfig.MaxTransactionInMultiSigPool
+	common.MessageInitialization = [4]byte{genesisConfig.MessageInitialization[0],
+		genesisConfig.MessageInitialization[1],
+		genesisConfig.MessageInitialization[2],
+		genesisConfig.MessageInitialization[3]}
+	common.MaxMessageSizeBytes = genesisConfig.MaxMessageSizeBytes
 }
 
 // Load opens and consumes the genesis file.
