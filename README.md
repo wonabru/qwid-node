@@ -14,7 +14,6 @@ Install prerequisites
     sudo apt install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
     sudo apt install astyle cmake gcc ninja-build libssl-dev python3-pytest python3-pytest-xdist unzip xsltproc doxygen graphviz python3-yaml valgrind
     sudo apt install nano
-    git config --global credential.helper store
 
 Install OQS library:
 
@@ -41,6 +40,7 @@ Clone project source code
 
     git clone https://github.com/okuralabs/okura-node.git
     cd okura-node
+    git config credential.helper store
 
 install go modules
 
