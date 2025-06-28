@@ -50,10 +50,11 @@ and should be like this:
     Libs: -L${LIBOQS_LIB_DIR} -loqs
     ```
     
-    go clean -cache
+    
 
 Reload dynamic libraries
 
+    go clean -cache
     sudo ldconfig -v
 
 Clone project source code
