@@ -28,9 +28,28 @@ Compile OQS with `-DBUILD_SHARED_LIBS=ON` and install
     cmake -GNinja -DBUILD_SHARED_LIBS=ON ..    
     ninja
     sudo ninja install
+    cd ~/
 
 Follow instruction from https://github.com/open-quantum-safe/liboqs-go.git in order to install go wrapper to oqs. Finally
 
+    git clone --depth=1 https://github.com/open-quantum-safe/liboqs-go
+
+Edit: liboqs-go/.config/liboqs-go.pc.linux
+
+and should be like this:
+
+    ```
+    LIBOQS_INCLUDE_DIR=/usr/local/include
+    LIBOQS_LIB_DIR=/usr/local/lib
+    
+    Name: liboqs-go
+    Description: Go bindings for liboqs, a C library for quantum resistant cryptography
+    Version: 0.12.1-dev
+    Cflags: -I${LIBOQS_INCLUDE_DIR}
+    Ldflags: '-extldflags "-Wl,-stack_size -Wl,0x1000000"'
+    Libs: -L${LIBOQS_LIB_DIR} -loqs
+    ```
+    
     go clean -cache
 
 Reload dynamic libraries
