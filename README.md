@@ -33,7 +33,7 @@ Compile OQS with `-DBUILD_SHARED_LIBS=ON` and install
 Install go1.23.6 if not installed:
 
     wget https://go.dev/dl/go1.23.6.linux-amd64.tar.gz
-    sudo rm -rf /usr/local/go && tar -C /usr/local -xzf go1.23.6.linux-amd64.tar.gz
+    sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.23.6.linux-amd64.tar.gz
 
 Add on the end of ~/.bashrc
 
