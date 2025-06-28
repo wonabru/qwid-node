@@ -97,7 +97,7 @@ Copy env file and change accordingly.
 
 Edit ~/.okura/.env
 
-    DELEGATED_ACCOUNT= any larger rather than 5
+    DELEGATED_ACCOUNT= any larger rather than 5 but less than 255
     REWARD_PERCENTAGE= any value 0 <= x <= 500    500 ==> means 50% reward to operator
     NODE_IP= your external IP
     WHITELIST_IP= one IP which you want to be be banned
