@@ -51,9 +51,11 @@ and should be like this:
 On the end of ~/.bashrc write this line:
 
     export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$HOME/liboqs-go/.config
+    
 
-Reload dynamic libraries
+Reload shell and dynamic libraries
 
+    bash
     go clean -cache
     sudo ldconfig -v
 
