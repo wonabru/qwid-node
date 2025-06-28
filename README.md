@@ -13,7 +13,7 @@ Install prerequisites
     sudo apt install build-essential
     sudo apt install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
     sudo apt install astyle cmake gcc ninja-build libssl-dev python3-pytest python3-pytest-xdist unzip xsltproc doxygen graphviz python3-yaml valgrind
-    sudo apt install nano
+    sudo apt install nano git
     git config --global credential.helper store
 
 Install OQS library:
