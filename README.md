@@ -39,6 +39,10 @@ Add on the end of ~/.bashrc
 
     export PATH=$PATH:/usr/local/go/bin
 
+reload shell:
+
+    bash
+
 Follow instruction from https://github.com/open-quantum-safe/liboqs-go.git in order to install go wrapper to oqs. Finally
 
     git clone --depth=1 https://github.com/open-quantum-safe/liboqs-go
