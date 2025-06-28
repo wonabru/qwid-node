@@ -89,7 +89,7 @@ install go modules
 
 Copy genesis config file ex.:
 
-    cp genesis/config/genesis_testnet.json ~/.okura/genesis/config/genesis.json
+    cp genesis/config/genesis_internal_tests.json ~/.okura/genesis/config/genesis.json
 
 Copy env file and change accordingly.
 
