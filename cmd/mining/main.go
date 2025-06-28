@@ -105,6 +105,7 @@ func main() {
 		logger.GetLogger().Fatal("Failed to load accounts:", err)
 	}
 	defer func() {
+		common.IsSyncing.Store(true)
 		logger.GetLogger().Println("Storing accounts...")
 		account.StoreAccounts(-1)
 	}()
@@ -116,6 +117,7 @@ func main() {
 		logger.GetLogger().Fatal("Failed to load DEX accounts:", err)
 	}
 	defer func() {
+		common.IsSyncing.Store(true)
 		logger.GetLogger().Println("Storing DEX accounts...")
 		account.StoreDexAccounts(-1)
 	}()
@@ -127,6 +129,7 @@ func main() {
 		logger.GetLogger().Fatal("Failed to load staking accounts:", err)
 	}
 	defer func() {
+		common.IsSyncing.Store(true)
 		logger.GetLogger().Println("Storing staking accounts...")
 		account.StoreStakingAccounts(-1)
 	}()

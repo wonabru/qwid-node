@@ -169,6 +169,7 @@ func StartSubscribingSyncMsg(ip [4]byte) {
 		select {
 		case s := <-recvChan:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
+				common.IsSyncing.Store(true)
 				quit = true
 				break
 			}
@@ -177,6 +178,7 @@ func StartSubscribingSyncMsg(ip [4]byte) {
 				OnMessage(ipr, s[4:])
 			}
 		case <-tcpip.Quit:
+			common.IsSyncing.Store(true)
 			quit = true
 		default:
 			// Optional: Add a small sleep to prevent busy-waiting

@@ -241,6 +241,7 @@ func StartSubscribingNonceMsg(ip [4]byte) {
 		select {
 		case s := <-recvChan:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
+				common.IsSyncing.Store(true)
 				quit = true
 				break
 			}
@@ -257,6 +258,7 @@ func StartSubscribingNonceMsg(ip [4]byte) {
 				}
 			}
 		case <-tcpip.Quit:
+			common.IsSyncing.Store(true)
 			quit = true
 		default:
 			// Optional: Add a small sleep to prevent busy-waiting
@@ -291,6 +293,7 @@ func StartSubscribingNonceMsgSelf() {
 		select {
 		case s := <-recvChanSelf:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
+				common.IsSyncing.Store(true)
 				recvChanExit <- s
 				quit = true
 				break
@@ -300,6 +303,7 @@ func StartSubscribingNonceMsgSelf() {
 				OnMessage(ip, s[4:])
 			}
 		case <-tcpip.Quit:
+			common.IsSyncing.Store(true)
 			quit = true
 		default:
 
