@@ -132,26 +132,3 @@ Run GUI:
 
     go run cmd/gui/main.go
     
-    
-Docker container to run node:
-
-
-Build the image
-
-    sudo docker build -t okura-node .
-
-To modify the `.env` file inside the container:
-
-    sudo docker exec -it okura-node nano ~/.okura/.env
-
-
-Run the container
-
-    sudo docker run -d \
-    --name okura-node \
-    -p 19023:19023 \
-    -p 18023:18023 \
-    -p 17023:17023 \
-    -p 16023:16023 \
-    -p 19009:19009 \
-    okura-node
