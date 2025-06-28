@@ -30,6 +30,11 @@ Compile OQS with `-DBUILD_SHARED_LIBS=ON` and install
     sudo ninja install
     cd ~/
 
+Install go1.23.6 if not installed:
+
+    wget https://go.dev/dl/go1.23.6.linux-amd64.tar.gz
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go1.23.6.linux-amd64.tar.gz
+
 Follow instruction from https://github.com/open-quantum-safe/liboqs-go.git in order to install go wrapper to oqs. Finally
 
     git clone --depth=1 https://github.com/open-quantum-safe/liboqs-go
