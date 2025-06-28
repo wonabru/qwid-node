@@ -34,7 +34,7 @@ Follow instruction from https://github.com/open-quantum-safe/liboqs-go.git in or
 
     git clone --depth=1 https://github.com/open-quantum-safe/liboqs-go
 
-Edit: liboqs-go/.config/liboqs-go.pc.linux
+Edit: liboqs-go/.config/liboqs-go.pc
 
 and should be like this:
 
@@ -47,6 +47,10 @@ and should be like this:
     Cflags: -I${LIBOQS_INCLUDE_DIR}
     Ldflags: '-extldflags "-Wl,-stack_size -Wl,0x1000000"'
     Libs: -L${LIBOQS_LIB_DIR} -loqs
+
+On the end of ~/.bashrc write this line:
+
+    export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$HOME/liboqs-go/.config
 
 Reload dynamic libraries
 
