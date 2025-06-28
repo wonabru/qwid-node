@@ -38,7 +38,6 @@ Edit: liboqs-go/.config/liboqs-go.pc.linux
 
 and should be like this:
 
-    ```
     LIBOQS_INCLUDE_DIR=/usr/local/include
     LIBOQS_LIB_DIR=/usr/local/lib
     
@@ -48,9 +47,6 @@ and should be like this:
     Cflags: -I${LIBOQS_INCLUDE_DIR}
     Ldflags: '-extldflags "-Wl,-stack_size -Wl,0x1000000"'
     Libs: -L${LIBOQS_LIB_DIR} -loqs
-    ```
-    
-    
 
 Reload dynamic libraries
 
