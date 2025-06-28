@@ -1,10 +1,11 @@
 package database
 
 import (
-	"github.com/okuralabs/okura-node/logger"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/okuralabs/okura-node/logger"
 
 	"github.com/okuralabs/okura-node/common"
 )
@@ -21,7 +22,7 @@ func init() {
 	}
 
 	// ONLY FOR TESTING
-	os.RemoveAll(homePath + common.DefaultBlockchainHomePath)
+	// os.RemoveAll(homePath + common.DefaultBlockchainHomePath)
 
 	// Initialize the blockchain database
 	db := &BlockchainDB{}

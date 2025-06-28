@@ -19,7 +19,10 @@
     "min_staking_user": 100000000000,
     "oracles_height_distance": 6,
     "voting_height_distance": 60,
-
+    "max_transaction_delay":  60480,
+    "max_transaction_in_multi_sig_pool": 60480,
+    "message_initialization": [2, 0, 2, 9],
+    "max_message_size_bytes":  151126018,
     "staked_balances": [
         {
             "account": "f9a3b2f9ef683fff2a3767b5cda83e12b8cd54c7",

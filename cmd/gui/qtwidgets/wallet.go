@@ -65,7 +65,7 @@ func ShowWalletPage() *widgets.QTabWidget {
 			widgets.QMessageBox_Information(nil, "Error", "error with retrieving current encryption", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 			return
 		}
-		MainWallet, err = wallet.Load(uint8(numWallet), input.Text())
+		MainWallet, err = wallet.LoadJSON(uint8(numWallet), input.Text())
 		if err != nil {
 			info = fmt.Sprintf("%v", err)
 			widgets.QMessageBox_Information(nil, "error", info, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
@@ -112,7 +112,7 @@ func ShowWalletPage() *widgets.QTabWidget {
 			widgets.QMessageBox_Information(nil, "OK", info, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 			return
 		}
-		MainWallet, err = wallet.Load(uint8(numWallet), input.Text())
+		MainWallet, err = wallet.LoadJSON(uint8(numWallet), input.Text())
 
 		if MainWallet != nil && MainWallet.Check() || err != nil {
 
@@ -171,7 +171,7 @@ func ShowWalletPage() *widgets.QTabWidget {
 			widgets.QMessageBox_Information(nil, "Error", "error with retrieving current encryption", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 			return
 		}
-		MainWallet, err = wallet.Load(uint8(numWallet), input.Text())
+		MainWallet, err = wallet.LoadJSON(uint8(numWallet), input.Text())
 		if MainWallet != nil && MainWallet.Check() || err != nil {
 			info = fmt.Sprintf("Wallet number %v exists!!! Would you like to overwrite? Current wallet will be removed permanently if overwritten.", numWallet)
 			overwrite := widgets.QMessageBox_Question(nil, "Would you like to overwrite?", info, widgets.QMessageBox__No|widgets.QMessageBox__Yes, widgets.QMessageBox__No)
