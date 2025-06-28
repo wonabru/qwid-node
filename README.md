@@ -60,7 +60,7 @@ and should be like this:
     
     Name: liboqs-go
     Description: Go bindings for liboqs, a C library for quantum resistant cryptography
-    Version: 0.12.1-dev
+    Version: 0.13.0-dev
     Cflags: -I${LIBOQS_INCLUDE_DIR}
     Ldflags: '-extldflags "-Wl,-stack_size -Wl,0x1000000"'
     Libs: -L${LIBOQS_LIB_DIR} -loqs
@@ -74,7 +74,7 @@ Reload shell and dynamic libraries
 
     bash
     go clean -cache
-    sudo ldconfig -v
+    sudo ldconfig -v | grep oqs
 
 Clone project source code
 
