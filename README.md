@@ -95,6 +95,15 @@ Copy env file and change accordingly.
 
     cp .okura/.env ~/.okura/.env
 
+Edit ~/.okura/.env
+
+    DELEGATED_ACCOUNT= any larger rather than 5
+    REWARD_PERCENTAGE= any value 0 <= x <= 500    500 ==> means 50% reward to operator
+    NODE_IP= your external IP
+    WHITELIST_IP= one IP which you want to be be banned
+    HEIGHT_OF_NETWORK= current height of network, to speed up syncing. Can be any > 1 but less than blockchain number of mined blocks
+
+
 In the case you are the first who run blockchain and generate genesis block you need to set in .env: DELEGATED_ACCOUNT=1. In other case if you join to other node which is running you can choose unique DELEGATED_ACCOUNT > 1 and < 255.
 
 Ports TCP needed to be opened:
