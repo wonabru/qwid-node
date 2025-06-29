@@ -69,7 +69,6 @@ Q:
 		select {
 		case s := <-chanRecv:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
-				common.IsSyncing.Store(true)
 				break Q
 			}
 		case <-timeout:
@@ -152,7 +151,6 @@ func StartSubscribingTransactionMsg(ip [4]byte) {
 		select {
 		case s := <-recvChan:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
-				common.IsSyncing.Store(true)
 				logger.GetLogger().Printf("Received EXIT signal for peer %v", ip)
 				quit = true
 				break
@@ -162,7 +160,6 @@ func StartSubscribingTransactionMsg(ip [4]byte) {
 				OnMessage(ipr, s[4:])
 			}
 		case <-tcpip.Quit:
-			common.IsSyncing.Store(true)
 			logger.GetLogger().Printf("Received quit signal for peer %v", ip)
 			quit = true
 		default:
