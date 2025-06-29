@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/okuralabs/okura-node/blocks"
+	"github.com/okuralabs/okura-node/database"
 	"github.com/okuralabs/okura-node/services"
 	"github.com/okuralabs/okura-node/statistics"
 	"github.com/okuralabs/okura-node/transactionsPool"
@@ -31,6 +32,7 @@ func main() {
 	var err error
 	logger.InitLogger()
 	defer logger.CloseLogger()
+	defer database.CloseDB()
 	// Now you can use log functions as usual
 	logger.GetLogger().Println("Application started")
 
