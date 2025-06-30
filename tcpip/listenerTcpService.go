@@ -126,7 +126,7 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 						//}
 						if _, ok := validPeersConnected[k]; !ok {
 							logger.GetLogger().Println("when send to all, ignore connection", k)
-							//CloseAndRemoveConnection(tcpConn0)
+							CloseAndRemoveConnection(tcpConn0)
 						} else if !bytes.Equal(k[:], MyIP[:]) {
 							//logger.GetLogger().Println("send to ipr", k)
 							err := Send(tcpConn0, s[4:])
@@ -145,7 +145,7 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 					//}
 					if _, ok2 := validPeersConnected[ipr]; !ok2 {
 						logger.GetLogger().Println("ignore when send to ", ipr)
-						//CloseAndRemoveConnection(tcpConn)
+						CloseAndRemoveConnection(tcpConn)
 					} else if ok {
 						//logger.GetLogger().Println("send to ip", ipr)
 						err := Send(tcpConn, s[4:])
