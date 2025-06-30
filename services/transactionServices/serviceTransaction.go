@@ -140,19 +140,19 @@ func startPublishingTransactionMsg() {
 
 func StartSubscribingTransactionMsg(ip [4]byte) {
 	recvChan := make(chan []byte, 100) // Increased buffer size
-	quit := false
+
 	var ipr [4]byte
 	logger.GetLogger().Printf("Starting transaction subscription to peer: %v", ip)
 
 	go tcpip.StartNewConnection(ip, recvChan, tcpip.TransactionTopic)
 
 	logger.GetLogger().Println("Entering transaction message receiving loop for peer:", ip)
-	for !quit {
+	for !services.QUIT.Load() {
 		select {
 		case s := <-recvChan:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
 				logger.GetLogger().Printf("Received EXIT signal for peer %v", ip)
-				quit = true
+				services.QUIT.Store(true)
 				break
 			}
 			if len(s) > 4 {
@@ -161,7 +161,7 @@ func StartSubscribingTransactionMsg(ip [4]byte) {
 			}
 		case <-tcpip.Quit:
 			logger.GetLogger().Printf("Received quit signal for peer %v", ip)
-			quit = true
+			services.QUIT.Store(true)
 		default:
 			time.Sleep(time.Millisecond * 100) // Reduced sleep time
 		}

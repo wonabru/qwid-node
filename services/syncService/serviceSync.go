@@ -162,14 +162,13 @@ func StartSubscribingSyncMsg(ip [4]byte) {
 
 	recvChan := make(chan []byte, 10) // Use a buffered channel
 	var ipr [4]byte
-	quit := false
 	go tcpip.StartNewConnection(ip, recvChan, tcpip.SyncTopic)
 	logger.GetLogger().Println("Enter connection receiving loop (sync msg)", ip)
-	for !quit {
+	for !services.QUIT.Load() {
 		select {
 		case s := <-recvChan:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
-				quit = true
+				services.QUIT.Store(true)
 				break
 			}
 			if len(s) > 4 {
@@ -177,7 +176,7 @@ func StartSubscribingSyncMsg(ip [4]byte) {
 				OnMessage(ipr, s[4:])
 			}
 		case <-tcpip.Quit:
-			quit = true
+			services.QUIT.Store(true)
 		default:
 			// Optional: Add a small sleep to prevent busy-waiting
 			time.Sleep(time.Millisecond)

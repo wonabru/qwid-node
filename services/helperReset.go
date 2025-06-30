@@ -6,7 +6,14 @@ import (
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/logger"
 	"github.com/okuralabs/okura-node/transactionsPool"
+	"sync/atomic"
 )
+
+var QUIT = atomic.Bool{}
+
+func init() {
+	QUIT.Store(false)
+}
 
 func AdjustShiftInPastInReset(height int64) {
 	common.ShiftToPastMutex.Lock()
