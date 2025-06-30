@@ -233,15 +233,15 @@ func startPublishingNonceMsg() {
 
 func StartSubscribingNonceMsg(ip [4]byte) {
 	recvChan := make(chan []byte, 10) // Use a buffered channel
+	quit := false
 	var ipr [4]byte
-	services.QUIT.Store(false)
 	go tcpip.StartNewConnection(ip, recvChan, tcpip.NonceTopic)
 	logger.GetLogger().Println("Enter connection receiving loop (nonce msg)", ip)
-	for !services.QUIT.Load() {
+	for !services.QUIT.Load() && !quit {
 		select {
 		case s := <-recvChan:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
-				services.QUIT.Store(true)
+				quit = true
 				break
 			}
 			if len(s) > 4 {
@@ -282,17 +282,17 @@ func sendReply(addr [4]byte) {
 func StartSubscribingNonceMsgSelf() {
 	recvChanSelf := make(chan []byte, 10) // Use a buffered channel
 	recvChanExit := make(chan []byte, 10) // Use a buffered channel
-	services.QUIT.Store(false)
+	quit := false
 	var ip [4]byte
 	go tcpip.StartNewConnection(tcpip.MyIP, recvChanSelf, tcpip.SelfNonceTopic)
 	go sendNonceMsgInLoopSelf(recvChanExit)
 	logger.GetLogger().Println("Enter connection receiving loop (nonce msg self)")
-	for !services.QUIT.Load() {
+	for !services.QUIT.Load() && !quit {
 		select {
 		case s := <-recvChanSelf:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
 				recvChanExit <- s
-				services.QUIT.Store(true)
+				quit = true
 				break
 			}
 			if len(s) > 4 {
