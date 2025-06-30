@@ -140,7 +140,7 @@ func startPublishingTransactionMsg() {
 
 func StartSubscribingTransactionMsg(ip [4]byte) {
 	recvChan := make(chan []byte, 100) // Increased buffer size
-
+	services.QUIT.Store(false)
 	var ipr [4]byte
 	logger.GetLogger().Printf("Starting transaction subscription to peer: %v", ip)
 

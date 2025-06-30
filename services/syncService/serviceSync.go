@@ -161,6 +161,7 @@ func startPublishingSyncMsg() {
 func StartSubscribingSyncMsg(ip [4]byte) {
 
 	recvChan := make(chan []byte, 10) // Use a buffered channel
+	services.QUIT.Store(false)
 	var ipr [4]byte
 	go tcpip.StartNewConnection(ip, recvChan, tcpip.SyncTopic)
 	logger.GetLogger().Println("Enter connection receiving loop (sync msg)", ip)
