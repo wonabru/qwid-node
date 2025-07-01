@@ -5,6 +5,8 @@ import (
 	"github.com/okuralabs/okura-node/blocks"
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/logger"
+	"golang.org/x/crypto/ssh/terminal"
+	"os"
 )
 
 func checkBlock(newBlock blocks.Block, lastBlock blocks.Block, checkFinal bool) error {
@@ -90,13 +92,19 @@ func SetBlockHeightAfterCheck() {
 	if err != nil && height >= 0 {
 		logger.GetLogger().Println(err)
 		// Get home directory
-		//homePath, err := os.UserHomeDir()
+		homePath, err := os.UserHomeDir()
 		if err != nil {
 			logger.GetLogger().Fatal("failed to get home directory:", err)
 		}
-		// remove database related to blockckchain, NOT wallets
-		//os.RemoveAll(homePath + common.DefaultBlockchainHomePath)
-		logger.GetLogger().Fatal("DB files related to chain was removed. run mining once more and sync with other nodes. wrong data stored in db")
+		fmt.Print("Should db with blockchain state should be removed and sync from beginning? Yes/[No]: ")
+		answer, err := terminal.ReadPassword(0)
+		if string(answer) == "Yes" {
+			// remove database related to blockckchain, NOT wallets
+			os.RemoveAll(homePath + common.DefaultBlockchainHomePath)
+			logger.GetLogger().Fatal("DB files related to chain was removed. run mining once more and sync with other nodes. wrong data stored in db")
+		} else {
+			logger.GetLogger().Fatal("DB files related to chain was NOT removed. Please run mining once more and sync with other nodes.")
+		}
 		return
 	}
 	common.SetHeight(height)
