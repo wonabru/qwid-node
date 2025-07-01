@@ -50,7 +50,7 @@ func RevertVMToBlockHeight(height int64) bool {
 }
 
 func ResetAccountsAndBlocksSync(height int64) {
-
+	logger.GetLogger().Println("reset to ", height)
 	if height < 0 {
 		logger.GetLogger().Println("try to reset from negative height")
 		height = 0
@@ -132,6 +132,5 @@ func ResetAccountsAndBlocksSync(height int64) {
 	}
 
 	common.SetHeight(height)
-
-	//common.IsSyncing.Store(true)
+	logger.GetLogger().Println("reset to ", height, " is successful")
 }

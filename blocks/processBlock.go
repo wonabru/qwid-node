@@ -383,11 +383,11 @@ func CheckBlockAndTransactions(newBlock *Block, lastBlock Block, merkleTrie *tra
 	defer RemoveAllTransactionsRelatedToBlock(*newBlock)
 	n, err := account.IntDelegatedAccountFromAddress(newBlock.GetHeader().DelegatedAccount)
 	if err != nil || n < 1 || n > 255 {
-		return fmt.Errorf("wrong delegated account: CheckBlockAndTransferFunds")
+		return fmt.Errorf("wrong delegated account: CheckBlockAndTransactions")
 	}
 	opAccBlockAddr := newBlock.GetHeader().OperatorAccount
 	if _, sumStaked, opAcc := account.GetStakedInDelegatedAccount(n); int64(sumStaked) < common.MinStakingForNode || !bytes.Equal(opAcc.Address[:], opAccBlockAddr.GetBytes()) {
-		return fmt.Errorf("not enough staked coins to be a node or not valid operetional account: CheckBlockAndTransferFunds")
+		return fmt.Errorf("not enough staked coins to be a node or not valid operetional account: CheckBlockAndTransactions")
 	}
 
 	reward, totalFee, err := CheckBlockTransfers(*newBlock, lastBlock, true)
@@ -397,7 +397,7 @@ func CheckBlockAndTransactions(newBlock *Block, lastBlock Block, merkleTrie *tra
 	newBlock.BlockFee = totalFee + lastBlock.BlockFee
 
 	if EvaluateSmartContracts(newBlock) == false {
-		return fmt.Errorf("evaluation of smart contracts in block fails: CheckBlockAndTransferFunds")
+		return fmt.Errorf("evaluation of smart contracts in block fails: CheckBlockAndTransactions")
 	}
 
 	staked, rewarded := GetSupplyInStakedAccounts()
@@ -408,12 +408,12 @@ func CheckBlockAndTransactions(newBlock *Block, lastBlock Block, merkleTrie *tra
 		logger.GetLogger().Println("rewarded", rewarded)
 		logger.GetLogger().Println("lastBlock.BlockFee", lastBlock.BlockFee)
 		logger.GetLogger().Println("GetSupplyInAccounts()+staked+rewarded+reward+lastBlock.BlockFee:", GetSupplyInAccounts()+staked+rewarded+reward+lastBlock.BlockFee, "newBlock.GetBlockSupply():", newBlock.GetBlockSupply())
-		return fmt.Errorf("block supply checking fails vs account balances: CheckBlockAndTransferFunds")
+		return fmt.Errorf("block supply checking fails vs account balances: CheckBlockAndTransactions")
 	}
 
 	head := newBlock.GetHeader()
 	if head.Verify() == false {
-		return fmt.Errorf("header fails to verify: CheckBlockAndTransferFunds")
+		return fmt.Errorf("header fails to verify: CheckBlockAndTransactions")
 	}
 	return nil
 }

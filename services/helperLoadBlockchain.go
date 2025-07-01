@@ -41,6 +41,7 @@ func checkMainChain() (int64, error) {
 		logger.GetLogger().Println(err)
 		return height - 1, err
 	}
+	logger.GetLogger().Println("blocks.LastHeightStoredInBlocks() height: ", height)
 	if height > 1 {
 		bl, err := blocks.LoadBlock(height)
 		if err != nil {
