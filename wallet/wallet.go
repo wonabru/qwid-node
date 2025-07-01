@@ -827,10 +827,12 @@ func Verify(msg []byte, sig []byte, pubkey []byte) bool {
 		logger.GetLogger().Println("Primary sign")
 		err = verifier.Init(common.SigName(), nil)
 		if err != nil {
+			logger.GetLogger().Println("verifier:", err)
 			return false
 		}
 		if verifier.Details().LengthPublicKey == len(pubkey) {
 			isVerified, err := verifier.Verify(msg, sig, pubkey)
+			logger.GetLogger().Println("isVerified:", isVerified)
 			if err != nil {
 				logger.GetLogger().Println(err)
 				return false
@@ -840,6 +842,7 @@ func Verify(msg []byte, sig []byte, pubkey []byte) bool {
 			}
 			return isVerified
 		}
+		logger.GetLogger().Println("verifier.Details().LengthPublicKey:", verifier.Details().LengthPublicKey, "len(pubkey):", len(pubkey))
 	}
 	if !primary && !common.IsPaused2() {
 		logger.GetLogger().Println("Secondary sign")
