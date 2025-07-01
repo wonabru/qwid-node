@@ -8,7 +8,7 @@ import (
 )
 
 func checkBlock(newBlock blocks.Block, lastBlock blocks.Block, checkFinal bool) error {
-
+	logger.GetLogger().Println("checkFinal:", checkFinal)
 	merkleTrie, err := blocks.CheckBaseBlock(newBlock, lastBlock)
 	defer merkleTrie.Destroy()
 	if err != nil {
