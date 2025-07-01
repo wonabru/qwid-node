@@ -2,8 +2,6 @@ package services
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/okuralabs/okura-node/blocks"
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/logger"
@@ -92,12 +90,12 @@ func SetBlockHeightAfterCheck() {
 	if err != nil && height >= 0 {
 		logger.GetLogger().Println(err)
 		// Get home directory
-		homePath, err := os.UserHomeDir()
+		//homePath, err := os.UserHomeDir()
 		if err != nil {
 			logger.GetLogger().Fatal("failed to get home directory:", err)
 		}
 		// remove database related to blockckchain, NOT wallets
-		os.RemoveAll(homePath + common.DefaultBlockchainHomePath)
+		//os.RemoveAll(homePath + common.DefaultBlockchainHomePath)
 		logger.GetLogger().Fatal("DB files related to chain was removed. run mining once more and sync with other nodes. wrong data stored in db")
 		return
 	}
