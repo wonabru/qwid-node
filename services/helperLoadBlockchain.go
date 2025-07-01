@@ -65,14 +65,16 @@ func checkMainChain() (int64, error) {
 		logger.GetLogger().Println("Starting blockchain from scratch...")
 		return 0, fmt.Errorf("bad chain storage")
 	}
-	for h := int64(1); h <= height; h++ {
+	ResetAccountsAndBlocksSync(height - 1)
+	for h := int64(1); h < height; h++ {
 		bl, err := blocks.LoadBlock(h)
 		if err != nil {
 			logger.GetLogger().Println(err)
+
 			err = checkBlock(bl, lastBlock, true)
 			return h - 1, err
 		}
-		err = checkBlock(bl, lastBlock, h == height)
+		err = checkBlock(bl, lastBlock, h == height-1)
 		if err != nil {
 			logger.GetLogger().Println(err)
 			err = checkBlock(bl, lastBlock, true)
