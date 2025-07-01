@@ -106,7 +106,7 @@ func (b *BaseHeader) GetBytes() []byte {
 	return rb
 }
 
-func (bh *BaseHeader) Verify() bool {
+func (bh *BaseHeader) Verify(primaryInt int) bool {
 	signatureBlockHeaderMessage := bh.GetBytesWithoutSignature()
 	if !bytes.Equal(signatureBlockHeaderMessage, bh.SignatureMessage) {
 		logger.GetLogger().Println("signatures are different")
@@ -118,7 +118,12 @@ func (bh *BaseHeader) Verify() bool {
 		return false
 	}
 	a := bh.OperatorAccount
-	primary := common.GetNodeSignPrimary(bh.Height)
+	var primary bool
+	if primaryInt < 0 {
+		primary = common.GetNodeSignPrimary(bh.Height)
+	} else {
+		primary = primaryInt == 0
+	}
 	logger.GetLogger().Println("a:", a, "primary:", primary)
 	pk, err := pubkeys.LoadPubKeyWithPrimary(a, primary)
 	if err != nil {
