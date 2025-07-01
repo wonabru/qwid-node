@@ -70,13 +70,13 @@ func checkMainChain() (int64, error) {
 		if err != nil {
 			logger.GetLogger().Println(err)
 
-			err = checkBlock(bl, lastBlock, true)
+			//err = checkBlock(bl, lastBlock, true)
 			return h - 1, err
 		}
 		err = checkBlock(bl, lastBlock, h == height-1)
 		if err != nil {
 			logger.GetLogger().Println(err)
-			err = checkBlock(bl, lastBlock, true)
+			//err = checkBlock(bl, lastBlock, true)
 			logger.GetLogger().Println("Error in block height ", h)
 			return h - 1, err
 		}
