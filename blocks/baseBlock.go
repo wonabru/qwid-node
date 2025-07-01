@@ -119,6 +119,7 @@ func (bh *BaseHeader) Verify() bool {
 	}
 	a := bh.OperatorAccount
 	primary := common.GetNodeSignPrimary(bh.Height)
+	logger.GetLogger().Println("a:", a, "primary:", primary)
 	pk, err := pubkeys.LoadPubKeyWithPrimary(a, primary)
 	if err != nil {
 		logger.GetLogger().Println(err)
