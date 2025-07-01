@@ -234,7 +234,7 @@ func CreateBlockFromGenesis(genesis Genesis) blocks.Block {
 		logger.GetLogger().Fatalf("cannot calculate hash of genesis block header %v", err)
 	}
 
-	if bh.Verify() == false {
+	if bh.Verify(0) == false {
 		logger.GetLogger().Fatal("Block Header signature in genesis block fails to verify")
 	}
 	bb := blocks.BaseBlock{
