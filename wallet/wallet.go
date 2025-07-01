@@ -835,6 +835,9 @@ func Verify(msg []byte, sig []byte, pubkey []byte) bool {
 				logger.GetLogger().Println(err)
 				return false
 			}
+			if !isVerified {
+				logger.GetLogger().Println("msg:", msg, "sig:", sig, "pubkey:", pubkey)
+			}
 			return isVerified
 		}
 	}
