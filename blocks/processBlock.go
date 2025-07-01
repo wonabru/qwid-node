@@ -411,13 +411,8 @@ func CheckBlockAndTransactions(newBlock *Block, lastBlock Block, merkleTrie *tra
 		return fmt.Errorf("block supply checking fails vs account balances: CheckBlockAndTransactions")
 	}
 
-	primaryInt := 0
-	enc1, err := FromBytesToEncryptionConfig(lastBlock.BaseBlock.BaseHeader.Encryption1[:], true)
-	if enc1.IsPaused == true {
-		primaryInt = 1
-	}
 	head := newBlock.GetHeader()
-	if head.Verify(primaryInt) == false {
+	if head.Verify() == false {
 		return fmt.Errorf("header fails to verify: CheckBlockAndTransactions")
 	}
 	return nil
@@ -463,7 +458,7 @@ func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *tr
 	}
 	head := newBlock.GetHeader()
 
-	if head.Verify(-1) == false {
+	if head.Verify() == false {
 		return fmt.Errorf("header fails to verify: CheckBlockAndTransferFunds")
 	}
 
