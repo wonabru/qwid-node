@@ -821,6 +821,7 @@ func (w *Wallet) Sign(data []byte, primary bool) (*common.Signature, error) {
 func Verify(msg []byte, sig []byte, pubkey []byte) bool {
 	var verifier oqs.Signature
 	var err error
+	logger.GetLogger().Println("sig:", string(sig))
 	primary := sig[0] == 0
 	sig = sig[1:]
 	logger.GetLogger().Println("Primary:", primary)
