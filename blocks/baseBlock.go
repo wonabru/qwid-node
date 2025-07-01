@@ -119,11 +119,13 @@ func (bh *BaseHeader) Verify(primaryInt int) bool {
 	}
 	a := bh.OperatorAccount
 	var primary bool
-	if primaryInt < 0 {
-		primary = common.GetNodeSignPrimary(bh.Height)
-	} else {
-		primary = primaryInt == 0
-	}
+	sig := bh.Signature.GetBytes()
+	primary = sig[0] == 0
+	//if primaryInt < 0 {
+	//	primary = common.GetNodeSignPrimary(bh.Height)
+	//} else {
+	//	primary = primaryInt == 0
+	//}
 	logger.GetLogger().Println("a:", a, "primary:", primary)
 	pk, err := pubkeys.LoadPubKeyWithPrimary(a, primary)
 	if err != nil {
