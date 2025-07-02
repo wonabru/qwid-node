@@ -82,7 +82,7 @@ func main() {
 	fmt.Printf("Write permission: %v\n", hasWritePermission2)
 	fmt.Printf("Execute permission: %v\n", hasExecutePermission2)
 
-	err = w.Store(true)
+	err = w.StoreJSON(true)
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return
