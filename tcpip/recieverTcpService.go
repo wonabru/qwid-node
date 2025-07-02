@@ -89,19 +89,27 @@ func init() {
 		return
 	}
 
-	// Parse the IP address
-	ip = net.ParseIP(ips)
-	if ip == nil {
-		logger.GetLogger().Println("Warning: Failed to parse WHITELIST_IP '%s' as an IP address", ips)
-		return
-	}
+	// Split the string into individual IP addresses
+	ipStrings := strings.Split(ips, ",")
+	// Process each IP address
+	for _, ipStr := range ipStrings {
+		// Trim any whitespace
+		ipStr = strings.TrimSpace(ipStr)
 
-	ip4 = ip.To4()
-	if ip4 == nil {
-		logger.GetLogger().Println("Warning: failed to parse WHITELIST_IP '%s' as 4 byte format", ips)
-		return
+		// Parse the IP address
+		ip = net.ParseIP(ips)
+		if ip == nil {
+			logger.GetLogger().Println("Warning: Failed to parse WHITELIST_IP '%s' as an IP address", ips)
+			return
+		}
+
+		ip4 = ip.To4()
+		if ip4 == nil {
+			logger.GetLogger().Println("Warning: failed to parse WHITELIST_IP '%s' as 4 byte format", ips)
+			return
+		}
+		AddWhiteListIPs([4]byte(ip4))
 	}
-	AddWhiteListIPs([4]byte(ip4))
 }
 
 func GetIp() [4]byte {
