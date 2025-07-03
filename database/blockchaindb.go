@@ -1,11 +1,9 @@
 package database
 
 import (
+	"github.com/okuralabs/okura-node/logger"
 	"os"
 	"path/filepath"
-	"sync"
-
-	"github.com/okuralabs/okura-node/logger"
 
 	"github.com/okuralabs/okura-node/common"
 )
@@ -70,25 +68,25 @@ func (r *InMemoryDBReader) Get(key []byte) ([]byte, error) {
 	return value, nil
 }
 
-func GetDBPermanentInstance() *BlockchainDB {
-	return &BlockchainDB{
-		db:    (*MainDB).GetLdb(),
-		mutex: sync.RWMutex{},
-	}
-}
-
-func NewPermanentDB(dbPath string) *BlockchainDB {
-	db := &BlockchainDB{}
-	db.mutex = sync.RWMutex{}
-
-	// Create a permanent database at the specified path
-	permanent, err := db.InitPermanent(dbPath)
-	if err != nil {
-		logger.GetLogger().Printf("Failed to initialize permanent database at %s: %v", dbPath, err)
-		return nil
-	}
-	return &BlockchainDB{
-		db:    permanent.GetLdb(),
-		mutex: sync.RWMutex{},
-	}
-}
+//func GetDBPermanentInstance() *BlockchainDB {
+//	return &BlockchainDB{
+//		db:    (*MainDB).GetLdb(),
+//		mutex: sync.RWMutex{},
+//	}
+//}
+//
+//func NewPermanentDB(dbPath string) *BlockchainDB {
+//	db := &BlockchainDB{}
+//	db.mutex = sync.RWMutex{}
+//
+//	// Create a permanent database at the specified path
+//	permanent, err := db.InitPermanent(dbPath)
+//	if err != nil {
+//		logger.GetLogger().Printf("Failed to initialize permanent database at %s: %v", dbPath, err)
+//		return nil
+//	}
+//	return &BlockchainDB{
+//		db:    permanent.GetLdb(),
+//		mutex: sync.RWMutex{},
+//	}
+//}

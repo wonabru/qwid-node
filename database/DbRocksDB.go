@@ -153,7 +153,7 @@ func (d *BlockchainDB) Close() {
 	select {
 	case <-done:
 		logger.GetLogger().Println("Database closed normally")
-	case <-time.After(2 * time.Second):
+	case <-time.After(5 * time.Second):
 		logger.GetLogger().Println("Database closure timed out, forcing cleanup")
 		// Last resort cleanup
 		if d.db != nil {
