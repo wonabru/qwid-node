@@ -40,7 +40,7 @@ var statsManager *StatsManager
 // InitStatsManager initializes the statistics manager
 func InitStatsManager() {
 	if database.MainDB == nil {
-		logger.GetLogger().Fatal("MainDB is not initialized")
+		logger.GetLogger().Println("WARNING: MainDB is not initialized")
 	}
 	statsManager = &StatsManager{
 		Stats: &Stats{
