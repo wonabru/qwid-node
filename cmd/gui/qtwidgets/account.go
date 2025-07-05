@@ -65,7 +65,7 @@ func UpdateAccountStats() {
 	}
 	err = acc.Unmarshal(re)
 	if err != nil {
-		logger.GetLogger().Println("cannot unmarshal account")
+		logger.GetLogger().Println("cannot unmarshal account", err)
 		common.SetIsPaused(!common.IsPaused(), true)
 		return
 	}

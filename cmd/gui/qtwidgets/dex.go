@@ -417,7 +417,7 @@ func GetAccount(a common.Address) (account.Account, error) {
 	}
 	err = acc.Unmarshal(re)
 	if err != nil {
-		logger.GetLogger().Println("cannot unmarshal account")
+		logger.GetLogger().Println("cannot unmarshal account", err)
 		return account.Account{}, err
 	}
 	return acc, nil
