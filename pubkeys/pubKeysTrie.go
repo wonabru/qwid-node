@@ -37,7 +37,7 @@ func InitPermanentTrie() {
 	GlobalMerkleTree.DB = database.MainDB
 }
 
-func init() {
+func InitTrie() {
 	InitPermanentTrie()
 }
 
