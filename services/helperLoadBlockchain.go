@@ -1,12 +1,12 @@
 package services
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/okuralabs/okura-node/blocks"
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/logger"
 	"github.com/okuralabs/okura-node/wallet"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
 )
 
@@ -109,7 +109,8 @@ func SetBlockHeightAfterCheck() {
 			logger.GetLogger().Fatal("failed to get home directory:", err)
 		}
 		fmt.Print("Should db with blockchain state should be removed and sync from beginning? Yes/[No]: ")
-		answer, err := terminal.ReadPassword(0)
+		reader := bufio.NewReader(os.Stdin)
+		answer, _ := reader.ReadString('\n')
 		if string(answer) == "Yes" {
 			// remove database related to blockckchain, NOT wallets
 			os.RemoveAll(homePath + common.DefaultBlockchainHomePath)
