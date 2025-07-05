@@ -23,7 +23,7 @@ func AdjustShiftInPastInReset(height int64) {
 		common.ShiftToPastInReset = 1
 		return
 	}
-	common.ShiftToPastInReset += 1
+	common.ShiftToPastInReset += 2
 	if common.ShiftToPastInReset > height {
 		common.ShiftToPastInReset = height
 	}
