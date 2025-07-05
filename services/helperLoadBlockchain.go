@@ -111,7 +111,8 @@ func SetBlockHeightAfterCheck() {
 		fmt.Print("Should db with blockchain state should be removed and sync from beginning? Yes/[No]: ")
 		reader := bufio.NewReader(os.Stdin)
 		answer, _ := reader.ReadString('\n')
-		if string(answer) == "Yes" {
+		logger.GetLogger().Println(answer)
+		if answer[0] == 'Y' || answer[0] == 'y' {
 			// remove database related to blockckchain, NOT wallets
 			os.RemoveAll(homePath + common.DefaultBlockchainHomePath)
 			logger.GetLogger().Fatal("DB files related to chain was removed. run mining once more and sync with other nodes. wrong data stored in db")
