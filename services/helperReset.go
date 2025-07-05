@@ -53,9 +53,6 @@ func ResetAccountsAndBlocksSync(height int64) {
 	logger.GetLogger().Println("reset to ", height)
 	if height < 0 {
 		logger.GetLogger().Println("try to reset from negative height")
-		common.ShiftToPastMutex.Lock()
-		common.ShiftToPastInReset = 1
-		common.ShiftToPastMutex.Unlock()
 		height = 0
 		h := common.GetHeight()
 		if h == 0 {
