@@ -42,7 +42,7 @@ type Wallet struct {
 	WalletNumber        uint8  `json:"wallet_number"`
 }
 
-// Structure map of Height and wallet which was chaange
+// GeneralWallet Structure map of Height and wallet which was change
 type GeneralWallet struct {
 	WalletChain   map[int64]Wallet `json:"wallet_chain"`
 	CurrentWallet Wallet           `json:"current_wallet"`
@@ -490,7 +490,7 @@ func LoadJSON(walletNumber uint8, password string, height int64) (*GeneralWallet
 	if err := json.Unmarshal(data, w); err != nil {
 		return nil, err
 	}
-	cw := EmptyWallet(walletNumber, common.SigName(), common.SigName2())
+	cw := &w.CurrentWallet
 	if height >= 0 {
 		maxHeight := int64(0)
 		for k, v := range w.WalletChain {
