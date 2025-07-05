@@ -370,6 +370,7 @@ func handleACCT(line []byte, reply *[]byte) {
 	acc := account.Accounts.AllAccounts[byt]
 	defer account.AccountsRWMutex.RUnlock()
 	am := acc.Marshal()
+	logger.GetLogger().Println("am len data", len(am))
 	*reply = am
 }
 
