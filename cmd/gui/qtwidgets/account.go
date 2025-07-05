@@ -16,6 +16,7 @@ import (
 
 var StatsLabel *widgets.QLabel
 var MainWallet *wallet.Wallet
+var MainGeneralWallet *wallet.GeneralWallet
 
 func UpdateAccountStats() {
 	if (MainWallet == nil) || ((MainWallet != nil) && MainWallet.Check() == false) {

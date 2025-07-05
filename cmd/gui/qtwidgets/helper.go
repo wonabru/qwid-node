@@ -76,7 +76,7 @@ func StoreWalletNewGenerated(w *wallet.Wallet) error {
 	fmt.Printf("Write permission: %v\n", hasWritePermission)
 	fmt.Printf("Execute permission: %v\n", hasExecutePermission)
 
-	err = w.StoreJSON(true)
+	err = w.StoreJSON(0)
 	if err != nil {
 		return err
 	}
