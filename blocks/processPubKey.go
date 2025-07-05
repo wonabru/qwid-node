@@ -32,11 +32,7 @@ func AddNewPubKeyToActiveWallet(sigName string, primary bool) error {
 	makeBackup := false
 	if w.GetSigName(primary) != sigName {
 		makeBackup = true
-		if primary {
-			w.HomePathOld = w.HomePath
-		} else {
-			w.HomePath2Old = w.HomePath2
-		}
+		w.HomePathOld = w.HomePath
 		err := w.AddNewEncryptionToActiveWallet(sigName, primary)
 		if err != nil {
 			return err
@@ -61,7 +57,7 @@ func AddNewPubKeyToActiveWallet(sigName string, primary bool) error {
 			return err
 		}
 	}
-	err := w.Store(makeBackup)
+	err := w.StoreJSON(makeBackup)
 	if err != nil {
 		return err
 	}

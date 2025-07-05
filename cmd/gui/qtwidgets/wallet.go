@@ -134,7 +134,7 @@ func ShowWalletPage() *widgets.QTabWidget {
 
 		}
 
-		err = MainWallet.Store(true)
+		err = MainWallet.StoreJSON(true)
 		if err != nil {
 			info = fmt.Sprintf("%v", err)
 			widgets.QMessageBox_Information(nil, "OK", info, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
@@ -221,7 +221,7 @@ func ShowWalletPage() *widgets.QTabWidget {
 			return
 		}
 		MainWallet.SetPassword(newPassword.Text())
-		err = MainWallet.Store(false)
+		err = MainWallet.StoreJSON(false)
 		if err != nil {
 			widgets.QMessageBox_Information(nil, "Error", fmt.Sprintf("%v", err), widgets.QMessageBox__Close, widgets.QMessageBox__Close)
 			return

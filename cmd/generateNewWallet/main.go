@@ -61,27 +61,6 @@ func main() {
 	fmt.Printf("Write permission: %v\n", hasWritePermission)
 	fmt.Printf("Execute permission: %v\n", hasExecutePermission)
 
-	folderPath2 := w.HomePath2
-	err = os.MkdirAll(w.HomePath2, 0755)
-	if err != nil {
-		logger.GetLogger().Fatal(err)
-	}
-	fileInfo2, err := os.Stat(folderPath2)
-	if err != nil {
-		fmt.Println("Error getting folder info:", err)
-		return
-	}
-	// Get the folder permissions
-	permissions2 := fileInfo2.Mode().Perm()
-	fmt.Printf("Folder permissions: %v\n", permissions2)
-	// Check if the current user has read, write, and execute permissions
-	hasReadPermission2 := permissions2&0400 != 0
-	hasWritePermission2 := permissions2&0200 != 0
-	hasExecutePermission2 := permissions2&0100 != 0
-	fmt.Printf("Read permission: %v\n", hasReadPermission2)
-	fmt.Printf("Write permission: %v\n", hasWritePermission2)
-	fmt.Printf("Execute permission: %v\n", hasExecutePermission2)
-
 	err = w.StoreJSON(true)
 	if err != nil {
 		logger.GetLogger().Println(err)
