@@ -39,7 +39,6 @@ type Wallet struct {
 	signer              oqs.Signature
 	signer2             oqs.Signature
 	HomePath            string `json:"home_path"`
-	HomePathOld         string `json:"home_path_old,omitempty"`
 	WalletNumber        uint8  `json:"wallet_number"`
 }
 
@@ -123,7 +122,6 @@ func EmptyWallet(walletNumber uint8, sigName, sigName2 string) *Wallet {
 		signer:        oqs.Signature{},
 		signer2:       oqs.Signature{},
 		HomePath:      homePath + common.DefaultWalletHomePath + strconv.Itoa(int(walletNumber)),
-		HomePathOld:   homePath + common.DefaultWalletHomePath + strconv.Itoa(int(walletNumber)),
 		WalletNumber:  walletNumber,
 	}
 }
@@ -351,24 +349,22 @@ func (w *Wallet) StoreJSON(makeBackup bool) error {
 		return fmt.Errorf("you need load wallet first")
 	}
 
+	// Create the wallet file path
+	walletFile := filepath.Join(w.HomePath, "wallet"+strconv.Itoa(int(w.WalletNumber)))
+	logger.GetLogger().Println("walletFile:", walletFile)
+
 	if makeBackup {
 		// Get the next available backup number
 		backupNum := 1
-		backupPath := w.HomePathOld + "_backup" + fmt.Sprintf("%d", backupNum)
+		backupPath := walletFile + "_backup" + fmt.Sprintf("%d", backupNum)
 		for {
 			if _, err := os.Stat(backupPath); os.IsNotExist(err) {
 				break
 			}
 			backupNum++
-			backupPath = w.HomePathOld + "_backup" + fmt.Sprintf("%d", backupNum)
+			backupPath = walletFile + "_backup" + fmt.Sprintf("%d", backupNum)
 		}
-		if _, err := os.Stat(backupPath); os.IsNotExist(err) {
-			err = os.MkdirAll(backupPath, 0755)
-			if err != nil {
-				logger.GetLogger().Println("WARNING:", err)
-			}
-		}
-		err := CopyDirectory(w.HomePathOld, backupPath)
+		err := Copy(walletFile+".json", backupPath+".json")
 		if err != nil {
 			return err
 		}
@@ -403,11 +399,9 @@ func (w *Wallet) StoreJSON(makeBackup bool) error {
 	if err := os.MkdirAll(w.HomePath, 0755); err != nil {
 		return err
 	}
-	// Create the wallet file path
-	walletFile := filepath.Join(w.HomePath, "wallet"+strconv.Itoa(int(w.WalletNumber))+".json")
-	logger.GetLogger().Println("walletFile:", walletFile)
+
 	// Write the wallet to the JSON file
-	if err := os.WriteFile(walletFile, wm, 0644); err != nil {
+	if err := os.WriteFile(walletFile+".json", wm, 0600); err != nil {
 		return err
 	}
 
@@ -520,7 +514,6 @@ func (w *Wallet) ChangePassword(password, newPassword string) error {
 		signer2:       w.signer2,
 		MainAddress:   w.MainAddress,
 		HomePath:      w.HomePath,
-		HomePathOld:   w.HomePathOld,
 		WalletNumber:  w.WalletNumber,
 	}
 
