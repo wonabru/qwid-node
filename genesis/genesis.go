@@ -234,7 +234,7 @@ func CreateBlockFromGenesis(genesis Genesis) blocks.Block {
 		logger.GetLogger().Fatalf("cannot calculate hash of genesis block header %v", err)
 	}
 
-	if bh.Verify() == false {
+	if bh.Verify(common.SigName(), common.SigName2()) == false {
 		logger.GetLogger().Fatal("Block Header signature in genesis block fails to verify")
 	}
 	bb := blocks.BaseBlock{
@@ -329,7 +329,7 @@ func GenesisTransaction(sender common.Address, recipient common.Address, genTx G
 	}
 	t.Signature = signature
 
-	if t.Verify() == false {
+	if t.Verify(common.SigName(), common.SigName2()) == false {
 		myWallet := wallet.GetActiveWallet()
 		logger.GetLogger().Println(myWallet.Account1.PublicKey.GetHex())
 		err = t.Sign(myWallet, true)

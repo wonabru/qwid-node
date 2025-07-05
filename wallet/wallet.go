@@ -602,7 +602,7 @@ func (w *Wallet) Sign(data []byte, primary bool) (*common.Signature, error) {
 	return nil, fmt.Errorf("input data are empty")
 }
 
-func Verify(msg []byte, sig []byte, pubkey []byte) bool {
+func Verify(msg []byte, sig []byte, pubkey []byte, sigName, sigName2 string) bool {
 	var verifier oqs.Signature
 	var err error
 	primary := sig[0] == 0
@@ -610,7 +610,7 @@ func Verify(msg []byte, sig []byte, pubkey []byte) bool {
 	logger.GetLogger().Println("Primary:", primary)
 	if primary && !common.IsPaused() {
 		logger.GetLogger().Println("Primary sign")
-		err = verifier.Init(common.SigName(), nil)
+		err = verifier.Init(sigName, nil)
 		if err != nil {
 			logger.GetLogger().Println("verifier:", err)
 			return false
@@ -631,7 +631,7 @@ func Verify(msg []byte, sig []byte, pubkey []byte) bool {
 	}
 	if !primary && !common.IsPaused2() {
 		logger.GetLogger().Println("Secondary sign")
-		err = verifier.Init(common.SigName2(), nil)
+		err = verifier.Init(sigName2, nil)
 		if err != nil {
 			logger.GetLogger().Println("verifier:", err)
 			return false

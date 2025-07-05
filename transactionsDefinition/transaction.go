@@ -74,7 +74,7 @@ func (tx *Transaction) GetSenderAddress() common.Address {
 
 func (tx *Transaction) GetFromBytes(b []byte) (Transaction, []byte, error) {
 
-	if len(b) < 76+common.SignatureLength()+1 && len(b) < 76+common.SignatureLength2()+1 {
+	if len(b) < 76+common.SignatureLength(true)+1 && len(b) < 76+common.SignatureLength2(true)+1 {
 		return Transaction{}, nil, fmt.Errorf("Not enough bytes for transaction unmarshal len bytes %v", len(b))
 	}
 	tp := TxParam{}
@@ -229,7 +229,7 @@ func CheckFromDBPoolTx(prefix []byte, hashTransaction []byte) bool {
 }
 
 // Verify - checking if hash is correct and signature
-func (tx *Transaction) Verify() bool {
+func (tx *Transaction) Verify(sigName, sigName2 string) bool {
 	recipientAddress := tx.TxData.Recipient
 	n, err := account.IntDelegatedAccountFromAddress(recipientAddress)
 	if tx.GetData().Amount < 0 && err != nil && n < 512 {
@@ -307,7 +307,7 @@ func (tx *Transaction) Verify() bool {
 		}
 		pkb = pkp.GetBytes()
 	}
-	return wallet.Verify(b, signature.GetBytes(), pkb)
+	return wallet.Verify(b, signature.GetBytes(), pkb, sigName, sigName2)
 }
 
 func (tx *Transaction) Sign(w *wallet.Wallet, primary bool) error {

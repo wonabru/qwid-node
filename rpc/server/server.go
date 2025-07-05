@@ -88,7 +88,7 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 			pubKey = activeWallet.Account2.PublicKey
 		}
 
-		if !wallet.Verify(common.BytesToLenAndBytes(line), signatureBytes, pubKey.GetBytes()) {
+		if !wallet.Verify(common.BytesToLenAndBytes(line), signatureBytes, pubKey.GetBytes(), common.SigName(), common.SigName2()) {
 			*reply = []byte("Invalid signature")
 			return nil
 		}
@@ -179,14 +179,14 @@ func handleENCR(line []byte, reply *[]byte) {
 	logger.GetLogger().Println(string(line))
 	*reply = nil
 
-	enb1, err := oqs.GenerateBytesFromParams(common.SigName(), common.PubKeyLength(), common.PrivateKeyLength(), common.SignatureLength(), common.IsPaused())
+	enb1, err := oqs.GenerateBytesFromParams(common.SigName(), common.PubKeyLength(false), common.PrivateKeyLength(), common.SignatureLength(false), common.IsPaused())
 	if err != nil {
 		*reply = []byte(err.Error())
 		return
 	}
 	enb := common.BytesToLenAndBytes(enb1)
 
-	enb2, err := oqs.GenerateBytesFromParams(common.SigName2(), common.PubKeyLength2(), common.PrivateKeyLength2(), common.SignatureLength2(), common.IsPaused2())
+	enb2, err := oqs.GenerateBytesFromParams(common.SigName2(), common.PubKeyLength2(false), common.PrivateKeyLength2(), common.SignatureLength2(false), common.IsPaused2())
 	if err != nil {
 		*reply = []byte(err.Error())
 		return

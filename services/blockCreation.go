@@ -61,13 +61,13 @@ func CreateBlockFromNonceMessage(nonceTx []transactionsDefinition.Transaction,
 			return blocks.Block{}, err
 		}
 		if len(encryption1) == 0 {
-			encryption1, err = oqs.GenerateBytesFromParams(common.SigName(), common.PubKeyLength(), common.PrivateKeyLength(), common.SignatureLength(), common.IsPaused())
+			encryption1, err = oqs.GenerateBytesFromParams(common.SigName(), common.PubKeyLength(false), common.PrivateKeyLength(), common.SignatureLength(false), common.IsPaused())
 			if err != nil {
 				return blocks.Block{}, err
 			}
 		}
 		if len(encryption2) == 0 {
-			encryption2, err = oqs.GenerateBytesFromParams(common.SigName2(), common.PubKeyLength2(), common.PrivateKeyLength2(), common.SignatureLength2(), common.IsPaused2())
+			encryption2, err = oqs.GenerateBytesFromParams(common.SigName2(), common.PubKeyLength2(false), common.PrivateKeyLength2(), common.SignatureLength2(false), common.IsPaused2())
 			if err != nil {
 				return blocks.Block{}, err
 			}

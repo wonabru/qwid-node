@@ -412,7 +412,11 @@ func CheckBlockAndTransactions(newBlock *Block, lastBlock Block, merkleTrie *tra
 	}
 
 	head := newBlock.GetHeader()
-	if head.Verify() == false {
+	sigName, sigName2, err := newBlock.GetSigNames()
+	if err != nil {
+		fmt.Errorf("%v: CheckBlockAndTransactions", err)
+	}
+	if head.Verify(sigName, sigName2) == false {
 		return fmt.Errorf("header fails to verify: CheckBlockAndTransactions")
 	}
 	return nil
@@ -457,8 +461,11 @@ func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *tr
 		return err
 	}
 	head := newBlock.GetHeader()
-
-	if head.Verify() == false {
+	sigName, sigName2, err := newBlock.GetSigNames()
+	if err != nil {
+		return fmt.Errorf("%v: CheckBlockAndTransferFunds", err)
+	}
+	if head.Verify(sigName, sigName2) == false {
 		return fmt.Errorf("header fails to verify: CheckBlockAndTransferFunds")
 	}
 
