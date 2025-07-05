@@ -40,7 +40,7 @@ var (
 	BannedTimeSeconds              int64   = 60                  // 1 minute
 	MessageInitialization                  = [4]byte{2, 0, 2, 9} // will be overwrite in init() by MaxMessageSizeBytes
 	MaxMessageSizeBytes            int32   = 151126018           // should be adjusted to maximal message sent
-	DefaultWalletHomePath                  = "/.okura/db/wallet/"
+	DefaultWalletHomePath                  = "/.okura/wallet/"
 	DefaultBlockchainHomePath              = "/.okura/db/blockchain/"
 	ConnectionsWithoutVerification         = [][]byte{[]byte("TRAN"), []byte("STAT"), []byte("ENCR"), []byte("DETS"), []byte("STAK"), []byte("ADEX")}
 	CurrentHeightOfNetwork         int64   = 23
