@@ -468,7 +468,7 @@ func (w *Wallet) StoreJSON(makeBackup bool) error {
 			backupNum++
 			backupPath = w.HomePathOld + "_backup" + fmt.Sprintf("%d", backupNum)
 		}
-		err := os.Rename(w.HomePathOld, backupPath)
+		err := CopyDirectory(w.HomePathOld, backupPath)
 		if err != nil {
 			return err
 		}
