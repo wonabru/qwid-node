@@ -500,9 +500,9 @@ func LoadJSON(walletNumber uint8, password string, height int64) (*GeneralWallet
 			}
 		}
 		w.CurrentWallet = *cw
-		copy(w.CurrentWallet.EncryptedSecretKey, cw.EncryptedSecretKey)
-		copy(w.CurrentWallet.EncryptedSecretKey2, cw.EncryptedSecretKey2)
-		copy(w.CurrentWallet.Iv, cw.Iv)
+		copy(w.CurrentWallet.EncryptedSecretKey[:], cw.EncryptedSecretKey[:])
+		copy(w.CurrentWallet.EncryptedSecretKey2[:], cw.EncryptedSecretKey2[:])
+		copy(w.CurrentWallet.Iv[:], cw.Iv[:])
 	}
 
 	w.CurrentWallet.SetPassword(password)
