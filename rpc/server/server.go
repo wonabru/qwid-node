@@ -83,9 +83,9 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 		}
 		activeWallet = wallet.GetActiveWallet()
 
-		pubKey := activeWallet.PublicKey
+		pubKey := activeWallet.Account1.PublicKey
 		if signatureBytes[0] != 0 {
-			pubKey = activeWallet.PublicKey2
+			pubKey = activeWallet.Account2.PublicKey
 		}
 
 		if !wallet.Verify(common.BytesToLenAndBytes(line), signatureBytes, pubKey.GetBytes()) {
@@ -151,12 +151,12 @@ func handleCHECK(line []byte, reply *[]byte) {
 	logger.GetLogger().Println(string(line))
 	w := wallet.GetActiveWallet()
 	*reply = nil
-	_, err := pubkeys.LoadPubKey(w.Address.GetBytes())
+	_, err := pubkeys.LoadPubKey(w.Account1.Address.GetBytes())
 	if err != nil {
 		*reply = []byte("Primary pubkey is not registered in blockchain. Please send transaction including primary PubKey to blockchain")
 
 	}
-	_, err = pubkeys.LoadPubKey(w.Address2.GetBytes())
+	_, err = pubkeys.LoadPubKey(w.Account2.Address.GetBytes())
 	if err != nil {
 		*reply = []byte("Secondary pubkey is not registered in blockchain. Please send transaction including secondary PubKey to blockchain")
 	}

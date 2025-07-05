@@ -331,7 +331,7 @@ func GenesisTransaction(sender common.Address, recipient common.Address, genTx G
 
 	if t.Verify() == false {
 		myWallet := wallet.GetActiveWallet()
-		logger.GetLogger().Println(myWallet.PublicKey.GetHex())
+		logger.GetLogger().Println(myWallet.Account1.PublicKey.GetHex())
 		err = t.Sign(myWallet, true)
 		if err != nil {
 			logger.GetLogger().Fatal("Signing error", err)
@@ -429,10 +429,10 @@ func Load(path string) (Genesis, error) {
 
 	del1 := common.GetDelegatedAccountAddress(1)
 	delegatedAccount := common.GetDelegatedAccount()
-	if mainWallet.PublicKey.GetBytes() != nil &&
-		genesis.OperatorPubKey[:100] != mainWallet.PublicKey.GetHex()[:100] &&
+	if mainWallet.Account1.PublicKey.GetBytes() != nil &&
+		genesis.OperatorPubKey[:100] != mainWallet.Account1.PublicKey.GetHex()[:100] &&
 		delegatedAccount.GetHex() == del1.GetHex() {
-		logger.GetLogger().Println(mainWallet.PublicKey.GetHex())
+		logger.GetLogger().Println(mainWallet.Account1.PublicKey.GetHex())
 		logger.GetLogger().Fatal("Main Wallet address should be the same as in config genesis.json file")
 	}
 	return genesis, nil

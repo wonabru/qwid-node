@@ -42,7 +42,7 @@ func main() {
 	password := "a"
 	// Initialize wallet
 	logger.GetLogger().Println("Initializing wallet...")
-	wallet.InitActiveWallet(0, string(password), 0)
+	wallet.InitActiveWallet(0, string(password), common.SigName(), common.SigName2())
 
 	// Initialize genesis block
 	logger.GetLogger().Println("Initializing genesis block for setting init params...")
@@ -53,7 +53,7 @@ func main() {
 	err = account.LoadAccounts(-1)
 	if err != nil {
 		addrbytes := [common.AddressLength]byte{}
-		copy(addrbytes[:], wallet.GetActiveWallet().Address.GetBytes())
+		copy(addrbytes[:], wallet.GetActiveWallet().Account1.Address.GetBytes())
 		// Initialize accounts
 		a := account.Account{
 			Balance: 0,

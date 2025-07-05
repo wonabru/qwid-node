@@ -127,10 +127,10 @@ func generateNonceMsg(topic [2]byte) (message.TransactionsMessage, error) {
 		if err != nil {
 			return message.TransactionsMessage{}, err
 		}
-		isAddr := pktrie.IsAddressInTree(w.Address2)
+		isAddr := pktrie.IsAddressInTree(w.Account2.Address)
 		if !isAddr {
 			logger.GetLogger().Println("no address2 in blockchain")
-			pubkey = w.PublicKey2
+			pubkey = w.Account2.PublicKey
 		}
 	}
 

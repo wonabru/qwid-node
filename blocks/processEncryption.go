@@ -65,6 +65,18 @@ func SetVoteEncryption(enc []byte, primary bool) {
 	logger.GetLogger().Println(string(<-VoteChannel))
 }
 
+func (bl *Block) GetSigNames() (string, string, error) {
+	enc1, err := FromBytesToEncryptionConfig(bl.BaseBlock.BaseHeader.Encryption1[:], true)
+	if err != nil {
+		return "", "", err
+	}
+	enc2, err := FromBytesToEncryptionConfig(bl.BaseBlock.BaseHeader.Encryption2[:], false)
+	if err != nil {
+		return "", "", err
+	}
+	return enc1.SigName, enc2.SigName, nil
+}
+
 func SetEncryptionFromBlock(height int64) error {
 	block, err := LoadBlock(height)
 	if err != nil {

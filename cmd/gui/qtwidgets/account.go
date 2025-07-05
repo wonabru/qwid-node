@@ -16,7 +16,7 @@ import (
 
 var StatsLabel *widgets.QLabel
 var MainWallet *wallet.Wallet
-var MainGeneralWallet *wallet.GeneralWallet
+var MainGeneralWallet *wallet.Wallet
 
 func UpdateAccountStats() {
 	if (MainWallet == nil) || ((MainWallet != nil) && MainWallet.Check() == false) {
@@ -54,7 +54,7 @@ func UpdateAccountStats() {
 	if MainWallet.Check() == false {
 		return
 	}
-	inb := append([]byte("ACCT"), MainWallet.Address.GetBytes()...)
+	inb := append([]byte("ACCT"), MainWallet.Account1.Address.GetBytes()...)
 	clientrpc.InRPC <- SignMessage(inb)
 	var re []byte
 	var acc account.Account
@@ -83,7 +83,7 @@ func UpdateAccountStats() {
 		if MainWallet.Check() == false {
 			return
 		}
-		inb = append([]byte("STAK"), MainWallet.Address.GetBytes()...)
+		inb = append([]byte("STAK"), MainWallet.Account1.Address.GetBytes()...)
 		inb = append(inb, byte(i))
 		clientrpc.InRPC <- SignMessage(inb)
 		re = <-clientrpc.OutRPC
@@ -101,7 +101,7 @@ func UpdateAccountStats() {
 		locks += account.Int64toFloat64(common.GetInt64FromByte(re[len(re)-8:]))
 	}
 
-	txt += fmt.Sprintln("\n\nYour Address:", MainWallet.Address.GetHex())
+	txt += fmt.Sprintln("\n\nYour Address:", MainWallet.Account1.Address.GetHex())
 	txt += fmt.Sprintf("Your holdings: %18.8f OKU\n", conf+stake+rewards+uncTx+uncStake+uncRewards)
 	txt += fmt.Sprintf("Confirmed balance: %18.8f OKU\n", conf)
 	//txt += fmt.Sprintf("Transactions unconfirmed balance: %18.8f OKU\n", uncTx)

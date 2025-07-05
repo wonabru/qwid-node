@@ -44,23 +44,27 @@ func checkMainChain() (int64, error) {
 	}
 	logger.GetLogger().Println("blocks.LastHeightStoredInBlocks() height: ", height)
 	if height > 1 {
-		cw, err := wallet.GetCurrentWallet(height)
-		if err == nil {
-			wallet.SetActiveWallet(cw)
-			bl, err := blocks.LoadBlock(height)
-			if err != nil {
-				logger.GetLogger().Println(err)
-			} else {
-				lastBlock, err := blocks.LoadBlock(height - 1)
-				if err != nil {
-					logger.GetLogger().Println(err)
-				} else {
-					err = checkBlock(bl, lastBlock, true)
+
+		bl, err := blocks.LoadBlock(height)
+		if err != nil {
+			logger.GetLogger().Println(err)
+		} else {
+			sn1, sn2, err := bl.GetSigNames()
+			if err == nil {
+				cw, err := wallet.GetCurrentWallet(sn1, sn2)
+				if err == nil {
+					wallet.SetActiveWallet(cw)
+					lastBlock, err := blocks.LoadBlock(height - 1)
 					if err != nil {
 						logger.GetLogger().Println(err)
-
 					} else {
-						return height, nil
+						err = checkBlock(bl, lastBlock, true)
+						if err != nil {
+							logger.GetLogger().Println(err)
+
+						} else {
+							return height, nil
+						}
 					}
 				}
 			}
@@ -80,19 +84,22 @@ func checkMainChain() (int64, error) {
 			//err = checkBlock(bl, lastBlock, true)
 			return h - 1, err
 		}
-		cw, err := wallet.GetCurrentWallet(height)
+		sn1, sn2, err := bl.GetSigNames()
 		if err == nil {
-			wallet.SetActiveWallet(cw)
-			err = checkBlock(bl, lastBlock, h == height-1)
-			if err != nil {
-				logger.GetLogger().Println(err)
-				//err = checkBlock(bl, lastBlock, true)
-				logger.GetLogger().Println("Error in block height ", h)
-				return h - 1, err
+			cw, err := wallet.GetCurrentWallet(sn1, sn2)
+			if err == nil {
+				wallet.SetActiveWallet(cw)
+				err = checkBlock(bl, lastBlock, h == height-1)
+				if err != nil {
+					logger.GetLogger().Println(err)
+					//err = checkBlock(bl, lastBlock, true)
+					logger.GetLogger().Println("Error in block height ", h)
+					return h - 1, err
+				}
+			} else {
+				logger.GetLogger().Println("Error get Current Wallet ", h)
+				return h - 1, fmt.Errorf("error get current wallet")
 			}
-		} else {
-			logger.GetLogger().Println("Error get Current Wallet ", h)
-			return h - 1, fmt.Errorf("error get current wallet")
 		}
 		lastBlock = bl
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/logger"
 	"github.com/okuralabs/okura-node/wallet"
 	"golang.org/x/crypto/ssh/terminal"
@@ -36,11 +37,29 @@ func main() {
 	if err != nil {
 		logger.GetLogger().Fatal(err)
 	}
-	w, err := wallet.GenerateNewWallet(uint8(walletNumber), string(password))
+
+	w := wallet.EmptyWallet(uint8(walletNumber), common.SigName(), common.SigName2())
+	w.SetPassword(string(password))
+	w.Iv = wallet.GenerateNewIv()
+
+	acc, err := wallet.GenerateNewAccount(w, w.SigName)
 	if err != nil {
 		logger.GetLogger().Printf("Can not create wallet. Error %v", err)
 	}
-	folderPath := w.CurrentWallet.HomePath
+	w.MainAddress = acc.Address
+	acc.PublicKey.MainAddress = w.MainAddress
+	w.Account1 = acc
+	copy(w.Account1.EncryptedSecretKey, acc.EncryptedSecretKey)
+
+	acc, err = wallet.GenerateNewAccount(w, w.SigName2)
+	if err != nil {
+		logger.GetLogger().Printf("Can not create wallet. Error %v", err)
+	}
+
+	w.Account2 = acc
+	copy(w.Account2.EncryptedSecretKey, acc.EncryptedSecretKey)
+
+	folderPath := w.HomePath
 	err = os.MkdirAll(folderPath, 0755)
 	if err != nil {
 		logger.GetLogger().Fatal(err)
@@ -61,7 +80,7 @@ func main() {
 	fmt.Printf("Write permission: %v\n", hasWritePermission)
 	fmt.Printf("Execute permission: %v\n", hasExecutePermission)
 
-	err = w.StoreJSON(0)
+	err = w.StoreJSON()
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return

@@ -114,3 +114,15 @@ func CopySymLink(source, dest string) error {
 	}
 	return os.Symlink(link, dest)
 }
+
+func CountNonZeroBytes(b []byte) int {
+	var i int
+	// Znajdź pierwszy zero od końca
+	for i = len(b) - 1; i >= 0; i-- {
+		if b[i] != 0 {
+			break
+		}
+	}
+
+	return i + 1
+}

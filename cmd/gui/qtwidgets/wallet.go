@@ -66,8 +66,7 @@ func ShowWalletPage() *widgets.QTabWidget {
 			return
 		}
 		//Later one needs reload wallet with proper height
-		MainGeneralWallet, err = wallet.LoadJSON(uint8(numWallet), input.Text(), 0)
-		MainWallet = &MainGeneralWallet.CurrentWallet
+		MainWallet, err = wallet.LoadJSON(uint8(numWallet), input.Text(), common.SigName(), common.SigName2())
 
 		if err != nil {
 			info = fmt.Sprintf("%v", err)
@@ -155,61 +154,61 @@ func ShowWalletPage() *widgets.QTabWidget {
 	//})
 	//
 	//widget.Layout().AddWidget(buttonAddWallet)
-
-	buttonNewWallet := widgets.NewQPushButton2("Generate new wallet", nil)
-	buttonNewWallet.ConnectReleased(func() {
-		MainWallet = nil
-		info := "Creating reserve wallet success"
-
-		nw := numberWallet.Text()
-		if nw == "" {
-			nw = "0"
-		}
-		numWallet, err := strconv.Atoi(nw)
-		if err != nil {
-			info = fmt.Sprintf("%v", err)
-			widgets.QMessageBox_Information(nil, "OK", info, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
-			return
-		}
-		err = SetCurrentEncryptions()
-		if err != nil {
-			widgets.QMessageBox_Information(nil, "Error", "error with retrieving current encryption", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
-			return
-		}
-		MainGeneralWallet, err = wallet.LoadJSON(uint8(numWallet), input.Text(), 0)
-		MainWallet = &MainGeneralWallet.CurrentWallet
-
-		if MainWallet != nil && MainWallet.Check() || err != nil {
-			info = fmt.Sprintf("Wallet number %v exists!!! Would you like to overwrite? Current wallet will be removed permanently if overwritten.", numWallet)
-			overwrite := widgets.QMessageBox_Question(nil, "Would you like to overwrite?", info, widgets.QMessageBox__No|widgets.QMessageBox__Yes, widgets.QMessageBox__No)
-			if overwrite == widgets.QMessageBox__No {
-				return
-			}
-
-		}
-		MainGeneralWallet, err = wallet.GenerateNewWallet(uint8(numWallet), input.Text())
-		MainWallet = &MainGeneralWallet.CurrentWallet
-
-		err = StoreWalletNewGenerated(MainWallet)
-		if err != nil {
-			info = fmt.Sprintf("%v", err)
-			widgets.QMessageBox_Information(nil, "OK", info, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
-			return
-		}
-
-		if err != nil {
-			info = fmt.Sprintf("Can not store wallet. Error %v", err)
-		} else if MainWallet.Check() {
-			info = MainWallet.ShowInfo()
-		} else {
-			info = fmt.Sprintf("no wallet exists with this number %v", numWallet)
-		}
-
-		widgets.QMessageBox_Information(nil, "OK", info, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
-		//buttonNewWallet.SetDisabled(true)
-	})
-
-	widget.Layout().AddWidget(buttonNewWallet)
+	//
+	//buttonNewWallet := widgets.NewQPushButton2("Generate new wallet", nil)
+	//buttonNewWallet.ConnectReleased(func() {
+	//	MainWallet = nil
+	//	info := "Creating reserve wallet success"
+	//
+	//	nw := numberWallet.Text()
+	//	if nw == "" {
+	//		nw = "0"
+	//	}
+	//	numWallet, err := strconv.Atoi(nw)
+	//	if err != nil {
+	//		info = fmt.Sprintf("%v", err)
+	//		widgets.QMessageBox_Information(nil, "OK", info, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+	//		return
+	//	}
+	//	err = SetCurrentEncryptions()
+	//	if err != nil {
+	//		widgets.QMessageBox_Information(nil, "Error", "error with retrieving current encryption", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+	//		return
+	//	}
+	//	MainWallet, err = wallet.LoadJSON(uint8(numWallet), input.Text(), common.SigName(), common.SigName2())
+	//
+	//
+	//	if MainWallet != nil && MainWallet.Check() || err != nil {
+	//		info = fmt.Sprintf("Wallet number %v exists!!! Would you like to overwrite? Current wallet will be removed permanently if overwritten.", numWallet)
+	//		overwrite := widgets.QMessageBox_Question(nil, "Would you like to overwrite?", info, widgets.QMessageBox__No|widgets.QMessageBox__Yes, widgets.QMessageBox__No)
+	//		if overwrite == widgets.QMessageBox__No {
+	//			return
+	//		}
+	//
+	//	}
+	//	MainGeneralWallet, err = wallet.GenerateNewWallet(uint8(numWallet), input.Text())
+	//	MainWallet = &MainGeneralWallet.CurrentWallet
+	//
+	//	err = StoreWalletNewGenerated(MainWallet)
+	//	if err != nil {
+	//		info = fmt.Sprintf("%v", err)
+	//		widgets.QMessageBox_Information(nil, "OK", info, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+	//		return
+	//	}
+	//
+	//	if err != nil {
+	//		info = fmt.Sprintf("Can not store wallet. Error %v", err)
+	//	} else if MainWallet.Check() {
+	//		info = MainWallet.ShowInfo()
+	//	} else {
+	//		info = fmt.Sprintf("no wallet exists with this number %v", numWallet)
+	//	}
+	//
+	//	widgets.QMessageBox_Information(nil, "OK", info, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+	//	//buttonNewWallet.SetDisabled(true)
+	//})
+	//
+	//widget.Layout().AddWidget(buttonNewWallet)
 
 	newPassword := widgets.NewQLineEdit(nil)
 	newPassword.SetEchoMode(widgets.QLineEdit__Password)
@@ -235,7 +234,7 @@ func ShowWalletPage() *widgets.QTabWidget {
 			widgets.QMessageBox_Information(nil, "Error", "Wrong current password", widgets.QMessageBox__Close, widgets.QMessageBox__Close)
 			return
 		}
-		err = MainWallet.StoreJSON(-1)
+		err = MainWallet.StoreJSON()
 		if err != nil {
 			widgets.QMessageBox_Information(nil, "Error", fmt.Sprintf("%v", err), widgets.QMessageBox__Close, widgets.QMessageBox__Close)
 			return

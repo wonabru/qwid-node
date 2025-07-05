@@ -40,7 +40,9 @@ func main() {
 		" Node Account: " +
 		strconv.Itoa(int(common.NumericalDelegatedAccountAddress(common.GetDelegatedAccount()))))
 
-	qtwidgets.MainWallet = wallet.EmptyWallet(0, common.SigName(), common.SigName2())
+	w := wallet.EmptyWallet(0, common.SigName(), common.SigName2())
+
+	qtwidgets.MainWallet = &w
 
 	walletWidget := qtwidgets.ShowWalletPage()
 	escrowWidget := qtwidgets.ShowEscrowPage()
