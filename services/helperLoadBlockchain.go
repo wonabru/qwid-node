@@ -5,6 +5,7 @@ import (
 	"github.com/okuralabs/okura-node/blocks"
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/logger"
+	"github.com/okuralabs/okura-node/wallet"
 	"golang.org/x/crypto/ssh/terminal"
 	"os"
 )
@@ -43,20 +44,24 @@ func checkMainChain() (int64, error) {
 	}
 	logger.GetLogger().Println("blocks.LastHeightStoredInBlocks() height: ", height)
 	if height > 1 {
-		bl, err := blocks.LoadBlock(height)
-		if err != nil {
-			logger.GetLogger().Println(err)
-		} else {
-			lastBlock, err := blocks.LoadBlock(height - 1)
+		cw, err := wallet.GetCurrentWallet(height)
+		if err == nil {
+			wallet.SetActiveWallet(cw)
+			bl, err := blocks.LoadBlock(height)
 			if err != nil {
 				logger.GetLogger().Println(err)
 			} else {
-				err = checkBlock(bl, lastBlock, true)
+				lastBlock, err := blocks.LoadBlock(height - 1)
 				if err != nil {
 					logger.GetLogger().Println(err)
-
 				} else {
-					return height, nil
+					err = checkBlock(bl, lastBlock, true)
+					if err != nil {
+						logger.GetLogger().Println(err)
+
+					} else {
+						return height, nil
+					}
 				}
 			}
 		}
@@ -75,12 +80,19 @@ func checkMainChain() (int64, error) {
 			//err = checkBlock(bl, lastBlock, true)
 			return h - 1, err
 		}
-		err = checkBlock(bl, lastBlock, h == height-1)
-		if err != nil {
-			logger.GetLogger().Println(err)
-			//err = checkBlock(bl, lastBlock, true)
-			logger.GetLogger().Println("Error in block height ", h)
-			return h - 1, err
+		cw, err := wallet.GetCurrentWallet(height)
+		if err == nil {
+			wallet.SetActiveWallet(cw)
+			err = checkBlock(bl, lastBlock, h == height-1)
+			if err != nil {
+				logger.GetLogger().Println(err)
+				//err = checkBlock(bl, lastBlock, true)
+				logger.GetLogger().Println("Error in block height ", h)
+				return h - 1, err
+			}
+		} else {
+			logger.GetLogger().Println("Error get Current Wallet ", h)
+			return h - 1, fmt.Errorf("error get current wallet")
 		}
 		lastBlock = bl
 	}

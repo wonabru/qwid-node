@@ -27,11 +27,9 @@ func StoreAddress(mainAddress common.Address, pk common.PubKey) error {
 	return nil
 }
 
-func AddNewPubKeyToActiveWallet(sigName string, primary bool) error {
+func AddNewPubKeyToActiveWallet(sigName string, primary bool, height int64) error {
 	w := wallet.GetActiveWallet()
-	makeBackup := false
 	if w.GetSigName(primary) != sigName {
-		makeBackup = true
 		err := w.AddNewEncryptionToActiveWallet(sigName, primary)
 		if err != nil {
 			return err
@@ -56,7 +54,7 @@ func AddNewPubKeyToActiveWallet(sigName string, primary bool) error {
 			return err
 		}
 	}
-	err := w.StoreJSON(makeBackup)
+	err := w.StoreJSON(height)
 	if err != nil {
 		return err
 	}

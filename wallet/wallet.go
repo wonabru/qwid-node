@@ -42,15 +42,22 @@ type Wallet struct {
 	WalletNumber        uint8  `json:"wallet_number"`
 }
 
+// Structure map of Height and wallet which was chaange
+type GeneralWallet struct {
+	WalletChain   map[int64]Wallet `json:"wallet_chain"`
+	CurrentWallet Wallet           `json:"current_wallet"`
+}
+
 var activeWallet *Wallet
 
 type AnyWallet interface {
 	GetWallet() Wallet
 }
 
-func InitActiveWallet(walletNumber uint8, password string) {
+func InitActiveWallet(walletNumber uint8, password string, height int64) {
 	var err error
-	activeWallet, err = LoadJSON(walletNumber, password)
+	gw, err := LoadJSON(walletNumber, password, height)
+	activeWallet = &gw.CurrentWallet
 	if err != nil {
 		logger.GetLogger().Println("wrong password")
 		os.Exit(1)
@@ -59,6 +66,22 @@ func InitActiveWallet(walletNumber uint8, password string) {
 		logger.GetLogger().Println("failed to load wallet")
 		os.Exit(1)
 	}
+}
+
+func GetCurrentWallet(height int64) (*Wallet, error) {
+	aw := GetActiveWallet()
+	var err error
+	gw, err := LoadJSON(aw.WalletNumber, aw.password, height)
+	currentWallet := &gw.CurrentWallet
+	if err != nil {
+		logger.GetLogger().Println("wrong password: GetCurrentWallet")
+		return nil, err
+	}
+	if currentWallet == nil {
+		logger.GetLogger().Println("failed to load wallet: GetCurrentWallet")
+		return nil, fmt.Errorf("failed to load wallet: GetCurrentWallet")
+	}
+	return currentWallet, nil
 }
 
 func (w *Wallet) SetPassword(password string) {
@@ -70,6 +93,12 @@ func GetActiveWallet() *Wallet {
 	globalMutex.Lock()
 	defer globalMutex.Unlock()
 	return activeWallet
+}
+
+func SetActiveWallet(w *Wallet) {
+	globalMutex.Lock()
+	defer globalMutex.Unlock()
+	activeWallet = w
 }
 
 func (w *Wallet) ShowInfo() string {
@@ -123,6 +152,14 @@ func EmptyWallet(walletNumber uint8, sigName, sigName2 string) *Wallet {
 		signer2:       oqs.Signature{},
 		HomePath:      homePath + common.DefaultWalletHomePath + strconv.Itoa(int(walletNumber)),
 		WalletNumber:  walletNumber,
+	}
+}
+
+func EmptyGeneralWallet(walletNumber uint8, sigName, sigName2 string) *GeneralWallet {
+	w := EmptyWallet(walletNumber, sigName, sigName2)
+	return &GeneralWallet{
+		map[int64]Wallet{},
+		*w,
 	}
 }
 
@@ -344,50 +381,50 @@ func (w *Wallet) RestoreSecretKeyFromMnemonic(mnemonic string, primary bool) err
 	return nil
 }
 
-func (w *Wallet) StoreJSON(makeBackup bool) error {
+func (w *Wallet) StoreJSON(heightWhenChanged int64) error {
 	if w.GetSecretKey().GetBytes() == nil {
+		return fmt.Errorf("you need load wallet first")
+	}
+	gw := EmptyGeneralWallet(w.WalletNumber, w.GetSigName(true), w.GetSigName(false))
+	gw.WalletChain[heightWhenChanged] = *w
+	gw.CurrentWallet = *w
+	err := gw.StoreJSON(heightWhenChanged)
+	if err != nil {
+		logger.GetLogger().Println(err)
+		return err
+	}
+	return nil
+}
+func (w *GeneralWallet) StoreJSON(heightWhenChanged int64) error {
+	if w.CurrentWallet.GetSecretKey().GetBytes() == nil {
 		return fmt.Errorf("you need load wallet first")
 	}
 
 	// Create the wallet file path
-	walletFile := filepath.Join(w.HomePath, "wallet"+strconv.Itoa(int(w.WalletNumber)))
-	logger.GetLogger().Println("walletFile:", walletFile)
+	walletFile := filepath.Join(w.CurrentWallet.HomePath, "wallet"+strconv.Itoa(int(w.CurrentWallet.WalletNumber)))
+	logger.GetLogger().Println("walletFile:", walletFile+".json")
 
-	if makeBackup {
-		// Get the next available backup number
-		backupNum := 1
-		backupPath := walletFile + "_backup" + fmt.Sprintf("%d", backupNum)
-		for {
-			if _, err := os.Stat(backupPath); os.IsNotExist(err) {
-				break
-			}
-			backupNum++
-			backupPath = walletFile + "_backup" + fmt.Sprintf("%d", backupNum)
-		}
-		err := Copy(walletFile+".json", backupPath+".json")
-		if err != nil {
-			return err
-		}
+	if heightWhenChanged >= 0 {
+		w.WalletChain[heightWhenChanged] = w.CurrentWallet
 	}
-
-	se, err := w.encrypt(w.secretKey.GetBytes())
+	se, err := w.CurrentWallet.encrypt(w.CurrentWallet.secretKey.GetBytes())
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return err
 	}
 
 	w2 := w
-	(*w2).EncryptedSecretKey = make([]byte, len(se))
-	copy((*w2).EncryptedSecretKey, se)
+	(*w2).CurrentWallet.EncryptedSecretKey = make([]byte, len(se))
+	copy((*w2).CurrentWallet.EncryptedSecretKey, se)
 
-	se, err = w.encrypt(w2.secretKey2.GetBytes())
+	se, err = w.CurrentWallet.encrypt(w2.CurrentWallet.secretKey2.GetBytes())
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return err
 	}
 
-	(*w2).EncryptedSecretKey2 = make([]byte, len(se))
-	copy((*w2).EncryptedSecretKey2, se)
+	(*w2).CurrentWallet.EncryptedSecretKey2 = make([]byte, len(se))
+	copy((*w2).CurrentWallet.EncryptedSecretKey2, se)
 
 	// Marshal the wallet to JSON
 	wm, err := json.MarshalIndent(&w, "", "    ")
@@ -396,7 +433,7 @@ func (w *Wallet) StoreJSON(makeBackup bool) error {
 		return err
 	}
 	// Create wallet directory if it doesn't exist
-	if err := os.MkdirAll(w.HomePath, 0755); err != nil {
+	if err := os.MkdirAll(w.CurrentWallet.HomePath, 0755); err != nil {
 		return err
 	}
 
@@ -408,20 +445,21 @@ func (w *Wallet) StoreJSON(makeBackup bool) error {
 	return nil
 }
 
-func LoadJSON(walletNumber uint8, password string) (*Wallet, error) {
+// LoadJSON if height >= 0 current wallet will be replaced by latest but not larger than height
+func LoadJSON(walletNumber uint8, password string, height int64) (*GeneralWallet, error) {
 	if len(password) == 0 {
 		return nil, fmt.Errorf("password cannot be empty")
 	}
 
-	w := EmptyWallet(walletNumber, common.SigName(), common.SigName2())
+	w := EmptyGeneralWallet(walletNumber, common.SigName(), common.SigName2())
 	if w == nil {
 		return nil, fmt.Errorf("failed to create empty wallet")
 	}
 
-	homePath := w.HomePath
+	homePath := w.CurrentWallet.HomePath
 
 	// Load wallet JSON file
-	walletFile := filepath.Join(w.HomePath, "wallet"+strconv.Itoa(int(w.WalletNumber))+".json")
+	walletFile := filepath.Join(homePath, "wallet"+strconv.Itoa(int(w.CurrentWallet.WalletNumber))+".json")
 	data, err := os.ReadFile(walletFile)
 	if err != nil {
 		return nil, err
@@ -430,99 +468,130 @@ func LoadJSON(walletNumber uint8, password string) (*Wallet, error) {
 	if err := json.Unmarshal(data, w); err != nil {
 		return nil, err
 	}
+	cw := EmptyWallet(walletNumber, common.SigName(), common.SigName2())
+	if height >= 0 {
+		maxHeight := int64(0)
+		for k, v := range w.WalletChain {
+			if height >= k && k > maxHeight {
+				cw = &v
+				maxHeight = k
+			}
+		}
+		w.CurrentWallet = *cw
+	}
 
-	w.SetPassword(password)
-	ds, err := w.decrypt(w.EncryptedSecretKey)
+	w.CurrentWallet.SetPassword(password)
+	ds, err := w.CurrentWallet.decrypt(w.CurrentWallet.EncryptedSecretKey)
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return nil, err
 	}
-	err = w.secretKey.Init(ds[:common.PrivateKeyLength()], w.Address)
+	err = w.CurrentWallet.secretKey.Init(ds[:common.PrivateKeyLength()], w.CurrentWallet.Address)
 	if err != nil {
 		return nil, err
 	}
 	var signer oqs.Signature
-	err = signer.Init(common.SigName(), w.secretKey.GetBytes())
+	err = signer.Init(common.SigName(), w.CurrentWallet.secretKey.GetBytes())
 	if err != nil {
 		return nil, err
 	}
-	(*w).signer = signer
+	(*w).CurrentWallet.signer = signer
 
 	// Unmarshal JSON data into second wallet struct
 	w2 := *w
-	w.MainAddress.Primary = true
-	w.Address.Primary = true
-	w.Address2.Primary = false
-	w.PublicKey.Address.Primary = true
-	w.PublicKey2.Address.Primary = false
-	w.PublicKey.Primary = true
-	w.PublicKey2.Primary = false
-	w.PublicKey.MainAddress.Primary = true
-	w.PublicKey2.MainAddress.Primary = true
+	w.CurrentWallet.MainAddress.Primary = true
+	w.CurrentWallet.Address.Primary = true
+	w.CurrentWallet.Address2.Primary = false
+	w.CurrentWallet.PublicKey.Address.Primary = true
+	w.CurrentWallet.PublicKey2.Address.Primary = false
+	w.CurrentWallet.PublicKey.Primary = true
+	w.CurrentWallet.PublicKey2.Primary = false
+	w.CurrentWallet.PublicKey.MainAddress.Primary = true
+	w.CurrentWallet.PublicKey2.MainAddress.Primary = true
 
-	w.secretKey.Address.Primary = true
-	w.secretKey2.Address.Primary = false
-	w.secretKey.Primary = true
-	w.secretKey2.Primary = false
+	w.CurrentWallet.secretKey.Address.Primary = true
+	w.CurrentWallet.secretKey2.Address.Primary = false
+	w.CurrentWallet.secretKey.Primary = true
+	w.CurrentWallet.secretKey2.Primary = false
 
-	w2.SetPassword(password)
-	ds, err = w2.decrypt(w.EncryptedSecretKey2)
+	w2.CurrentWallet.SetPassword(password)
+	ds, err = w2.CurrentWallet.decrypt(w.CurrentWallet.EncryptedSecretKey2)
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return nil, err
 	}
-	err = w.secretKey2.Init(ds[:common.PrivateKeyLength2()], w.Address2)
+	err = w.CurrentWallet.secretKey2.Init(ds[:common.PrivateKeyLength2()], w.CurrentWallet.Address2)
 	if err != nil {
 		return nil, err
 	}
 	var signer2 oqs.Signature
-	err = signer2.Init(common.SigName2(), w.secretKey2.GetBytes())
+	err = signer2.Init(common.SigName2(), w.CurrentWallet.secretKey2.GetBytes())
 	if err != nil {
 		return nil, err
 	}
-	(*w).signer2 = signer2
-	(*w).HomePath = homePath
+	(*w).CurrentWallet.signer2 = signer2
+	(*w).CurrentWallet.HomePath = homePath
 
-	logger.GetLogger().Println("PubKey:", w.PublicKey.GetHex())
-	logger.GetLogger().Println("PubKey2:", w.PublicKey2.GetHex())
-	logger.GetLogger().Println("MainAddress:", w.MainAddress.GetHex())
+	logger.GetLogger().Println("PubKey:", w.CurrentWallet.PublicKey.GetHex())
+	logger.GetLogger().Println("PubKey2:", w.CurrentWallet.PublicKey2.GetHex())
+	logger.GetLogger().Println("MainAddress:", w.CurrentWallet.MainAddress.GetHex())
 	return w, err
 }
 
-func (w *Wallet) ChangePassword(password, newPassword string) error {
-	if w.passwordBytes == nil {
+func (w *GeneralWallet) ChangePassword(password, newPassword string) error {
+	if w.CurrentWallet.passwordBytes == nil {
 		return fmt.Errorf("you need load wallet first")
 	}
-	if !bytes.Equal(passwordToByte(password), w.passwordBytes) {
+	if !bytes.Equal(passwordToByte(password), w.CurrentWallet.passwordBytes) {
 		return fmt.Errorf("current password is not valid")
 	}
 
 	globalMutex.Lock()
 	defer globalMutex.Unlock()
 
-	w2 := &Wallet{
+	w2 := Wallet{
 		password:      newPassword,
 		passwordBytes: passwordToByte(newPassword),
-		Iv:            w.Iv,
-		secretKey:     w.secretKey,
-		PublicKey:     w.PublicKey,
-		Address:       w.Address,
-		signer:        w.signer,
-		secretKey2:    w.secretKey2,
-		PublicKey2:    w.PublicKey2,
-		Address2:      w.Address2,
-		signer2:       w.signer2,
-		MainAddress:   w.MainAddress,
-		HomePath:      w.HomePath,
-		WalletNumber:  w.WalletNumber,
+		Iv:            w.CurrentWallet.Iv,
+		secretKey:     w.CurrentWallet.secretKey,
+		PublicKey:     w.CurrentWallet.PublicKey,
+		Address:       w.CurrentWallet.Address,
+		signer:        w.CurrentWallet.signer,
+		secretKey2:    w.CurrentWallet.secretKey2,
+		PublicKey2:    w.CurrentWallet.PublicKey2,
+		Address2:      w.CurrentWallet.Address2,
+		signer2:       w.CurrentWallet.signer2,
+		MainAddress:   w.CurrentWallet.MainAddress,
+		HomePath:      w.CurrentWallet.HomePath,
+		WalletNumber:  w.CurrentWallet.WalletNumber,
 	}
-
-	err := w2.StoreJSON(false)
+	ew := EmptyGeneralWallet(w.CurrentWallet.WalletNumber, w.CurrentWallet.GetSigName(true), w.CurrentWallet.GetSigName(false))
+	for k, v := range w.WalletChain {
+		ww := Wallet{
+			password:      newPassword,
+			passwordBytes: passwordToByte(newPassword),
+			Iv:            v.Iv,
+			secretKey:     v.secretKey,
+			PublicKey:     v.PublicKey,
+			Address:       v.Address,
+			signer:        v.signer,
+			secretKey2:    v.secretKey2,
+			PublicKey2:    v.PublicKey2,
+			Address2:      v.Address2,
+			signer2:       v.signer2,
+			MainAddress:   v.MainAddress,
+			HomePath:      v.HomePath,
+			WalletNumber:  v.WalletNumber,
+		}
+		ew.WalletChain[k] = ww
+	}
+	ew.CurrentWallet = w2
+	err := ew.StoreJSON(-1)
 	if err != nil {
 		logger.GetLogger().Println("Can not store new wallet")
 		return err
 	}
-	_, err = LoadJSON(w2.WalletNumber, newPassword)
+	_, err = LoadJSON(ew.CurrentWallet.WalletNumber, newPassword, -1)
 	if err != nil {
 		return err
 	}

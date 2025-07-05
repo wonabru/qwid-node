@@ -47,7 +47,7 @@ func main() {
 
 	// Initialize wallet
 	logger.GetLogger().Println("Initializing wallet...")
-	wallet.InitActiveWallet(0, string(password))
+	wallet.InitActiveWallet(0, string(password), 0)
 
 	// Initialize genesis block
 	logger.GetLogger().Println("Initializing genesis block for setting init params...")

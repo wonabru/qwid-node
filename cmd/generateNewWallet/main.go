@@ -61,7 +61,10 @@ func main() {
 	fmt.Printf("Write permission: %v\n", hasWritePermission)
 	fmt.Printf("Execute permission: %v\n", hasExecutePermission)
 
-	err = w.StoreJSON(true)
+	gw := wallet.EmptyGeneralWallet(w.WalletNumber, w.GetSigName(true), w.GetSigName(false))
+	gw.WalletChain[0] = *w
+	gw.CurrentWallet = *w
+	err = gw.StoreJSON(0)
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return

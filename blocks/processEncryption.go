@@ -31,7 +31,7 @@ func ProcessBlockEncryption(block Block, lastBlock Block) error {
 		SetVoteEncryption(block.BaseBlock.BaseHeader.Encryption1[:], true)
 		voting.ResetLastVoting()
 
-		err = AddNewPubKeyToActiveWallet(enc1.SigName, true)
+		err = AddNewPubKeyToActiveWallet(enc1.SigName, true, block.GetHeader().Height)
 		if err != nil {
 			return err
 		}
@@ -45,7 +45,7 @@ func ProcessBlockEncryption(block Block, lastBlock Block) error {
 
 		SetVoteEncryption(block.BaseBlock.BaseHeader.Encryption2[:], false)
 		voting.ResetLastVoting()
-		err = AddNewPubKeyToActiveWallet(enc2.SigName, false)
+		err = AddNewPubKeyToActiveWallet(enc2.SigName, false, block.GetHeader().Height)
 		if err != nil {
 			return err
 		}
