@@ -163,13 +163,13 @@ func EmptyGeneralWallet(walletNumber uint8, sigName, sigName2 string) *GeneralWa
 	}
 }
 
-func GenerateNewWallet(walletNumber uint8, password string) (*Wallet, error) {
+func GenerateNewWallet(walletNumber uint8, password string) (*GeneralWallet, error) {
 	if len(password) < 1 {
 		return nil, fmt.Errorf("password cannot be empty")
 	}
-	w := EmptyWallet(walletNumber, common.SigName(), common.SigName2())
-	w.SetPassword(password)
-	(*w).Iv = generateNewIv()
+	w := EmptyGeneralWallet(walletNumber, common.SigName(), common.SigName2())
+	w.CurrentWallet.SetPassword(password)
+	(*w).CurrentWallet.Iv = generateNewIv()
 	var signer oqs.Signature
 	var signer2 oqs.Signature
 	//defer signer.Clean()
@@ -187,17 +187,17 @@ func GenerateNewWallet(walletNumber uint8, password string) (*Wallet, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = w.PublicKey.Init(pubKey, mainAddress)
+	err = w.CurrentWallet.PublicKey.Init(pubKey, mainAddress)
 	if err != nil {
 		return nil, err
 	}
-	(*w).Address = w.PublicKey.GetAddress()
-	(*w).MainAddress = (*w).Address
-	err = w.secretKey.Init(signer.ExportSecretKey(), w.Address)
+	(*w).CurrentWallet.Address = w.CurrentWallet.PublicKey.GetAddress()
+	(*w).CurrentWallet.MainAddress = (*w).CurrentWallet.Address
+	err = w.CurrentWallet.secretKey.Init(signer.ExportSecretKey(), w.CurrentWallet.Address)
 	if err != nil {
 		return nil, err
 	}
-	(*w).signer = signer
+	(*w).CurrentWallet.signer = signer
 
 	err = signer2.Init(common.SigName2(), nil)
 	if err != nil {
@@ -207,18 +207,36 @@ func GenerateNewWallet(walletNumber uint8, password string) (*Wallet, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = w.PublicKey2.Init(pubKey2, mainAddress)
+	err = w.CurrentWallet.PublicKey2.Init(pubKey2, mainAddress)
 	if err != nil {
 		return nil, err
 	}
-	(*w).Address2 = w.PublicKey2.GetAddress()
-	err = w.secretKey2.Init(signer2.ExportSecretKey(), w.Address2)
+	(*w).CurrentWallet.Address2 = w.CurrentWallet.PublicKey2.GetAddress()
+	err = w.CurrentWallet.secretKey2.Init(signer2.ExportSecretKey(), w.CurrentWallet.Address2)
 	if err != nil {
 		return nil, err
 	}
-	(*w).signer2 = signer2
+	se, err := (*w).CurrentWallet.encrypt(w.CurrentWallet.secretKey.GetBytes())
+	if err != nil {
+		logger.GetLogger().Println(err)
+		return nil, err
+	}
+	(*w).CurrentWallet.EncryptedSecretKey = make([]byte, len(se))
+	copy((*w).CurrentWallet.EncryptedSecretKey, se)
 
-	fmt.Print(signer2.Details())
+	se, err = w.CurrentWallet.encrypt(w.CurrentWallet.secretKey2.GetBytes())
+	if err != nil {
+		logger.GetLogger().Println(err)
+		return nil, err
+	}
+
+	(*w).CurrentWallet.EncryptedSecretKey2 = make([]byte, len(se))
+	copy((*w).CurrentWallet.EncryptedSecretKey2, se)
+
+	(*w).CurrentWallet.signer2 = signer2
+	(*w).WalletChain[0] = (*w).CurrentWallet
+	copy((*w).WalletChain[0].EncryptedSecretKey[:], (*w).CurrentWallet.EncryptedSecretKey[:])
+	copy((*w).WalletChain[0].EncryptedSecretKey2[:], (*w).CurrentWallet.EncryptedSecretKey2[:])
 	return w, nil
 }
 
@@ -387,7 +405,11 @@ func (w *Wallet) StoreJSON(heightWhenChanged int64) error {
 	}
 	gw := EmptyGeneralWallet(w.WalletNumber, w.GetSigName(true), w.GetSigName(false))
 	gw.WalletChain[heightWhenChanged] = *w
+	copy((*gw).WalletChain[heightWhenChanged].EncryptedSecretKey, (*w).EncryptedSecretKey)
+	copy((*gw).WalletChain[heightWhenChanged].EncryptedSecretKey2, (*w).EncryptedSecretKey2)
 	gw.CurrentWallet = *w
+	copy((*gw).CurrentWallet.EncryptedSecretKey, (*w).EncryptedSecretKey)
+	copy((*gw).CurrentWallet.EncryptedSecretKey2, (*w).EncryptedSecretKey2)
 	err := gw.StoreJSON(heightWhenChanged)
 	if err != nil {
 		logger.GetLogger().Println(err)
@@ -472,7 +494,7 @@ func LoadJSON(walletNumber uint8, password string, height int64) (*GeneralWallet
 	if height >= 0 {
 		maxHeight := int64(0)
 		for k, v := range w.WalletChain {
-			if height >= k && k > maxHeight {
+			if height >= k && k >= maxHeight {
 				cw = &v
 				maxHeight = k
 			}

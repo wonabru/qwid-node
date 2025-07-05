@@ -40,8 +40,8 @@ func main() {
 	if err != nil {
 		logger.GetLogger().Printf("Can not create wallet. Error %v", err)
 	}
-	folderPath := w.HomePath
-	err = os.MkdirAll(w.HomePath, 0755)
+	folderPath := w.CurrentWallet.HomePath
+	err = os.MkdirAll(folderPath, 0755)
 	if err != nil {
 		logger.GetLogger().Fatal(err)
 	}
@@ -61,10 +61,7 @@ func main() {
 	fmt.Printf("Write permission: %v\n", hasWritePermission)
 	fmt.Printf("Execute permission: %v\n", hasExecutePermission)
 
-	gw := wallet.EmptyGeneralWallet(w.WalletNumber, w.GetSigName(true), w.GetSigName(false))
-	gw.WalletChain[0] = *w
-	gw.CurrentWallet = *w
-	err = gw.StoreJSON(0)
+	err = w.StoreJSON(0)
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return
