@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"sync"
@@ -104,11 +105,11 @@ func GetNodeSignPrimary(height int64) bool {
 		return true
 	}
 	if IsPaused() == false && IsPaused2() == false {
-		//if rand.Intn(2) == 0 {
-		return true
-		//} else {
-		//	return false
-		//}
+		if rand.Intn(2) == 0 {
+			return true
+		} else {
+			return false
+		}
 	}
 	if nodeSignPrimary && (IsPaused() == false) {
 		return true
