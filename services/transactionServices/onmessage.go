@@ -68,8 +68,8 @@ func OnMessage(addr [4]byte, m []byte) {
 						logger.GetLogger().Println(err)
 						continue
 					}
-					//maybe we should not spread automatically transactions. Third party should care about it
-					Spread(addr, m)
+					//maybe we should not broadcast automatically transactions. Third party should care about it
+					BroadcastTxn(addr, m)
 				}
 			}
 		}
