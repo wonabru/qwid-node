@@ -32,6 +32,7 @@ type EncryptionConfig struct {
 }
 
 var encryptionConfigInstance *EncryptionConfig
+var encryptionConfigInstanceOld *EncryptionConfig
 
 func GetEncryptionConfigInstance() *EncryptionConfig {
 	if encryptionConfigInstance == nil {
@@ -41,8 +42,31 @@ func GetEncryptionConfigInstance() *EncryptionConfig {
 	return encryptionConfigInstance
 }
 
+func GetEncryptionConfigInstanceOld() *EncryptionConfig {
+	if encryptionConfigInstanceOld == nil {
+		// Initialize with a function to avoid init() if not needed immediately
+		initEncryptionConfigInstanceOld()
+	}
+	return encryptionConfigInstanceOld
+}
+
 func initEncryptionConfigInstance() {
 	encryptionConfigInstance = &EncryptionConfig{
+		pubKeyLength:      897,
+		privateKeyLength:  1281,
+		signatureLength:   752,
+		sigName:           "Falcon-512",
+		isPaused:          0,
+		pubKeyLength2:     5554,
+		privateKeyLength2: 40,
+		signatureLength2:  964,
+		sigName2:          "MAYO-5",
+		isPaused2:         0,
+	}
+}
+
+func initEncryptionConfigInstanceOld() {
+	encryptionConfigInstanceOld = &EncryptionConfig{
 		pubKeyLength:      897,
 		privateKeyLength:  1281,
 		signatureLength:   752,
@@ -63,6 +87,17 @@ func SetEncryption(sigName string, pubKeyLength, privateKeyLength, signatureLeng
 
 		}
 	}
+	enc := GetEncryptionConfigInstance()
+	isP := false
+	if enc.isPaused == 1 {
+		isP = true
+	}
+	GetEncryptionConfigInstanceOld().SetEncryption(enc.sigName, int(enc.pubKeyLength), int(enc.privateKeyLength), int(enc.signatureLength), isP, true)
+	isP = false
+	if enc.isPaused2 == 1 {
+		isP = true
+	}
+	GetEncryptionConfigInstanceOld().SetEncryption(enc.sigName2, int(enc.pubKeyLength2), int(enc.privateKeyLength2), int(enc.signatureLength2), isP, false)
 	GetEncryptionConfigInstance().SetEncryption(sigName, pubKeyLength, privateKeyLength, signatureLength, isPaused, primary)
 }
 
@@ -70,6 +105,7 @@ func (ec *EncryptionConfig) SetEncryption(sigName string, pubKeyLength, privateK
 
 	ec.mu.Lock()
 	defer ec.mu.Unlock()
+
 	if primary {
 		ec.sigName = sigName
 		ec.pubKeyLength = int32(pubKeyLength)
@@ -136,13 +172,25 @@ func IsPaused2() bool {
 func PubKeyLength() int {
 	encryptionConfigInstance.mu.RLock()
 	defer encryptionConfigInstance.mu.RUnlock()
-	return int(encryptionConfigInstance.pubKeyLength)
+	encryptionConfigInstanceOld.mu.RLock()
+	defer encryptionConfigInstanceOld.mu.RUnlock()
+	if encryptionConfigInstance.pubKeyLength < encryptionConfigInstanceOld.pubKeyLength {
+		return int(encryptionConfigInstance.pubKeyLength)
+	} else {
+		return int(encryptionConfigInstanceOld.pubKeyLength)
+	}
 }
 
 func PubKeyLength2() int {
 	encryptionConfigInstance.mu.RLock()
 	defer encryptionConfigInstance.mu.RUnlock()
-	return int(encryptionConfigInstance.pubKeyLength2)
+	encryptionConfigInstanceOld.mu.RLock()
+	defer encryptionConfigInstanceOld.mu.RUnlock()
+	if encryptionConfigInstance.pubKeyLength2 < encryptionConfigInstanceOld.pubKeyLength2 {
+		return int(encryptionConfigInstance.pubKeyLength2)
+	} else {
+		return int(encryptionConfigInstanceOld.pubKeyLength2)
+	}
 }
 
 func PrivateKeyLength() int {
@@ -160,13 +208,25 @@ func PrivateKeyLength2() int {
 func SignatureLength() int {
 	encryptionConfigInstance.mu.RLock()
 	defer encryptionConfigInstance.mu.RUnlock()
-	return int(encryptionConfigInstance.signatureLength)
+	encryptionConfigInstanceOld.mu.RLock()
+	defer encryptionConfigInstanceOld.mu.RUnlock()
+	if encryptionConfigInstance.signatureLength < encryptionConfigInstanceOld.signatureLength {
+		return int(encryptionConfigInstance.signatureLength)
+	} else {
+		return int(encryptionConfigInstanceOld.signatureLength)
+	}
 }
 
 func SignatureLength2() int {
 	encryptionConfigInstance.mu.RLock()
 	defer encryptionConfigInstance.mu.RUnlock()
-	return int(encryptionConfigInstance.signatureLength2)
+	encryptionConfigInstanceOld.mu.RLock()
+	defer encryptionConfigInstanceOld.mu.RUnlock()
+	if encryptionConfigInstance.signatureLength2 < encryptionConfigInstanceOld.signatureLength2 {
+		return int(encryptionConfigInstance.signatureLength2)
+	} else {
+		return int(encryptionConfigInstanceOld.signatureLength2)
+	}
 }
 
 func (a PubKey) GetLength() int {
