@@ -1,7 +1,6 @@
 package voting
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"github.com/okuralabs/okura-node/account"
@@ -146,81 +145,13 @@ func GenerateEncryption2Data(height int64) ([]byte, [][]byte, int64) {
 	return valueData, values, staked
 }
 
-func ParseVotesData(votingData []byte) (map[uint8]Votes, [][]byte, int64, error) {
-	parsedData := make(map[uint8]Votes)
-	dataLen := len(votingData)
-	values := [][]byte{}
-	allStaked := int64(0)
-
-	if dataLen%17 != 0 {
-		return nil, nil, 0, fmt.Errorf("invalid priceData length: %d", dataLen)
-	}
-	var err error
-	value := []byte{}
-	b := votingData[:]
-	for i := 0; i < dataLen; i += 17 {
-		id := b[i]
-		height := common.GetInt64FromByte(b[i+1 : i+9])
-		value, b, err = common.BytesWithLenToBytes(b[i+9:])
-		if err != nil {
-			return nil, nil, 0, err
-		}
-		values = append(values, value)
-		_, staked, _ := account.GetStakedInDelegatedAccount(int(id))
-		allStaked += int64(staked)
-		parsedData[id] = Votes{
-			Values: value,
-			Height: height,
-			Staked: int64(staked),
-		}
-	}
-
-	return parsedData, values, allStaked, nil
-}
-
-// removeOneDifferent removes one outlier byte slice, if all others are the same.
-func removeOneDifferent(values [][]byte) [][]byte {
-	if len(values) <= 1 {
-		return values
-	}
-
-	byteCount := make(map[string]int)
-	var commonPattern []byte
-	maxCount := 0
-
-	// Count occurrences of each byte slice
-	for _, v := range values {
-		vs := string(v) // Convert the byte slice to a string for easy comparison in a map
-		byteCount[vs]++
-		if byteCount[vs] > maxCount {
-			maxCount = byteCount[vs]
-			commonPattern = v
-		}
-	}
-
-	// Remove one outlier byte slice if present
-	var result [][]byte
-	outlierRemoved := false
-	for _, v := range values {
-		if !bytes.Equal(v, commonPattern) && !outlierRemoved {
-			// Skip adding this outlier byte slice to result once
-			outlierRemoved = true
-		} else {
-			result = append(result, v)
-		}
-	}
-
-	return result
-}
-
 // one has to think what happens when verification is not on current block than GetStakedInDelegatedAccount should depend on height
 func VerifyEncryptionForPausing(height int64, totalStaked int64, primary bool) bool {
-	values := [][]byte{}
 	staked := int64(0)
 	if primary {
-		_, values, staked = GenerateEncryption1Data(height)
+		_, _, staked = GenerateEncryption1Data(height)
 	} else {
-		_, values, staked = GenerateEncryption2Data(height)
+		_, _, staked = GenerateEncryption2Data(height)
 	}
 
 	// 1/3 for pausing
@@ -228,36 +159,16 @@ func VerifyEncryptionForPausing(height int64, totalStaked int64, primary bool) b
 		return false
 	}
 
-	// Remove max and min value
-	if len(values) > 2 {
-		values = removeOneDifferent(values)
-	}
-
-	if len(values) == 0 {
-		return false
-	}
-
-	// Compare bytes if the same
-	isSame := true
-	first := values[0]
-	for _, b := range values {
-		if !bytes.Equal(first, b) {
-			isSame = false
-			break
-		}
-	}
-
-	return isSame
+	return true
 }
 
 // one has to think what happens when verification is not on current block than GetStakedInDelegatedAccount should depend on height
 func VerifyEncryptionForReplacing(height int64, totalStaked int64, primary bool) bool {
-	values := [][]byte{}
 	staked := int64(0)
 	if primary {
-		_, values, staked = GenerateEncryption1Data(height)
+		_, _, staked = GenerateEncryption1Data(height)
 	} else {
-		_, values, staked = GenerateEncryption2Data(height)
+		_, _, staked = GenerateEncryption2Data(height)
 	}
 
 	// 2/3 for invalidation
@@ -266,24 +177,5 @@ func VerifyEncryptionForReplacing(height int64, totalStaked int64, primary bool)
 		return false
 	}
 
-	// Remove max and min value
-	if len(values) > 2 {
-		values = removeOneDifferent(values)
-	}
-
-	if len(values) == 0 {
-		return false
-	}
-
-	// Compare bytes if the same
-	isSame := true
-	first := values[0]
-	for _, b := range values {
-		if !bytes.Equal(first, b) {
-			isSame = false
-			break
-		}
-	}
-
-	return isSame
+	return true
 }
