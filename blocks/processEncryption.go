@@ -75,14 +75,14 @@ func SetEncryptionFromBlock(height int64) error {
 		return err
 	}
 
-	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, true)
+	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, true, true)
 
 	enc2, err := FromBytesToEncryptionConfig(block.BaseBlock.BaseHeader.Encryption2[:], false)
 	if err != nil {
 		return err
 	}
 
-	common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, enc2.IsPaused, false)
+	common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, true, false)
 	return nil
 }
 
