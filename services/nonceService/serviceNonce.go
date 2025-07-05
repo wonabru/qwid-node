@@ -195,6 +195,10 @@ Q:
 }
 
 func sendNonceMsg(ip [4]byte, topic [2]byte) {
+	h := common.GetHeight()
+	if h < common.CurrentHeightOfNetwork {
+		return
+	}
 	isync := common.IsSyncing.Load()
 	if isync == true {
 		return
