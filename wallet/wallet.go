@@ -496,6 +496,9 @@ func LoadJSON(walletNumber uint8, password string, height int64) (*GeneralWallet
 		for k, v := range w.WalletChain {
 			if height >= k && k >= maxHeight {
 				cw = &v
+				copy(cw.EncryptedSecretKey[:], v.EncryptedSecretKey[:])
+				copy(cw.EncryptedSecretKey2[:], v.EncryptedSecretKey2[:])
+				copy(cw.Iv[:], v.Iv[:])
 				maxHeight = k
 			}
 		}
