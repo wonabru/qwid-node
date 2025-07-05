@@ -12,7 +12,7 @@ var (
 	MainDB *BlockchainDB
 )
 
-func init() {
+func InitDB() {
 	// Get home directory
 	homePath, err := os.UserHomeDir()
 	if err != nil {

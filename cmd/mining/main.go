@@ -32,6 +32,7 @@ func main() {
 	var err error
 	logger.InitLogger()
 	defer logger.CloseLogger()
+	database.InitDB()
 	defer database.CloseDB()
 	// Now you can use log functions as usual
 	logger.GetLogger().Println("Application started")
