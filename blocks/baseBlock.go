@@ -145,7 +145,7 @@ func (bh *BaseHeader) Sign(primary bool) (common.Signature, []byte, error) {
 }
 
 func (bh *BaseHeader) GetFromBytes(b []byte) ([]byte, error) {
-	logger.GetLogger().Println("block decompile len bytes ", len(b))
+	//logger.GetLogger().Println("block decompile len bytes ", len(b))
 	if len(b) < 117 {
 		return nil, fmt.Errorf("not enough bytes to decode BaseHeader")
 	}
@@ -207,7 +207,7 @@ func (bb *BaseBlock) GetBytes() []byte {
 }
 
 func (bb *BaseBlock) GetFromBytes(b []byte) ([]byte, error) {
-	logger.GetLogger().Println("bytes to decode BaseBlock", len(b))
+	//logger.GetLogger().Println("bytes to decode BaseBlock", len(b))
 	if len(b) < 116+44+16 {
 		return nil, fmt.Errorf("not enough bytes to decode BaseBlock")
 	}
