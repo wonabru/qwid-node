@@ -121,7 +121,7 @@ func (bh *BaseHeader) Verify(sigName, sigName2 string, isPaused, isPaused2 bool)
 	var primary bool
 	sig := bh.Signature.GetBytes()
 	primary = sig[0] == 0
-	logger.GetLogger().Println("a:", a, "primary:", primary)
+	//logger.GetLogger().Println("a:", a, "primary:", primary)
 	pk, err := pubkeys.LoadPubKeyWithPrimary(a, primary)
 	if err != nil {
 		logger.GetLogger().Println(err)
