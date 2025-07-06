@@ -106,7 +106,7 @@ func generateNonceMsg(topic [2]byte) (message.TransactionsMessage, error) {
 	optData := common.GetByteInt64(h)
 	optData = append(optData, lastBlockHash...)
 
-	//TODO Price oracle currently is random: 0.9 - 1.1 OKU/USD
+	//TODO Price oracle currently is random: 0.9 - 1.1 KURA/USD
 	priceOracle := int64(rand.Intn(10000000) - 5000000 + 100000000)
 	randOracle := rand.Int63()
 	optData = append(optData, common.GetByteInt64(priceOracle)...)
@@ -127,10 +127,10 @@ func generateNonceMsg(topic [2]byte) (message.TransactionsMessage, error) {
 		if err != nil {
 			return message.TransactionsMessage{}, err
 		}
-		isAddr := pktrie.IsAddressInTree(w.Address2)
+		isAddr := pktrie.IsAddressInTree(w.Account2.Address)
 		if !isAddr {
 			logger.GetLogger().Println("no address2 in blockchain")
-			pubkey = w.PublicKey2
+			pubkey = w.Account2.PublicKey
 		}
 	}
 
@@ -195,6 +195,10 @@ Q:
 }
 
 func sendNonceMsg(ip [4]byte, topic [2]byte) {
+	h := common.GetHeight()
+	if h < common.CurrentHeightOfNetwork {
+		return
+	}
 	isync := common.IsSyncing.Load()
 	if isync == true {
 		return

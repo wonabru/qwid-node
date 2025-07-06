@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/logger"
 	"github.com/okuralabs/okura-node/wallet"
 	"golang.org/x/crypto/ssh/terminal"
@@ -36,12 +37,30 @@ func main() {
 	if err != nil {
 		logger.GetLogger().Fatal(err)
 	}
-	w, err := wallet.GenerateNewWallet(uint8(walletNumber), string(password))
+
+	w := wallet.EmptyWallet(uint8(walletNumber), common.SigName(), common.SigName2())
+	w.SetPassword(string(password))
+	w.Iv = wallet.GenerateNewIv()
+
+	acc, err := wallet.GenerateNewAccount(w, w.SigName)
 	if err != nil {
 		logger.GetLogger().Printf("Can not create wallet. Error %v", err)
 	}
+	w.MainAddress = acc.Address
+	acc.PublicKey.MainAddress = w.MainAddress
+	w.Account1 = acc
+	copy(w.Account1.EncryptedSecretKey, acc.EncryptedSecretKey)
+
+	acc, err = wallet.GenerateNewAccount(w, w.SigName2)
+	if err != nil {
+		logger.GetLogger().Printf("Can not create wallet. Error %v", err)
+	}
+
+	w.Account2 = acc
+	copy(w.Account2.EncryptedSecretKey, acc.EncryptedSecretKey)
+
 	folderPath := w.HomePath
-	err = os.MkdirAll(w.HomePath, 0755)
+	err = os.MkdirAll(folderPath, 0755)
 	if err != nil {
 		logger.GetLogger().Fatal(err)
 	}
@@ -61,28 +80,7 @@ func main() {
 	fmt.Printf("Write permission: %v\n", hasWritePermission)
 	fmt.Printf("Execute permission: %v\n", hasExecutePermission)
 
-	folderPath2 := w.HomePath2
-	err = os.MkdirAll(w.HomePath2, 0755)
-	if err != nil {
-		logger.GetLogger().Fatal(err)
-	}
-	fileInfo2, err := os.Stat(folderPath2)
-	if err != nil {
-		fmt.Println("Error getting folder info:", err)
-		return
-	}
-	// Get the folder permissions
-	permissions2 := fileInfo2.Mode().Perm()
-	fmt.Printf("Folder permissions: %v\n", permissions2)
-	// Check if the current user has read, write, and execute permissions
-	hasReadPermission2 := permissions2&0400 != 0
-	hasWritePermission2 := permissions2&0200 != 0
-	hasExecutePermission2 := permissions2&0100 != 0
-	fmt.Printf("Read permission: %v\n", hasReadPermission2)
-	fmt.Printf("Write permission: %v\n", hasWritePermission2)
-	fmt.Printf("Execute permission: %v\n", hasExecutePermission2)
-
-	err = w.StoreJSON(true)
+	err = w.StoreJSON()
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return

@@ -25,7 +25,7 @@ type TxData struct {
 
 func (td TxData) GetString() string {
 	t := "Recipient: " + td.Recipient.GetHex() + "\n"
-	t += "Amount OKU: " + fmt.Sprintln(account.Int64toFloat64(td.Amount)) + "\n"
+	t += "Amount KURA: " + fmt.Sprintln(account.Int64toFloat64(td.Amount)) + "\n"
 	t += "Opt Data: " + hex.EncodeToString(td.OptData) + "\n"
 	if td.Pubkey.ByteValue != nil {
 		t += "Pubkey: " + td.Pubkey.GetHex()[:20] + "\n"

@@ -1,17 +1,18 @@
 package services
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/okuralabs/okura-node/blocks"
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/logger"
-	"golang.org/x/crypto/ssh/terminal"
+	"github.com/okuralabs/okura-node/wallet"
 	"os"
 )
 
 func checkBlock(newBlock blocks.Block, lastBlock blocks.Block, checkFinal bool) error {
 	logger.GetLogger().Println("checkFinal:", checkFinal)
-	merkleTrie, err := blocks.CheckBaseBlock(newBlock, lastBlock)
+	merkleTrie, err := blocks.CheckBaseBlock(newBlock, lastBlock, checkFinal)
 	defer merkleTrie.Destroy()
 	if err != nil {
 		logger.GetLogger().Println(err)
@@ -43,20 +44,28 @@ func checkMainChain() (int64, error) {
 	}
 	logger.GetLogger().Println("blocks.LastHeightStoredInBlocks() height: ", height)
 	if height > 1 {
+
 		bl, err := blocks.LoadBlock(height)
 		if err != nil {
 			logger.GetLogger().Println(err)
 		} else {
-			lastBlock, err := blocks.LoadBlock(height - 1)
-			if err != nil {
-				logger.GetLogger().Println(err)
-			} else {
-				err = checkBlock(bl, lastBlock, true)
-				if err != nil {
-					logger.GetLogger().Println(err)
+			sn1, sn2, _, _, err := bl.GetSigNames()
+			if err == nil {
+				cw, err := wallet.GetCurrentWallet(sn1, sn2)
+				if err == nil {
+					wallet.SetActiveWallet(cw)
+					lastBlock, err := blocks.LoadBlock(height - 1)
+					if err != nil {
+						logger.GetLogger().Println(err)
+					} else {
+						err = checkBlock(bl, lastBlock, true)
+						if err != nil {
+							logger.GetLogger().Println(err)
 
-				} else {
-					return height, nil
+						} else {
+							return height, nil
+						}
+					}
 				}
 			}
 		}
@@ -75,12 +84,22 @@ func checkMainChain() (int64, error) {
 			//err = checkBlock(bl, lastBlock, true)
 			return h - 1, err
 		}
-		err = checkBlock(bl, lastBlock, h == height-1)
-		if err != nil {
-			logger.GetLogger().Println(err)
-			//err = checkBlock(bl, lastBlock, true)
-			logger.GetLogger().Println("Error in block height ", h)
-			return h - 1, err
+		sn1, sn2, _, _, err := bl.GetSigNames()
+		if err == nil {
+			cw, err := wallet.GetCurrentWallet(sn1, sn2)
+			if err == nil {
+				wallet.SetActiveWallet(cw)
+				err = checkBlock(bl, lastBlock, h == height-1)
+				if err != nil {
+					logger.GetLogger().Println(err)
+					//err = checkBlock(bl, lastBlock, true)
+					logger.GetLogger().Println("Error in block height ", h)
+					return h - 1, err
+				}
+			} else {
+				logger.GetLogger().Println("Error get Current Wallet ", h)
+				return h - 1, fmt.Errorf("error get current wallet")
+			}
 		}
 		lastBlock = bl
 	}
@@ -97,8 +116,10 @@ func SetBlockHeightAfterCheck() {
 			logger.GetLogger().Fatal("failed to get home directory:", err)
 		}
 		fmt.Print("Should db with blockchain state should be removed and sync from beginning? Yes/[No]: ")
-		answer, err := terminal.ReadPassword(0)
-		if string(answer) == "Yes" {
+		reader := bufio.NewReader(os.Stdin)
+		answer, _ := reader.ReadString('\n')
+		logger.GetLogger().Println(answer)
+		if answer[0] == 'Y' || answer[0] == 'y' {
 			// remove database related to blockckchain, NOT wallets
 			os.RemoveAll(homePath + common.DefaultBlockchainHomePath)
 			logger.GetLogger().Fatal("DB files related to chain was removed. run mining once more and sync with other nodes. wrong data stored in db")

@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/wonabru/bip39"
 	"io"
 	"sync"
@@ -24,26 +23,27 @@ import (
 
 var globalMutex sync.RWMutex
 
+type Account struct {
+	secretKey          common.PrivKey
+	EncryptedSecretKey []byte         `json:"encrypted_secret_key"`
+	PublicKey          common.PubKey  `json:"public_key"`
+	Address            common.Address `json:"address"`
+	signer             oqs.Signature
+}
+
+// Wallet Structure map of Height and wallet which was change
 type Wallet struct {
-	password            string
-	passwordBytes       []byte
-	Iv                  []byte `json:"iv"`
-	secretKey           common.PrivKey
-	secretKey2          common.PrivKey
-	EncryptedSecretKey  []byte         `json:"encrypted_secret_key"`
-	EncryptedSecretKey2 []byte         `json:"encrypted_secret_key2"`
-	PublicKey           common.PubKey  `json:"public_key"`
-	PublicKey2          common.PubKey  `json:"public_key2"`
-	Address             common.Address `json:"address"`
-	Address2            common.Address `json:"address2"`
-	MainAddress         common.Address `json:"main_address"`
-	signer              oqs.Signature
-	signer2             oqs.Signature
-	HomePath            string `json:"home_path"`
-	HomePath2           string `json:"home_path2"`
-	HomePathOld         string `json:"home_path_old,omitempty"`
-	HomePath2Old        string `json:"home_path2_old,omitempty"`
-	WalletNumber        uint8  `json:"wallet_number"`
+	password      string
+	passwordBytes []byte
+	Iv            []byte             `json:"iv"`
+	HomePath      string             `json:"home_path"`
+	WalletNumber  uint8              `json:"wallet_number"`
+	MainAddress   common.Address     `json:"main_address"`
+	SigName       string             `json:"sig_name"`
+	SigName2      string             `json:"sig_name_2"`
+	Account1      Account            `json:"account_1"`
+	Account2      Account            `json:"account_2"`
+	Accounts      map[string]Account `json:"accounts"`
 }
 
 var activeWallet *Wallet
@@ -52,17 +52,34 @@ type AnyWallet interface {
 	GetWallet() Wallet
 }
 
-func InitActiveWallet(walletNumber uint8, password string) {
+func InitActiveWallet(walletNumber uint8, password string, sigName, sigName2 string) {
 	var err error
-	activeWallet, err = LoadJSON(walletNumber, password)
+	w, err := LoadJSON(walletNumber, password, sigName, sigName2)
+	activeWallet = w
 	if err != nil {
-		logger.GetLogger().Println("wrong password")
+		logger.GetLogger().Println("wrong password", err)
 		os.Exit(1)
 	}
 	if activeWallet == nil {
 		logger.GetLogger().Println("failed to load wallet")
 		os.Exit(1)
 	}
+}
+
+func GetCurrentWallet(sigName, sigName2 string) (*Wallet, error) {
+	aw := GetActiveWallet()
+	var err error
+	w, err := LoadJSON(aw.WalletNumber, aw.password, sigName, sigName2)
+	currentWallet := w
+	if err != nil {
+		logger.GetLogger().Println("wrong password: GetCurrentWallet")
+		return nil, err
+	}
+	if currentWallet == nil {
+		logger.GetLogger().Println("failed to load wallet: GetCurrentWallet")
+		return nil, fmt.Errorf("failed to load wallet: GetCurrentWallet")
+	}
+	return currentWallet, nil
 }
 
 func (w *Wallet) SetPassword(password string) {
@@ -76,19 +93,24 @@ func GetActiveWallet() *Wallet {
 	return activeWallet
 }
 
+func SetActiveWallet(w *Wallet) {
+	globalMutex.Lock()
+	defer globalMutex.Unlock()
+	activeWallet = w
+}
+
 func (w *Wallet) ShowInfo() string {
 
-	s := fmt.Sprintln("Length of public key:", w.PublicKey.GetLength())
-	s += fmt.Sprintln("Beginning of public key:", w.PublicKey.GetHex()[:10])
-	s += fmt.Sprintln("Address:", w.Address.GetHex())
+	s := fmt.Sprintln("Length of public key:", w.Account1.PublicKey.GetLength())
+	s += fmt.Sprintln("Beginning of public key:", w.Account1.PublicKey.GetHex()[:10])
+	s += fmt.Sprintln("Address:", w.Account1.Address.GetHex())
 	s += fmt.Sprintln("Length of private key:", w.GetSecretKey().GetLength())
-	s += fmt.Sprintln("Length of public key 2:", w.PublicKey2.GetLength())
-	s += fmt.Sprintln("Beginning of public key 2:", w.PublicKey2.GetHex()[:10])
-	s += fmt.Sprintln("Address 2:", w.Address2.GetHex())
+	s += fmt.Sprintln("Length of public key 2:", w.Account2.PublicKey.GetLength())
+	s += fmt.Sprintln("Beginning of public key 2:", w.Account2.PublicKey.GetHex()[:10])
+	s += fmt.Sprintln("Address 2:", w.Account2.Address.GetHex())
 	s += fmt.Sprintln("Length of private key 2:", w.GetSecretKey2().GetLength())
 	s += fmt.Sprintln("MainAddress:", w.MainAddress.GetHex())
 	s += fmt.Sprintln("Wallet location", w.HomePath)
-	s += fmt.Sprintln("Wallet location 2", w.HomePath2)
 	s += fmt.Sprintln("Wallet Number", w.WalletNumber)
 	fmt.Println(s)
 	return s
@@ -102,95 +124,82 @@ func passwordToByte(password string) []byte {
 
 func (w *Wallet) GetSigName(primary bool) string {
 	if primary {
-		return w.signer.Details().Name
+		return w.SigName
 	} else {
-		return w.signer2.Details().Name
+		return w.SigName2
 	}
 }
 
-func EmptyWallet(walletNumber uint8, sigName, sigName2 string) *Wallet {
+func EmptyWallet(walletNumber uint8, sigName, sigName2 string) Wallet {
 	homePath, err := os.UserHomeDir()
 	if err != nil {
 		logger.GetLogger().Fatal(err)
 	}
-	return &Wallet{
+
+	return Wallet{
 		password:      "",
 		passwordBytes: nil,
 		Iv:            nil,
-		secretKey:     common.PrivKey{},
-		secretKey2:    common.PrivKey{},
-		PublicKey:     common.PubKey{},
-		PublicKey2:    common.PubKey{},
-		Address:       common.Address{},
-		Address2:      common.Address{},
+		Account1:      EmptyAccount(),
+		Account2:      EmptyAccount(),
+		SigName:       sigName,
+		SigName2:      sigName2,
+		Accounts:      map[string]Account{},
 		MainAddress:   common.Address{},
-		signer:        oqs.Signature{},
-		signer2:       oqs.Signature{},
-		HomePath:      homePath + common.DefaultWalletHomePath + strconv.Itoa(int(walletNumber)) + "/" + sigName,
-		HomePath2:     homePath + common.DefaultWalletHomePath + strconv.Itoa(int(walletNumber)) + "/" + sigName2,
-		HomePathOld:   homePath + common.DefaultWalletHomePath + strconv.Itoa(int(walletNumber)) + "/" + sigName,
-		HomePath2Old:  homePath + common.DefaultWalletHomePath + strconv.Itoa(int(walletNumber)) + "/" + sigName2,
+		HomePath:      homePath + common.DefaultWalletHomePath + strconv.Itoa(int(walletNumber)),
 		WalletNumber:  walletNumber,
 	}
 }
 
-func GenerateNewWallet(walletNumber uint8, password string) (*Wallet, error) {
-	if len(password) < 1 {
-		return nil, fmt.Errorf("password cannot be empty")
+func EmptyAccount() Account {
+	return Account{
+		secretKey:          common.PrivKey{},
+		EncryptedSecretKey: nil,
+		PublicKey:          common.PubKey{},
+		Address:            common.Address{},
+		signer:             oqs.Signature{},
 	}
-	w := EmptyWallet(walletNumber, common.SigName(), common.SigName2())
-	w.SetPassword(password)
-	(*w).Iv = generateNewIv()
+}
+
+func GenerateNewAccount(w Wallet, sigName string) (Account, error) {
+	if len(w.password) < 1 {
+		return Account{}, fmt.Errorf("password cannot be empty")
+	}
+
 	var signer oqs.Signature
-	var signer2 oqs.Signature
-	//defer signer.Clean()
 
 	// ignore potential errors everywhere
-	err := signer.Init(common.SigName(), nil)
+	err := signer.Init(sigName, nil)
 	if err != nil {
-		return nil, err
+		return Account{}, err
 	}
 	pubKey, err := signer.GenerateKeyPair()
 	if err != nil {
-		return nil, err
+		return Account{}, err
 	}
-	mainAddress, err := common.PubKeyToAddress(pubKey, true)
-	if err != nil {
-		return nil, err
-	}
-	err = w.PublicKey.Init(pubKey, mainAddress)
-	if err != nil {
-		return nil, err
-	}
-	(*w).Address = w.PublicKey.GetAddress()
-	(*w).MainAddress = (*w).Address
-	err = w.secretKey.Init(signer.ExportSecretKey(), w.Address)
-	if err != nil {
-		return nil, err
-	}
-	(*w).signer = signer
 
-	err = signer2.Init(common.SigName2(), nil)
+	acc := EmptyAccount()
+	err = acc.PublicKey.Init(pubKey, w.MainAddress)
 	if err != nil {
-		return nil, err
+		return Account{}, err
 	}
-	pubKey2, err := signer2.GenerateKeyPair()
-	if err != nil {
-		return nil, err
-	}
-	err = w.PublicKey2.Init(pubKey2, mainAddress)
-	if err != nil {
-		return nil, err
-	}
-	(*w).Address2 = w.PublicKey2.GetAddress()
-	err = w.secretKey2.Init(signer2.ExportSecretKey(), w.Address2)
-	if err != nil {
-		return nil, err
-	}
-	(*w).signer2 = signer2
+	acc.Address = acc.PublicKey.GetAddress()
 
-	fmt.Print(signer2.Details())
-	return w, nil
+	err = acc.secretKey.Init(signer.ExportSecretKey(), acc.Address)
+	if err != nil {
+		return Account{}, err
+	}
+	acc.signer = signer
+
+	se, err := w.encrypt(acc.secretKey.GetBytes())
+	if err != nil {
+		logger.GetLogger().Println(err)
+		return Account{}, err
+	}
+	acc.EncryptedSecretKey = make([]byte, len(se))
+	copy(acc.EncryptedSecretKey, se)
+
+	return acc, nil
 }
 
 func (w *Wallet) AddNewEncryptionToActiveWallet(sigName string, primary bool) error {
@@ -215,36 +224,35 @@ func (w *Wallet) AddNewEncryptionToActiveWallet(sigName string, primary bool) er
 		return err
 	}
 	if primary {
-		err = w.PublicKey.Init(pubKey, mainAddress)
+		err = w.Account1.PublicKey.Init(pubKey, mainAddress)
 		if err != nil {
 			return err
 		}
-		(*w).Address = w.PublicKey.GetAddress()
-		err = w.secretKey.Init(signer.ExportSecretKey(), w.Address)
+		(*w).Account1.Address = w.Account1.PublicKey.GetAddress()
+		err = w.Account1.secretKey.Init(signer.ExportSecretKey(), w.Account1.Address)
 		if err != nil {
 			return err
 		}
-		(*w).signer = signer
+		(*w).Account1.signer = signer
 		(*w).HomePath = ew.HomePath
 	} else {
-		err = w.PublicKey2.Init(pubKey, mainAddress)
+		err = w.Account2.PublicKey.Init(pubKey, mainAddress)
 		if err != nil {
 			return err
 		}
-		(*w).Address2 = w.PublicKey2.GetAddress()
-		err = w.secretKey2.Init(signer.ExportSecretKey(), w.Address2)
+		(*w).Account2.Address = w.Account2.PublicKey.GetAddress()
+		err = w.Account2.secretKey.Init(signer.ExportSecretKey(), w.Account2.Address)
 		if err != nil {
 			return err
 		}
-		(*w).signer2 = signer
-		(*w).HomePath2 = ew.HomePath2
+		(*w).Account2.signer = signer
 	}
 
 	logger.GetLogger().Println(signer.Details())
 	return nil
 }
 
-func generateNewIv() []byte {
+func GenerateNewIv() []byte {
 	iv := make([]byte, aes.BlockSize)
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		panic(err)
@@ -325,190 +333,80 @@ func (w *Wallet) RestoreSecretKeyFromMnemonic(mnemonic string, primary bool) err
 		if len(secretKey) < common.PrivateKeyLength() {
 			return fmt.Errorf("not enough bytes for primary encryption private key")
 		}
-		err = w.secretKey.Init(secretKey[:common.PrivateKeyLength()], w.Address)
+		err = w.Account1.secretKey.Init(secretKey[:common.PrivateKeyLength()], w.Account1.Address)
 		if err != nil {
 			return err
 		}
 
-		err = signer.Init(common.SigName(), w.secretKey.GetBytes())
+		err = signer.Init(common.SigName(), w.Account1.secretKey.GetBytes())
 		if err != nil {
 			return err
 		}
-		(*w).signer = signer
+		(*w).Account1.signer = signer
 	} else {
 		if len(secretKey) < common.PrivateKeyLength2() {
 			return fmt.Errorf("not enough bytes for secondary encryption private key")
 		}
-		err = w.secretKey2.Init(secretKey[:common.PrivateKeyLength2()], w.Address2)
+		err = w.Account2.secretKey.Init(secretKey[:common.PrivateKeyLength2()], w.Account2.Address)
 		if err != nil {
 			return err
 		}
-		err = signer.Init(common.SigName2(), w.secretKey2.GetBytes())
+		err = signer.Init(common.SigName2(), w.Account2.secretKey.GetBytes())
 		if err != nil {
 			return err
 		}
-		(*w).signer2 = signer
+		(*w).Account2.signer = signer
 	}
 
 	return nil
 }
 
-func (w *Wallet) Store(makeBackup bool) error {
-	if w.GetSecretKey().GetBytes() == nil {
-		return fmt.Errorf("you need load wallet first")
-	}
-	err := w.StoreJSON(makeBackup)
-	if err != nil {
-		return err
-	}
-	if makeBackup {
-		// Get the next available backup number
-		backupNum := 1
-		backupPath := w.HomePathOld + "_backup" + fmt.Sprintf("%d", backupNum)
-		for {
-			if _, err := os.Stat(backupPath); os.IsNotExist(err) {
-				break
-			}
-			backupNum++
-			backupPath = w.HomePathOld + "_backup" + fmt.Sprintf("%d", backupNum)
-		}
-		err := os.Rename(w.HomePathOld, backupPath)
-		if err != nil {
-			return err
-		}
-	}
-	globalMutex.Lock()
-	defer globalMutex.Unlock()
-	walletDB, err := leveldb.OpenFile(w.HomePath, nil)
-	if err != nil {
-		return err
-	}
-	if walletDB == nil {
-		return fmt.Errorf("database is nil")
-	}
-	defer walletDB.Close()
-
-	se, err := w.encrypt(w.secretKey.GetBytes())
-	if err != nil {
-		logger.GetLogger().Println(err)
-		return err
-	}
-
-	w2 := w
-	(*w2).EncryptedSecretKey = make([]byte, len(se))
-	copy((*w2).EncryptedSecretKey, se)
-
-	if makeBackup {
-		// Get the next available backup number
-		backupNum := 1
-		backupPath := w.HomePath2Old + "_backup" + fmt.Sprintf("%d", backupNum)
-		for {
-			if _, err := os.Stat(backupPath); os.IsNotExist(err) {
-				break
-			}
-			backupNum++
-			backupPath = w.HomePath2Old + "_backup" + fmt.Sprintf("%d", backupNum)
-		}
-		err = os.Rename(w.HomePath2Old, backupPath)
-		if err != nil {
-			return err
-		}
-	}
-	walletDB2, err := leveldb.OpenFile(w.HomePath2, nil)
-	if err != nil {
-		return err
-	}
-	if walletDB2 == nil {
-		return fmt.Errorf("database is nil")
-	}
-	defer walletDB2.Close()
-
-	se, err = w.encrypt(w2.secretKey2.GetBytes())
-	if err != nil {
-		logger.GetLogger().Println(err)
-		return err
-	}
-
-	(*w2).EncryptedSecretKey2 = make([]byte, len(se))
-	copy((*w2).EncryptedSecretKey2, se)
-
-	wm, err := json.Marshal(&w2)
-	if err != nil {
-		logger.GetLogger().Println(err)
-		return err
-	}
-	prefix := common.WalletDBPrefix
-	prefix[1] = w.WalletNumber
-	err = walletDB.Put(prefix[:], wm, nil)
-	if err != nil {
-		return err
-	}
-	// Put a key-value pair into the database
-	err = walletDB2.Put(prefix[:], wm, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (w *Wallet) StoreJSON(makeBackup bool) error {
+func (w *Wallet) StoreJSON() error {
 	if w.GetSecretKey().GetBytes() == nil {
 		return fmt.Errorf("you need load wallet first")
 	}
 
-	if makeBackup {
-		// Get the next available backup number
-		backupNum := 1
-		backupPath := w.HomePathOld + "_backup" + fmt.Sprintf("%d", backupNum)
-		for {
-			if _, err := os.Stat(backupPath); os.IsNotExist(err) {
-				break
-			}
-			backupNum++
-			backupPath = w.HomePathOld + "_backup" + fmt.Sprintf("%d", backupNum)
-		}
-		err := CopyDirectory(w.HomePathOld, backupPath)
-		if err != nil {
-			return err
-		}
+	// Create the wallet file path
+	walletFile := filepath.Join(w.HomePath, "wallet"+strconv.Itoa(int(w.WalletNumber)))
+	logger.GetLogger().Println("walletFile:", walletFile+".json")
+
+	if _, ok := w.Accounts[w.SigName]; !ok {
+		logger.GetLogger().Println("not properly structured wallet. Now OK")
+		w.Accounts[w.SigName] = w.Account1
+		copy(w.Accounts[w.SigName].EncryptedSecretKey[:], w.Account1.EncryptedSecretKey[:])
+	}
+	if _, ok := w.Accounts[w.SigName2]; !ok {
+		logger.GetLogger().Println("not properly structured wallet. Now OK")
+		w.Accounts[w.SigName2] = w.Account2
+		copy(w.Accounts[w.SigName2].EncryptedSecretKey[:], w.Account2.EncryptedSecretKey[:])
 	}
 
-	se, err := w.encrypt(w.secretKey.GetBytes())
+	for k, v := range w.Accounts {
+		se, err := w.encrypt(v.secretKey.GetBytes())
+		if err != nil {
+			logger.GetLogger().Println(err)
+			return err
+		}
+		copy(w.Accounts[k].EncryptedSecretKey, se)
+	}
+
+	se, err := w.encrypt(w.Account1.secretKey.GetBytes())
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return err
 	}
 
-	w2 := w
-	(*w2).EncryptedSecretKey = make([]byte, len(se))
-	copy((*w2).EncryptedSecretKey, se)
+	w.Account1.EncryptedSecretKey = make([]byte, len(se))
+	copy(w.Account1.EncryptedSecretKey, se)
 
-	if makeBackup {
-		// Get the next available backup number
-		backupNum := 1
-		backupPath := w.HomePath2Old + "_backup" + fmt.Sprintf("%d", backupNum)
-		for {
-			if _, err := os.Stat(backupPath); os.IsNotExist(err) {
-				break
-			}
-			backupNum++
-			backupPath = w.HomePath2Old + "_backup" + fmt.Sprintf("%d", backupNum)
-		}
-		err = os.Rename(w.HomePath2Old, backupPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	se, err = w.encrypt(w2.secretKey2.GetBytes())
+	se, err = w.encrypt(w.Account2.secretKey.GetBytes())
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return err
 	}
 
-	(*w2).EncryptedSecretKey2 = make([]byte, len(se))
-	copy((*w2).EncryptedSecretKey2, se)
+	w.Account2.EncryptedSecretKey = make([]byte, len(se))
+	copy(w.Account2.EncryptedSecretKey, se)
 
 	// Marshal the wallet to JSON
 	wm, err := json.MarshalIndent(&w, "", "    ")
@@ -520,228 +418,124 @@ func (w *Wallet) StoreJSON(makeBackup bool) error {
 	if err := os.MkdirAll(w.HomePath, 0755); err != nil {
 		return err
 	}
-	// Create the wallet file path
-	walletFile := filepath.Join(w.HomePath, "wallet"+strconv.Itoa(int(w.WalletNumber))+".json")
-	logger.GetLogger().Println("walletFile:", walletFile)
+
 	// Write the wallet to the JSON file
-	if err := os.WriteFile(walletFile, wm, 0644); err != nil {
+	if err := os.WriteFile(walletFile+".json", wm, 0600); err != nil {
 		return err
 	}
-	// Marshal the wallet to JSON
-	wm2, err := json.MarshalIndent(&w2, "", "    ")
-	if err != nil {
-		logger.GetLogger().Println(err)
-		return err
-	}
-	// Create wallet directory if it doesn't exist
-	if err := os.MkdirAll(w.HomePath2, 0755); err != nil {
-		return err
-	}
-	// Create the wallet file path
-	walletFile2 := filepath.Join(w2.HomePath2, "wallet"+strconv.Itoa(int(w2.WalletNumber))+".json")
-	// Write the wallet to the JSON file
-	if err := os.WriteFile(walletFile2, wm2, 0644); err != nil {
-		return err
-	}
-	logger.GetLogger().Println("walletFile2:", walletFile2)
+
 	return nil
 }
 
-func LoadJSON(walletNumber uint8, password string) (*Wallet, error) {
+// LoadJSON if height >= 0 current wallet will be replaced by latest but not larger than height
+func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*Wallet, error) {
 	if len(password) == 0 {
 		return nil, fmt.Errorf("password cannot be empty")
 	}
 
-	w := EmptyWallet(walletNumber, common.SigName(), common.SigName2())
-	if w == nil {
-		return nil, fmt.Errorf("failed to create empty wallet")
-	}
+	ew := EmptyWallet(walletNumber, sigName, sigName2)
 
-	homePath := w.HomePath
-	homePath2 := w.HomePath2
+	homePath := ew.HomePath
 
 	// Load wallet JSON file
-	walletFile := filepath.Join(w.HomePath, "wallet"+strconv.Itoa(int(w.WalletNumber))+".json")
+	walletFile := filepath.Join(homePath, "wallet"+strconv.Itoa(int(walletNumber))+".json")
 	data, err := os.ReadFile(walletFile)
 	if err != nil {
 		return nil, err
 	}
+	var w Wallet
 	// Unmarshal JSON data into wallet struct
-	if err := json.Unmarshal(data, w); err != nil {
+	if err := json.Unmarshal(data, &w); err != nil {
 		return nil, err
 	}
 
+	if w.SigName != sigName {
+		w.SigName = sigName
+		if a, ok := w.Accounts[sigName]; ok {
+			w.Account1 = a
+			copy(w.Account1.EncryptedSecretKey[:], a.EncryptedSecretKey[:])
+		} else {
+			acc, err := GenerateNewAccount(w, sigName)
+			if err != nil {
+				return nil, err
+			}
+
+			w.Account1 = acc
+			copy(w.Account1.EncryptedSecretKey[:], acc.EncryptedSecretKey[:])
+		}
+	}
+	if w.SigName2 != sigName2 {
+		w.SigName2 = sigName2
+		if a, ok := w.Accounts[sigName2]; ok {
+			w.Account2 = a
+			copy(w.Account2.EncryptedSecretKey[:], a.EncryptedSecretKey[:])
+		} else {
+			acc, err := GenerateNewAccount(w, sigName2)
+			if err != nil {
+				return nil, err
+			}
+			w.Account2 = acc
+			copy(w.Account2.EncryptedSecretKey[:], acc.EncryptedSecretKey[:])
+		}
+	}
+
 	w.SetPassword(password)
-	ds, err := w.decrypt(w.EncryptedSecretKey)
+	ds, err := w.decrypt(w.Account1.EncryptedSecretKey)
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return nil, err
 	}
-	err = w.secretKey.Init(ds[:common.PrivateKeyLength()], w.Address)
+	// maybe one should limit amount of bytes to pass here
+	cnz := CountNonZeroBytes(ds)
+	logger.GetLogger().Println("cnz:", cnz)
+	err = w.Account1.secretKey.Init(ds[:cnz], w.Account1.Address)
 	if err != nil {
 		return nil, err
 	}
 	var signer oqs.Signature
-	err = signer.Init(common.SigName(), w.secretKey.GetBytes())
+	err = signer.Init(w.SigName, w.Account1.secretKey.GetBytes())
 	if err != nil {
 		return nil, err
 	}
-	(*w).signer = signer
-	(*w).HomePath2 = homePath2
-	// Load second wallet JSON file
-	walletFile2 := filepath.Join(w.HomePath2, "wallet"+strconv.Itoa(int(w.WalletNumber))+".json")
-	data2, err := os.ReadFile(walletFile2)
-	if err != nil {
-		return nil, err
-	}
-	// Unmarshal JSON data into second wallet struct
-	w2 := *w
-	if err := json.Unmarshal(data2, &w2); err != nil {
-		return nil, err
-	}
-	w.MainAddress.Primary = true
-	w.Address.Primary = true
-	w.Address2.Primary = false
-	w.PublicKey.Address.Primary = true
-	w.PublicKey2.Address.Primary = false
-	w.PublicKey.Primary = true
-	w.PublicKey2.Primary = false
-	w.PublicKey.MainAddress.Primary = true
-	w.PublicKey2.MainAddress.Primary = true
+	w.Account1.signer = signer
 
-	w.secretKey.Address.Primary = true
-	w.secretKey2.Address.Primary = false
-	w.secretKey.Primary = true
-	w.secretKey2.Primary = false
-
-	w2.SetPassword(password)
-	ds, err = w2.decrypt(w.EncryptedSecretKey2)
+	ds, err = w.decrypt(w.Account2.EncryptedSecretKey)
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return nil, err
 	}
-	err = w.secretKey2.Init(ds[:common.PrivateKeyLength2()], w.Address2)
+	cnz = CountNonZeroBytes(ds)
+	logger.GetLogger().Println("cnz:", cnz)
+	err = w.Account2.secretKey.Init(bytes.TrimSuffix(ds[:cnz], []byte{0}), w.Account2.Address)
 	if err != nil {
 		return nil, err
 	}
 	var signer2 oqs.Signature
-	err = signer2.Init(common.SigName2(), w.secretKey2.GetBytes())
+	err = signer2.Init(w.SigName2, w.Account2.secretKey.GetBytes())
 	if err != nil {
 		return nil, err
 	}
-	(*w).signer2 = signer2
-	(*w).HomePath = homePath
+	w.Account2.signer = signer2
 
-	logger.GetLogger().Println("PubKey:", w.PublicKey.GetHex())
-	logger.GetLogger().Println("PubKey2:", w.PublicKey2.GetHex())
-	logger.GetLogger().Println("MainAddress:", w.MainAddress.GetHex())
-	return w, err
-}
-
-func Load(walletNumber uint8, password string) (*Wallet, error) {
-	if len(password) == 0 {
-		return nil, fmt.Errorf("password cannot be empty")
-	}
-
-	globalMutex.Lock()
-	defer globalMutex.Unlock()
-
-	w := EmptyWallet(walletNumber, common.SigName(), common.SigName2())
-	if w == nil {
-		return nil, fmt.Errorf("failed to create empty wallet")
-	}
-
-	homePath := w.HomePath
-	homePath2 := w.HomePath2
-	// Open the database with the provided options
-	walletDB, err := leveldb.OpenFile(w.HomePath, nil)
-	if err != nil {
-		return nil, err
-	}
-	if walletDB == nil {
-		return nil, fmt.Errorf("database is nil")
-	}
-	defer walletDB.Close()
-	prefix := common.WalletDBPrefix
-	prefix[1] = walletNumber
-	value, err := walletDB.Get(prefix[:], nil)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(value, w)
-	if err != nil {
-		logger.GetLogger().Println(err)
-		return nil, err
-	}
-	w.SetPassword(password)
-	ds, err := w.decrypt(w.EncryptedSecretKey)
-	if err != nil {
-		logger.GetLogger().Println(err)
-		return nil, err
-	}
-	err = w.secretKey.Init(ds[:common.PrivateKeyLength()], w.Address)
-	if err != nil {
-		return nil, err
-	}
-	var signer oqs.Signature
-	err = signer.Init(common.SigName(), w.secretKey.GetBytes())
-	if err != nil {
-		return nil, err
-	}
-	(*w).signer = signer
-	(*w).HomePath2 = homePath2
-	walletDB2, err := leveldb.OpenFile(w.HomePath2, nil)
-	if err != nil {
-		return nil, err
-	}
-	if walletDB2 == nil {
-		return nil, fmt.Errorf("database is nil")
-	}
-
-	defer walletDB2.Close()
-
-	prefix = common.WalletDBPrefix
-	prefix[1] = walletNumber
-	value, err = walletDB2.Get(prefix[:], nil)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(value, w)
-	if err != nil {
-		logger.GetLogger().Println(err)
-		return nil, err
-	}
 	w.MainAddress.Primary = true
-	w.Address.Primary = true
-	w.Address2.Primary = false
-	w.PublicKey.Address.Primary = true
-	w.PublicKey2.Address.Primary = false
-	w.PublicKey.MainAddress.Primary = true
-	w.PublicKey2.MainAddress.Primary = true
-	w.SetPassword(password)
-	ds, err = w.decrypt(w.EncryptedSecretKey2)
-	if err != nil {
-		logger.GetLogger().Println(err)
-		return nil, err
-	}
-	err = w.secretKey2.Init(ds[:common.PrivateKeyLength2()], w.Address2)
-	if err != nil {
-		return nil, err
-	}
-	var signer2 oqs.Signature
-	err = signer2.Init(common.SigName2(), w.secretKey2.GetBytes())
-	if err != nil {
-		return nil, err
-	}
-	(*w).signer2 = signer2
-	(*w).HomePath = homePath
+	w.Account1.Address.Primary = true
+	w.Account2.Address.Primary = false
+	w.Account1.PublicKey.Address.Primary = true
+	w.Account2.PublicKey.Address.Primary = false
+	w.Account1.PublicKey.Primary = true
+	w.Account2.PublicKey.Primary = false
 
-	logger.GetLogger().Println("PubKey:", w.PublicKey.GetHex())
-	logger.GetLogger().Println("PubKey2:", w.PublicKey2.GetHex())
+	w.Account1.secretKey.Address.Primary = true
+	w.Account2.secretKey.Address.Primary = false
+	w.Account1.secretKey.Primary = true
+	w.Account2.secretKey.Primary = false
+
+	w.HomePath = homePath
+	w.StoreJSON()
+	//logger.GetLogger().Println("PubKey:", w.Account1.PublicKey.GetHex())
+	//logger.GetLogger().Println("PubKey2:", w.Account2.PublicKey.GetHex())
 	logger.GetLogger().Println("MainAddress:", w.MainAddress.GetHex())
-	return w, err
+	return &w, err
 }
 
 func (w *Wallet) ChangePassword(password, newPassword string) error {
@@ -755,32 +549,26 @@ func (w *Wallet) ChangePassword(password, newPassword string) error {
 	globalMutex.Lock()
 	defer globalMutex.Unlock()
 
-	w2 := &Wallet{
+	w2 := Wallet{
 		password:      newPassword,
 		passwordBytes: passwordToByte(newPassword),
 		Iv:            w.Iv,
-		secretKey:     w.secretKey,
-		PublicKey:     w.PublicKey,
-		Address:       w.Address,
-		signer:        w.signer,
-		secretKey2:    w.secretKey2,
-		PublicKey2:    w.PublicKey2,
-		Address2:      w.Address2,
-		signer2:       w.signer2,
-		MainAddress:   w.MainAddress,
 		HomePath:      w.HomePath,
-		HomePathOld:   w.HomePathOld,
-		HomePath2:     w.HomePath2,
-		HomePath2Old:  w.HomePath2Old,
 		WalletNumber:  w.WalletNumber,
+		MainAddress:   w.MainAddress,
+		SigName:       w.SigName,
+		SigName2:      w.SigName2,
+		Account1:      w.Account1,
+		Account2:      w.Account2,
+		Accounts:      w.Accounts,
 	}
 
-	err := w2.Store(false)
+	err := w2.StoreJSON()
 	if err != nil {
 		logger.GetLogger().Println("Can not store new wallet")
 		return err
 	}
-	_, err = LoadJSON(w2.WalletNumber, newPassword)
+	_, err = LoadJSON(w2.WalletNumber, newPassword, w2.SigName, w2.SigName2)
 	if err != nil {
 		return err
 	}
@@ -790,7 +578,7 @@ func (w *Wallet) ChangePassword(password, newPassword string) error {
 func (w *Wallet) Sign(data []byte, primary bool) (*common.Signature, error) {
 	if len(data) > 0 {
 		if primary {
-			signature, err := w.signer.Sign(data)
+			signature, err := w.Account1.signer.Sign(data)
 			if err != nil {
 				return nil, err
 			}
@@ -802,7 +590,7 @@ func (w *Wallet) Sign(data []byte, primary bool) (*common.Signature, error) {
 			}
 			return sig, nil
 		} else {
-			signature2, err := w.signer2.Sign(data)
+			signature2, err := w.Account2.signer.Sign(data)
 			if err != nil {
 				return nil, err
 			}
@@ -818,15 +606,15 @@ func (w *Wallet) Sign(data []byte, primary bool) (*common.Signature, error) {
 	return nil, fmt.Errorf("input data are empty")
 }
 
-func Verify(msg []byte, sig []byte, pubkey []byte) bool {
+func Verify(msg []byte, sig []byte, pubkey []byte, sigName, sigName2 string, isPaused, isPaused2 bool) bool {
 	var verifier oqs.Signature
 	var err error
 	primary := sig[0] == 0
 	sig = sig[1:]
 	logger.GetLogger().Println("Primary:", primary)
-	if primary && !common.IsPaused() {
+	if primary && !isPaused {
 		logger.GetLogger().Println("Primary sign")
-		err = verifier.Init(common.SigName(), nil)
+		err = verifier.Init(sigName, nil)
 		if err != nil {
 			logger.GetLogger().Println("verifier:", err)
 			return false
@@ -839,15 +627,15 @@ func Verify(msg []byte, sig []byte, pubkey []byte) bool {
 				return false
 			}
 			if !isVerified {
-				logger.GetLogger().Println("msg:", msg, "sig:", sig, "pubkey:", pubkey)
+				logger.GetLogger().Println("msg:", string(msg[:5]), "sig:", string(sig[:5]), "pubkey:", string(pubkey[:5]))
 			}
 			return isVerified
 		}
 		logger.GetLogger().Println("verifier.Details().LengthPublicKey:", verifier.Details().LengthPublicKey, "len(pubkey):", len(pubkey))
 	}
-	if !primary && !common.IsPaused2() {
+	if !primary && !isPaused2 {
 		logger.GetLogger().Println("Secondary sign")
-		err = verifier.Init(common.SigName2(), nil)
+		err = verifier.Init(sigName2, nil)
 		if err != nil {
 			logger.GetLogger().Println("verifier:", err)
 			return false
@@ -858,10 +646,14 @@ func Verify(msg []byte, sig []byte, pubkey []byte) bool {
 				logger.GetLogger().Println(err)
 				return false
 			}
+			if !isVerified {
+				logger.GetLogger().Println("msg:", string(msg[:5]), "sig:", string(sig[:5]), "pubkey:", string(pubkey[:5]))
+			}
 			return isVerified
 		}
 		logger.GetLogger().Println("verifier.Details().LengthPublicKey:", verifier.Details().LengthPublicKey, "len(pubkey):", len(pubkey))
 	}
+	logger.GetLogger().Println(primary, isPaused, isPaused2)
 	return false
 }
 
@@ -869,7 +661,7 @@ func (w *Wallet) GetSecretKey() common.PrivKey {
 	if w == nil {
 		return common.PrivKey{}
 	}
-	return w.secretKey
+	return w.Account1.secretKey
 }
 
 func (w *Wallet) Check() bool {
@@ -883,7 +675,7 @@ func (w *Wallet) GetSecretKey2() common.PrivKey {
 	if w == nil {
 		return common.PrivKey{}
 	}
-	return w.secretKey2
+	return w.Account2.secretKey
 }
 
 func (w *Wallet) Check2() bool {

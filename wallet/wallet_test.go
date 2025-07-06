@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/logger"
 	"testing"
 
@@ -110,6 +111,6 @@ func TestSignAndVerify(t *testing.T) {
 		logger.GetLogger().Fatal(err)
 	}
 	// Verify the signature using the wallet's public key
-	isVerified := Verify(message, signature.GetBytes(), wallet.PublicKey.GetBytes())
+	isVerified := Verify(message, signature.GetBytes(), wallet.PublicKey.GetBytes(), common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2())
 	assert.Equal(t, isVerified, true)
 }

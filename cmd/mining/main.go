@@ -1,22 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"github.com/okuralabs/okura-node/blocks"
 	"github.com/okuralabs/okura-node/database"
+	"github.com/okuralabs/okura-node/logger"
 	"github.com/okuralabs/okura-node/pubkeys"
 	"github.com/okuralabs/okura-node/services"
 	"github.com/okuralabs/okura-node/statistics"
 	"github.com/okuralabs/okura-node/transactionsPool"
-	"strconv"
-	"strings"
-
-	"github.com/okuralabs/okura-node/logger"
 	"github.com/okuralabs/okura-node/wallet"
-	"golang.org/x/crypto/ssh/terminal"
-
 	_ "net/http/pprof"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/okuralabs/okura-node/account"
@@ -38,16 +34,15 @@ func main() {
 	pubkeys.InitTrie()
 	// Now you can use log functions as usual
 	logger.GetLogger().Println("Application started")
-
-	fmt.Print("Enter password: ")
-	password, err := terminal.ReadPassword(0)
-	if err != nil {
-		logger.GetLogger().Fatal(err)
-	}
-
+	logger.GetLogger().Println("Password:")
+	//password, err := terminal.ReadPassword(0)
+	//if err != nil {
+	//	logger.GetLogger().Fatal(err)
+	//}
+	password := "a"
 	// Initialize wallet
 	logger.GetLogger().Println("Initializing wallet...")
-	wallet.InitActiveWallet(0, string(password))
+	wallet.InitActiveWallet(0, string(password), common.SigName(), common.SigName2())
 
 	// Initialize genesis block
 	logger.GetLogger().Println("Initializing genesis block for setting init params...")
@@ -58,7 +53,7 @@ func main() {
 	err = account.LoadAccounts(-1)
 	if err != nil {
 		addrbytes := [common.AddressLength]byte{}
-		copy(addrbytes[:], wallet.GetActiveWallet().Address.GetBytes())
+		copy(addrbytes[:], wallet.GetActiveWallet().Account1.Address.GetBytes())
 		// Initialize accounts
 		a := account.Account{
 			Balance: 0,

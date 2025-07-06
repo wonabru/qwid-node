@@ -2,6 +2,7 @@ package blocks
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/logger"
 	"github.com/okuralabs/okura-node/voting"
@@ -26,12 +27,10 @@ func ProcessBlockEncryption(block Block, lastBlock Block) error {
 		if err != nil {
 			return err
 		}
-
 		logger.GetLogger().Println("new encryption: ", enc1.ToString())
 		SetVoteEncryption(block.BaseBlock.BaseHeader.Encryption1[:], true)
 		voting.ResetLastVoting()
-
-		err = AddNewPubKeyToActiveWallet(enc1.SigName, true)
+		err = AddNewPubKeyToActiveWallet(enc1.SigName, true, block.GetHeader().Height)
 		if err != nil {
 			return err
 		}
@@ -45,7 +44,7 @@ func ProcessBlockEncryption(block Block, lastBlock Block) error {
 
 		SetVoteEncryption(block.BaseBlock.BaseHeader.Encryption2[:], false)
 		voting.ResetLastVoting()
-		err = AddNewPubKeyToActiveWallet(enc2.SigName, false)
+		err = AddNewPubKeyToActiveWallet(enc2.SigName, false, block.GetHeader().Height)
 		if err != nil {
 			return err
 		}
@@ -63,6 +62,18 @@ func SetVoteEncryption(enc []byte, primary bool) {
 	defer VoteChannelMutex.Unlock()
 	VoteChannel <- enc1
 	logger.GetLogger().Println(string(<-VoteChannel))
+}
+
+func (bl *Block) GetSigNames() (string, string, bool, bool, error) {
+	enc1, err := FromBytesToEncryptionConfig(bl.BaseBlock.BaseHeader.Encryption1[:], true)
+	if err != nil {
+		return "", "", false, false, err
+	}
+	enc2, err := FromBytesToEncryptionConfig(bl.BaseBlock.BaseHeader.Encryption2[:], false)
+	if err != nil {
+		return "", "", false, false, err
+	}
+	return enc1.SigName, enc2.SigName, enc1.IsPaused, enc2.IsPaused, nil
 }
 
 func SetEncryptionFromBlock(height int64) error {
@@ -92,6 +103,16 @@ func SetEncryptionFromBytes(enc []byte, primary bool) error {
 	if err != nil {
 		return err
 	}
-	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, primary)
+	logger.GetLogger().Println("set encryption changing. Default paused then true")
+	isPause := enc1.IsPaused
+	if primary && enc1.SigName != common.SigName() {
+		isPause = true
+	} else if !primary && enc1.SigName != common.SigName2() {
+		isPause = true
+	}
+	if isPause != enc1.IsPaused {
+		return fmt.Errorf("not proper pause set. should be %v", isPause)
+	}
+	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, isPause, primary)
 	return nil
 }

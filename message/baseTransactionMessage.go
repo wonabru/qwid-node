@@ -19,7 +19,7 @@ func (a TransactionsMessage) GetTransactionsBytes() map[[2]byte][][]byte {
 	return a.TransactionsBytes
 }
 
-func (a TransactionsMessage) GetTransactionsFromBytes() (map[[2]byte][]transactionsDefinition.Transaction, error) {
+func (a TransactionsMessage) GetTransactionsFromBytes(sigName, sigName2 string, isPaused, isPaused2 bool) (map[[2]byte][]transactionsDefinition.Transaction, error) {
 	txn := map[[2]byte][]transactionsDefinition.Transaction{}
 	for _, topic := range validTopics {
 		if _, ok := a.TransactionsBytes[topic]; ok {
@@ -35,7 +35,7 @@ func (a TransactionsMessage) GetTransactionsFromBytes() (map[[2]byte][]transacti
 					continue
 					//return nil, err
 				}
-				if at.Verify() || topic == tcpip.NonceTopic || topic == tcpip.SelfNonceTopic {
+				if at.Verify(sigName, sigName2, isPaused, isPaused2) || topic == tcpip.NonceTopic || topic == tcpip.SelfNonceTopic {
 					txn[topic] = append(txn[topic], at)
 				} else {
 					logger.GetLogger().Println("warning: transaction fail to verify")

@@ -27,15 +27,13 @@ func StoreAddress(mainAddress common.Address, pk common.PubKey) error {
 	return nil
 }
 
-func AddNewPubKeyToActiveWallet(sigName string, primary bool) error {
+func AddNewPubKeyToActiveWallet(sigName string, primary bool, height int64) error {
 	w := wallet.GetActiveWallet()
-	makeBackup := false
 	if w.GetSigName(primary) != sigName {
-		makeBackup = true
 		if primary {
-			w.HomePathOld = w.HomePath
+			w.SigName = sigName
 		} else {
-			w.HomePath2Old = w.HomePath2
+			w.SigName2 = sigName
 		}
 		err := w.AddNewEncryptionToActiveWallet(sigName, primary)
 		if err != nil {
@@ -43,25 +41,25 @@ func AddNewPubKeyToActiveWallet(sigName string, primary bool) error {
 		}
 	}
 	if primary {
-		err := StorePubKey(w.PublicKey)
+		err := StorePubKey(w.Account1.PublicKey)
 		if err != nil {
 			return err
 		}
-		err = StorePubKeyInPatriciaTrie(w.PublicKey)
+		err = StorePubKeyInPatriciaTrie(w.Account1.PublicKey)
 		if err != nil {
 			return err
 		}
 	} else {
-		err := StorePubKey(w.PublicKey2)
+		err := StorePubKey(w.Account2.PublicKey)
 		if err != nil {
 			return err
 		}
-		err = StorePubKeyInPatriciaTrie(w.PublicKey2)
+		err = StorePubKeyInPatriciaTrie(w.Account2.PublicKey)
 		if err != nil {
 			return err
 		}
 	}
-	err := w.Store(makeBackup)
+	err := w.StoreJSON()
 	if err != nil {
 		return err
 	}
@@ -100,9 +98,10 @@ func StorePubKeyInPatriciaTrie(pk common.PubKey) error {
 	addresses, err := pubkeys.LoadAddresses(pk.MainAddress)
 	if err != nil {
 		if err.Error() != "key not found" {
+			logger.GetLogger().Println(err)
 			return err
 		}
-		logger.GetLogger().Println("key not found")
+		logger.GetLogger().Println("OK", err)
 		addresses = []common.Address{}
 	}
 	if len(addresses) == 0 {

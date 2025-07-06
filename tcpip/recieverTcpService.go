@@ -93,19 +93,20 @@ func init() {
 	ipStrings := strings.Split(ips, ",")
 	// Process each IP address
 	for _, ipStr := range ipStrings {
+		logger.GetLogger().Println(ipStr)
 		// Trim any whitespace
 		ipStr = strings.TrimSpace(ipStr)
 
 		// Parse the IP address
-		ip = net.ParseIP(ips)
+		ip = net.ParseIP(ipStr)
 		if ip == nil {
-			logger.GetLogger().Println("Warning: Failed to parse WHITELIST_IP '%s' as an IP address", ips)
+			logger.GetLogger().Println("Warning: Failed to parse WHITELIST_IP '%s' as an IP address", ipStr)
 			return
 		}
 
 		ip4 = ip.To4()
 		if ip4 == nil {
-			logger.GetLogger().Println("Warning: failed to parse WHITELIST_IP '%s' as 4 byte format", ips)
+			logger.GetLogger().Println("Warning: failed to parse WHITELIST_IP '%s' as 4 byte format", ipStr)
 			return
 		}
 		AddWhiteListIPs([4]byte(ip4))

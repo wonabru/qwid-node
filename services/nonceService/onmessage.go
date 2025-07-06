@@ -49,7 +49,7 @@ func OnMessage(addr [4]byte, m []byte) {
 		//defer common.NonceMutex.Unlock()
 		//fmt.Printf("%v", nonceTransaction)
 		//var topic [2]byte
-		txn, err := amsg.(message.TransactionsMessage).GetTransactionsFromBytes()
+		txn, err := amsg.(message.TransactionsMessage).GetTransactionsFromBytes(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2())
 		if err != nil {
 			return
 		}
@@ -71,7 +71,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			return
 		}
 
-		isValid = transaction.Verify()
+		isValid = transaction.Verify(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2())
 		if isValid == false {
 			logger.GetLogger().Println("nonce signature is invalid")
 			tcpip.ReduceAndCheckIfBanIP(addr)
@@ -123,7 +123,7 @@ func OnMessage(addr [4]byte, m []byte) {
 
 		// checking if enough coins staked
 		if _, sumStaked, operationalAcc := account.GetStakedInDelegatedAccount(n); int64(sumStaked) < common.MinStakingForNode || !bytes.Equal(operationalAcc.Address[:], mainAddress.GetBytes()) {
-			logger.GetLogger().Println("not enough staked coins to be a node or not valid operational account")
+			logger.GetLogger().Println("not enough staked coins to be a node or not valid operational account", sumStaked, common.MinStakingForNode, operationalAcc.Address[:5], mainAddress.GetBytes()[:5])
 			tcpip.ReduceAndCheckIfBanIP(addr)
 			return
 		}
@@ -212,7 +212,7 @@ func OnMessage(addr [4]byte, m []byte) {
 					logger.GetLogger().Println("block of too short chain")
 					return
 				}
-				merkleTrie, err := blocks.CheckBaseBlock(newBlock, lastBlock)
+				merkleTrie, err := blocks.CheckBaseBlock(newBlock, lastBlock, true)
 				defer merkleTrie.Destroy()
 				if err != nil {
 					logger.GetLogger().Println(err)

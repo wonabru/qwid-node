@@ -32,6 +32,7 @@ type EncryptionConfig struct {
 }
 
 var encryptionConfigInstance *EncryptionConfig
+var encryptionConfigInstanceOld *EncryptionConfig
 
 func GetEncryptionConfigInstance() *EncryptionConfig {
 	if encryptionConfigInstance == nil {
@@ -41,8 +42,31 @@ func GetEncryptionConfigInstance() *EncryptionConfig {
 	return encryptionConfigInstance
 }
 
+func GetEncryptionConfigInstanceOld() *EncryptionConfig {
+	if encryptionConfigInstanceOld == nil {
+		// Initialize with a function to avoid init() if not needed immediately
+		initEncryptionConfigInstanceOld()
+	}
+	return encryptionConfigInstanceOld
+}
+
 func initEncryptionConfigInstance() {
 	encryptionConfigInstance = &EncryptionConfig{
+		pubKeyLength:      897,
+		privateKeyLength:  1281,
+		signatureLength:   752,
+		sigName:           "Falcon-512",
+		isPaused:          0,
+		pubKeyLength2:     5554,
+		privateKeyLength2: 40,
+		signatureLength2:  964,
+		sigName2:          "MAYO-5",
+		isPaused2:         0,
+	}
+}
+
+func initEncryptionConfigInstanceOld() {
+	encryptionConfigInstanceOld = &EncryptionConfig{
 		pubKeyLength:      897,
 		privateKeyLength:  1281,
 		signatureLength:   752,
@@ -63,6 +87,17 @@ func SetEncryption(sigName string, pubKeyLength, privateKeyLength, signatureLeng
 
 		}
 	}
+	enc := GetEncryptionConfigInstance()
+	isP := false
+	if enc.isPaused == 1 {
+		isP = true
+	}
+	GetEncryptionConfigInstanceOld().SetEncryption(enc.sigName, int(enc.pubKeyLength), int(enc.privateKeyLength), int(enc.signatureLength), isP, true)
+	isP = false
+	if enc.isPaused2 == 1 {
+		isP = true
+	}
+	GetEncryptionConfigInstanceOld().SetEncryption(enc.sigName2, int(enc.pubKeyLength2), int(enc.privateKeyLength2), int(enc.signatureLength2), isP, false)
 	GetEncryptionConfigInstance().SetEncryption(sigName, pubKeyLength, privateKeyLength, signatureLength, isPaused, primary)
 }
 
@@ -70,6 +105,7 @@ func (ec *EncryptionConfig) SetEncryption(sigName string, pubKeyLength, privateK
 
 	ec.mu.Lock()
 	defer ec.mu.Unlock()
+
 	if primary {
 		ec.sigName = sigName
 		ec.pubKeyLength = int32(pubKeyLength)
@@ -133,16 +169,28 @@ func IsPaused2() bool {
 	return atomic.LoadInt32(paused) == 1
 }
 
-func PubKeyLength() int {
+func PubKeyLength(withPrev bool) int {
 	encryptionConfigInstance.mu.RLock()
 	defer encryptionConfigInstance.mu.RUnlock()
-	return int(encryptionConfigInstance.pubKeyLength)
+	encryptionConfigInstanceOld.mu.RLock()
+	defer encryptionConfigInstanceOld.mu.RUnlock()
+	if !withPrev || encryptionConfigInstance.pubKeyLength < encryptionConfigInstanceOld.pubKeyLength {
+		return int(encryptionConfigInstance.pubKeyLength)
+	} else {
+		return int(encryptionConfigInstanceOld.pubKeyLength)
+	}
 }
 
-func PubKeyLength2() int {
+func PubKeyLength2(withPrev bool) int {
 	encryptionConfigInstance.mu.RLock()
 	defer encryptionConfigInstance.mu.RUnlock()
-	return int(encryptionConfigInstance.pubKeyLength2)
+	encryptionConfigInstanceOld.mu.RLock()
+	defer encryptionConfigInstanceOld.mu.RUnlock()
+	if !withPrev || encryptionConfigInstance.pubKeyLength2 < encryptionConfigInstanceOld.pubKeyLength2 {
+		return int(encryptionConfigInstance.pubKeyLength2)
+	} else {
+		return int(encryptionConfigInstanceOld.pubKeyLength2)
+	}
 }
 
 func PrivateKeyLength() int {
@@ -157,20 +205,32 @@ func PrivateKeyLength2() int {
 	return int(encryptionConfigInstance.privateKeyLength2)
 }
 
-func SignatureLength() int {
+func SignatureLength(withPrev bool) int {
 	encryptionConfigInstance.mu.RLock()
 	defer encryptionConfigInstance.mu.RUnlock()
-	return int(encryptionConfigInstance.signatureLength)
+	encryptionConfigInstanceOld.mu.RLock()
+	defer encryptionConfigInstanceOld.mu.RUnlock()
+	if !withPrev || encryptionConfigInstance.signatureLength < encryptionConfigInstanceOld.signatureLength {
+		return int(encryptionConfigInstance.signatureLength)
+	} else {
+		return int(encryptionConfigInstanceOld.signatureLength)
+	}
 }
 
-func SignatureLength2() int {
+func SignatureLength2(withPrev bool) int {
 	encryptionConfigInstance.mu.RLock()
 	defer encryptionConfigInstance.mu.RUnlock()
-	return int(encryptionConfigInstance.signatureLength2)
+	encryptionConfigInstanceOld.mu.RLock()
+	defer encryptionConfigInstanceOld.mu.RUnlock()
+	if !withPrev || encryptionConfigInstance.signatureLength2 < encryptionConfigInstanceOld.signatureLength2 {
+		return int(encryptionConfigInstance.signatureLength2)
+	} else {
+		return int(encryptionConfigInstanceOld.signatureLength2)
+	}
 }
 
 func (a PubKey) GetLength() int {
-	if PubKeyLength() == PubKeyLength2() {
+	if PubKeyLength(false) == PubKeyLength2(false) {
 		logger.GetLogger().Fatal("pubkey length in bytes cannot be equal")
 	}
 	return len(a.ByteValue)
@@ -262,10 +322,10 @@ type PubKey struct {
 }
 
 func (pk *PubKey) Init(b []byte, mainAddress Address) error {
-	if len(b) != PubKeyLength() && len(b) != PubKeyLength2() && encryptionConfigInstance.isPaused == 0 && encryptionConfigInstance.isPaused2 == 0 {
-		return fmt.Errorf("error Pubkey initialization with wrong length, should be %v, %v, got %v", PubKeyLength(), PubKeyLength2(), len(b))
+	if len(b) != PubKeyLength(false) && len(b) != PubKeyLength2(false) && encryptionConfigInstance.isPaused == 0 && encryptionConfigInstance.isPaused2 == 0 {
+		return fmt.Errorf("error Pubkey initialization with wrong length, should be %v, %v, got %v", PubKeyLength(false), PubKeyLength2(false), len(b))
 	}
-	if len(b) == PubKeyLength() {
+	if len(b) == PubKeyLength(false) {
 		pk.Primary = true
 	} else {
 		pk.Primary = false
@@ -338,18 +398,18 @@ type Signature struct {
 func (s *Signature) Init(b []byte, address Address) error {
 	var primary bool
 	if len(b) == 0 {
-		return fmt.Errorf("error Signature initialization with wrong length, should be %v %v", SignatureLength(), len(b))
+		return fmt.Errorf("error Signature initialization with wrong length, should be %v %v", SignatureLength(false), len(b))
 	}
 	if b[0] == 0 {
 		primary = true
 	} else {
 		primary = false
 	}
-	if primary && len(b) > SignatureLength()+1 {
-		return fmt.Errorf("error Signature initialization with wrong length, should be %v %v", SignatureLength(), len(b))
+	if primary && len(b) > SignatureLength(false)+1 {
+		return fmt.Errorf("error Signature initialization with wrong length, should be %v %v", SignatureLength(false), len(b))
 	}
-	if !primary && len(b) > SignatureLength2()+1 {
-		return fmt.Errorf("error Signature 2 initialization with wrong length, should be %v %v", SignatureLength2(), len(b))
+	if !primary && len(b) > SignatureLength2(false)+1 {
+		return fmt.Errorf("error Signature 2 initialization with wrong length, should be %v %v", SignatureLength2(false), len(b))
 	}
 	s.ByteValue = b[:]
 	s.Address = address
@@ -456,7 +516,7 @@ func EmptyAddress() Address {
 
 func EmptySignature() Signature {
 	s := Signature{}
-	tmp := make([]byte, SignatureLength()+1)
+	tmp := make([]byte, SignatureLength(false)+1)
 	s.Init(tmp, EmptyAddress())
 	return s
 }

@@ -76,57 +76,37 @@ func StoreWalletNewGenerated(w *wallet.Wallet) error {
 	fmt.Printf("Write permission: %v\n", hasWritePermission)
 	fmt.Printf("Execute permission: %v\n", hasExecutePermission)
 
-	folderPath2 := w.HomePath2
-	err = os.MkdirAll(w.HomePath2, 0755)
-	if err != nil {
-		return err
-	}
-	fileInfo2, err := os.Stat(folderPath2)
-	if err != nil {
-		return fmt.Errorf("Error getting folder info: %v", err)
-	}
-	// Get the folder permissions
-	permissions2 := fileInfo2.Mode().Perm()
-	fmt.Printf("Folder permissions: %v\n", permissions2)
-	// Check if the current user has read, write, and execute permissions
-	hasReadPermission2 := permissions2&0400 != 0
-	hasWritePermission2 := permissions2&0200 != 0
-	hasExecutePermission2 := permissions2&0100 != 0
-	fmt.Printf("Read permission: %v\n", hasReadPermission2)
-	fmt.Printf("Write permission: %v\n", hasWritePermission2)
-	fmt.Printf("Execute permission: %v\n", hasExecutePermission2)
-
-	err = w.Store(true)
+	err = w.StoreJSON()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func SetCurrentEncryptions() error {
+func SetCurrentEncryptions() (string, string, error) {
 	clientrpc.InRPC <- SignMessage([]byte("ENCR"))
 	var reply []byte
 	reply = <-clientrpc.OutRPC
 	if bytes.Equal(reply, []byte("Timeout")) {
-		return fmt.Errorf("timout")
+		return "", "", fmt.Errorf("timout")
 	}
 	enc1b, left, err := common.BytesWithLenToBytes(reply)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	enc2b, left, err := common.BytesWithLenToBytes(left)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	enc1, err := blocks.FromBytesToEncryptionConfig(enc1b, true)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, true)
 	enc2, err := blocks.FromBytesToEncryptionConfig(enc2b, false)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, enc2.IsPaused, false)
-	return nil
+	return enc1.SigName, enc2.SigName, nil
 }

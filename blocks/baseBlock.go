@@ -39,11 +39,11 @@ func FromBytesToEncryptionConfig(bb []byte, primary bool) (oqs.ConfigEnc, error)
 	if len(bb) == 0 {
 
 		if !common.IsPaused() && primary {
-			enc := oqs.CreateEncryptionScheme(common.SigName(), common.PubKeyLength(), common.PrivateKeyLength(), common.SignatureLength(), common.IsPaused())
+			enc := oqs.CreateEncryptionScheme(common.SigName(), common.PubKeyLength(false), common.PrivateKeyLength(), common.SignatureLength(false), common.IsPaused())
 			return enc, nil
 		} else if !common.IsPaused2() && !primary {
 			//TODO maybe one should make it better
-			enc := oqs.CreateEncryptionScheme(common.SigName2(), common.PubKeyLength2(), common.PrivateKeyLength2(), common.SignatureLength2(), common.IsPaused2())
+			enc := oqs.CreateEncryptionScheme(common.SigName2(), common.PubKeyLength2(false), common.PrivateKeyLength2(), common.SignatureLength2(false), common.IsPaused2())
 			return enc, nil
 		} else {
 			return oqs.ConfigEnc{}, fmt.Errorf("no valid encyption scheme")
@@ -106,7 +106,7 @@ func (b *BaseHeader) GetBytes() []byte {
 	return rb
 }
 
-func (bh *BaseHeader) Verify() bool {
+func (bh *BaseHeader) Verify(sigName, sigName2 string, isPaused, isPaused2 bool) bool {
 	signatureBlockHeaderMessage := bh.GetBytesWithoutSignature()
 	if !bytes.Equal(signatureBlockHeaderMessage, bh.SignatureMessage) {
 		logger.GetLogger().Println("signatures are different")
@@ -127,7 +127,7 @@ func (bh *BaseHeader) Verify() bool {
 		logger.GetLogger().Println(err)
 		return false
 	}
-	return wallet.Verify(calcHash, bh.Signature.GetBytes(), pk.GetBytes())
+	return wallet.Verify(calcHash, bh.Signature.GetBytes(), pk.GetBytes(), sigName, sigName2, isPaused, isPaused2)
 }
 
 func (bh *BaseHeader) Sign(primary bool) (common.Signature, []byte, error) {
@@ -145,10 +145,10 @@ func (bh *BaseHeader) Sign(primary bool) (common.Signature, []byte, error) {
 }
 
 func (bh *BaseHeader) GetFromBytes(b []byte) ([]byte, error) {
-	if len(b) < 117+common.SignatureLength() && len(b) < 117+common.SignatureLength2() {
+	logger.GetLogger().Println("block decompile len bytes ", len(b))
+	if len(b) < 117 {
 		return nil, fmt.Errorf("not enough bytes to decode BaseHeader")
 	}
-	//logger.GetLogger().Println("block decompile len bytes ", len(b))
 
 	bh.PreviousHash = common.GetHashFromBytes(b[:32])
 	bh.Difficulty = common.GetInt32FromByte(b[32:36])
@@ -207,7 +207,8 @@ func (bb *BaseBlock) GetBytes() []byte {
 }
 
 func (bb *BaseBlock) GetFromBytes(b []byte) ([]byte, error) {
-	if len(b) < 116+common.SignatureLength()+44+16 {
+	logger.GetLogger().Println("bytes to decode BaseBlock", len(b))
+	if len(b) < 116+44+16 {
 		return nil, fmt.Errorf("not enough bytes to decode BaseBlock")
 	}
 	b, err := bb.BaseHeader.GetFromBytes(b)

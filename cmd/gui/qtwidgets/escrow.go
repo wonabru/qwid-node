@@ -56,10 +56,10 @@ func ShowEscrowPage() *widgets.QTabWidget {
 		pk := common.PubKey{}
 		if pubkeyInclude.IsChecked() {
 			if primaryChb.IsChecked() {
-				pk = MainWallet.PublicKey
+				pk = MainWallet.Account1.PublicKey
 				primary = true
 			} else {
-				pk = MainWallet.PublicKey2
+				pk = MainWallet.Account2.PublicKey
 				primary = false
 			}
 		} else {

@@ -16,6 +16,7 @@ import (
 
 var StatsLabel *widgets.QLabel
 var MainWallet *wallet.Wallet
+var MainGeneralWallet *wallet.Wallet
 
 func UpdateAccountStats() {
 	if (MainWallet == nil) || ((MainWallet != nil) && MainWallet.Check() == false) {
@@ -42,7 +43,7 @@ func UpdateAccountStats() {
 	txt += fmt.Sprintln("Heights max:", st.HeightMax)
 	txt += fmt.Sprintln("Time interval [sec.]:", st.TimeInterval)
 	txt += fmt.Sprintln("Difficulty:", st.Difficulty)
-	txt += fmt.Sprintln("\nPrice Oracle:", st.PriceOracle, " OKU/USD")
+	txt += fmt.Sprintln("\nPrice Oracle:", st.PriceOracle, " KURA/USD")
 	txt += fmt.Sprintln("Rand Oracle:", st.RandOracle)
 	txt += fmt.Sprintln("\nNumber of transactions : ", st.Transactions, "/", st.TransactionsPending)
 	txt += fmt.Sprintln("Size of transactions [kB] : ", st.TransactionsSize/1024, "/", st.TransactionsPendingSize/1024)
@@ -53,7 +54,7 @@ func UpdateAccountStats() {
 	if MainWallet.Check() == false {
 		return
 	}
-	inb := append([]byte("ACCT"), MainWallet.Address.GetBytes()...)
+	inb := append([]byte("ACCT"), MainWallet.Account1.Address.GetBytes()...)
 	clientrpc.InRPC <- SignMessage(inb)
 	var re []byte
 	var acc account.Account
@@ -64,7 +65,7 @@ func UpdateAccountStats() {
 	}
 	err = acc.Unmarshal(re)
 	if err != nil {
-		logger.GetLogger().Println("cannot unmarshal account")
+		logger.GetLogger().Println("cannot unmarshal account", err)
 		common.SetIsPaused(!common.IsPaused(), true)
 		return
 	}
@@ -82,7 +83,7 @@ func UpdateAccountStats() {
 		if MainWallet.Check() == false {
 			return
 		}
-		inb = append([]byte("STAK"), MainWallet.Address.GetBytes()...)
+		inb = append([]byte("STAK"), MainWallet.Account1.Address.GetBytes()...)
 		inb = append(inb, byte(i))
 		clientrpc.InRPC <- SignMessage(inb)
 		re = <-clientrpc.OutRPC
@@ -100,15 +101,15 @@ func UpdateAccountStats() {
 		locks += account.Int64toFloat64(common.GetInt64FromByte(re[len(re)-8:]))
 	}
 
-	txt += fmt.Sprintln("\n\nYour Address:", MainWallet.Address.GetHex())
-	txt += fmt.Sprintf("Your holdings: %18.8f OKU\n", conf+stake+rewards+uncTx+uncStake+uncRewards)
-	txt += fmt.Sprintf("Confirmed balance: %18.8f OKU\n", conf)
-	//txt += fmt.Sprintf("Transactions unconfirmed balance: %18.8f OKU\n", uncTx)
-	txt += fmt.Sprintf("Staked amount: %18.8f OKU\n", stake)
-	txt += fmt.Sprintf("Locked amount: %18.8f OKU\n", locks)
-	//txt += fmt.Sprintf("Unconfirmed staked amount: %18.8f OKU\n", uncStake)
-	txt += fmt.Sprintf("Rewards amount: %18.8f OKU\n", rewards)
-	//txt += fmt.Sprintf("Unconfirmed rewards amount: %18.8f OKU\n", uncRewards)
+	txt += fmt.Sprintln("\n\nYour Address:", MainWallet.Account1.Address.GetHex())
+	txt += fmt.Sprintf("Your holdings: %18.8f KURA\n", conf+stake+rewards+uncTx+uncStake+uncRewards)
+	txt += fmt.Sprintf("Confirmed balance: %18.8f KURA\n", conf)
+	//txt += fmt.Sprintf("Transactions unconfirmed balance: %18.8f KURA\n", uncTx)
+	txt += fmt.Sprintf("Staked amount: %18.8f KURA\n", stake)
+	txt += fmt.Sprintf("Locked amount: %18.8f KURA\n", locks)
+	//txt += fmt.Sprintf("Unconfirmed staked amount: %18.8f KURA\n", uncStake)
+	txt += fmt.Sprintf("Rewards amount: %18.8f KURA\n", rewards)
+	//txt += fmt.Sprintf("Unconfirmed rewards amount: %18.8f KURA\n", uncRewards)
 	txt += fmt.Sprintf("\nStaking details:\n")
 	for i, acc := range stakeAccs {
 		if acc.StakedBalance == 0 && acc.StakingRewards == 0 {

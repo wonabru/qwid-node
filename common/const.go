@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"sync"
@@ -10,7 +11,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/okuralabs/okura-node/crypto/oqs"
 	"github.com/okuralabs/okura-node/logger"
-	"golang.org/x/exp/rand"
 )
 
 var (
@@ -40,7 +40,7 @@ var (
 	BannedTimeSeconds              int64   = 60                  // 1 minute
 	MessageInitialization                  = [4]byte{2, 0, 2, 9} // will be overwrite in init() by MaxMessageSizeBytes
 	MaxMessageSizeBytes            int32   = 151126018           // should be adjusted to maximal message sent
-	DefaultWalletHomePath                  = "/.okura/db/wallet/"
+	DefaultWalletHomePath                  = "/.okura/wallet/"
 	DefaultBlockchainHomePath              = "/.okura/db/blockchain/"
 	ConnectionsWithoutVerification         = [][]byte{[]byte("TRAN"), []byte("STAT"), []byte("ENCR"), []byte("DETS"), []byte("STAK"), []byte("ADEX")}
 	CurrentHeightOfNetwork         int64   = 23
@@ -78,7 +78,7 @@ var (
 
 var chainID = int16(23)
 var chainIDMutex = sync.Mutex{}
-var nodeSignPrimary = true
+var nodeSignPrimary = false
 var delegatedAccount Address
 var rewardPercentage int16
 var ShiftToPastInReset int64
@@ -111,12 +111,12 @@ func GetNodeSignPrimary(height int64) bool {
 			return false
 		}
 	}
-	if nodeSignPrimary && (IsPaused() == false) {
-		return true
-	}
-	if (nodeSignPrimary == false) && (IsPaused2() == false) {
-		return false
-	}
+	//if nodeSignPrimary && (IsPaused() == false) {
+	//	return true
+	//}
+	//if (nodeSignPrimary == false) && (IsPaused2() == false) {
+	//	return false
+	//}
 	if IsPaused() == false {
 		return true
 	}

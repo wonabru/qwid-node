@@ -33,7 +33,7 @@ func InitStateDB() {
 }
 
 func GenerateOptDataDEX(tx transactionsDefinition.Transaction, operation int) ([]byte, common.Address, int64, int64, float64, error) {
-	// 2 - adding liquidity, 3 - buy trade, 4 -sell trade, 5 - withdraw token, 6 - withdraw OKU (5,6 inactive, just withdraw is selling opposite)
+	// 2 - adding liquidity, 3 - buy trade, 4 -sell trade, 5 - withdraw token, 6 - withdraw KURA (5,6 inactive, just withdraw is selling opposite)
 	amountToken := common.GetInt64FromByte(tx.TxData.OptData)
 	sender := tx.TxParam.Sender
 	tokenAddress := tx.ContractAddress
@@ -225,7 +225,7 @@ func EvaluateSCForBlock(bl Block) (bool, map[[common.HashLength]byte]string, map
 			copy(aa[:], t.TxParam.Sender.GetBytes())
 			dex := common.GetDexAccountAddress()
 			copy(da[:], dex.GetBytes())
-			// transfering coins OKU
+			// transfering coins KURA
 
 			err = AddBalance(aa, coinAmount)
 			if err != nil {

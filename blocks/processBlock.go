@@ -15,7 +15,7 @@ import (
 	"github.com/okuralabs/okura-node/voting"
 )
 
-func CheckBaseBlock(newBlock Block, lastBlock Block) (*transactionsPool.MerkleTree, error) {
+func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*transactionsPool.MerkleTree, error) {
 	blockHeight := newBlock.GetHeader().Height
 	if newBlock.GetBlockSupply() > common.MaxTotalSupply {
 		return nil, fmt.Errorf("supply is too high")
@@ -66,6 +66,10 @@ func CheckBaseBlock(newBlock Block, lastBlock Block) (*transactionsPool.MerkleTr
 	blockTime := newBlock.GetBlockTimeStamp()
 	currTime := common.GetCurrentTimeStampInSecond()
 	shouldCheck := !((currTime - blockTime) > int64(common.BlockTimeInterval)*common.VotingHeightDistance)
+	logger.GetLogger().Println("should check pausing:", shouldCheck)
+	if forceShouldCheck == false {
+		shouldCheck = false
+	}
 	if !common.IsSyncing.Load() && !bytes.Equal(newBlock.BaseBlock.BaseHeader.Encryption1[:], lastBlock.BaseBlock.BaseHeader.Encryption1[:]) {
 		enc1, err := FromBytesToEncryptionConfig(newBlock.BaseBlock.BaseHeader.Encryption1[:], true)
 		if err != nil {
@@ -85,8 +89,8 @@ func CheckBaseBlock(newBlock Block, lastBlock Block) (*transactionsPool.MerkleTr
 			if enc1.IsPaused == true && common.IsPaused() == true && enc1.SigName == common.SigName() {
 				return nil, fmt.Errorf("pausing fails, encryption is just puased, 1")
 			}
-			if enc1.SigName != common.SigName() && (enc1.IsPaused == true) {
-				return nil, fmt.Errorf("new encryption has to be fully functional from beginning, so no paused, 1")
+			if enc1.SigName != common.SigName() && (enc1.IsPaused == false) {
+				return nil, fmt.Errorf("new encryption has to be paused, 1")
 			}
 
 			if shouldCheck && (enc1.SigName != common.SigName()) && !voting.VerifyEncryptionForReplacing(blockHeight, totalStaked, true) {
@@ -119,8 +123,8 @@ func CheckBaseBlock(newBlock Block, lastBlock Block) (*transactionsPool.MerkleTr
 			if enc2.IsPaused == true && common.IsPaused2() == true && enc2.SigName == common.SigName2() {
 				return nil, fmt.Errorf("pausing fails, encryption is just puased, 2")
 			}
-			if enc2.SigName != common.SigName2() && (enc2.IsPaused == true) {
-				return nil, fmt.Errorf("new encryption has to be fully functional from beginning, so no paused, 2")
+			if enc2.SigName != common.SigName2() && (enc2.IsPaused == false) {
+				return nil, fmt.Errorf("new encryption has to be paused, 2")
 			}
 			if shouldCheck && (enc2.SigName != common.SigName2()) && !voting.VerifyEncryptionForReplacing(blockHeight, totalStaked, false) {
 				return nil, fmt.Errorf("voting replacement encryption check fails, 2")
@@ -412,7 +416,11 @@ func CheckBlockAndTransactions(newBlock *Block, lastBlock Block, merkleTrie *tra
 	}
 
 	head := newBlock.GetHeader()
-	if head.Verify() == false {
+	sigName, sigName2, isPaused, isPaused2, err := newBlock.GetSigNames()
+	if err != nil {
+		fmt.Errorf("%v: CheckBlockAndTransactions", err)
+	}
+	if head.Verify(sigName, sigName2, isPaused, isPaused2) == false {
 		return fmt.Errorf("header fails to verify: CheckBlockAndTransactions")
 	}
 	return nil
@@ -427,7 +435,7 @@ func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *tr
 	}
 	opAccBlockAddr := newBlock.GetHeader().OperatorAccount
 	if _, sumStaked, opAcc := account.GetStakedInDelegatedAccount(n); int64(sumStaked) < common.MinStakingForNode || !bytes.Equal(opAcc.Address[:], opAccBlockAddr.GetBytes()) {
-		return fmt.Errorf("not enough staked coins to be a node or not valid operetional account: CheckBlockAndTransferFunds")
+		return fmt.Errorf("not enough staked coins to be a node or not valid operetional account: CheckBlockAndTransferFunds %v %v %v %v", int64(sumStaked), common.MinStakingForNode, opAcc.Address[:5], opAccBlockAddr.GetBytes()[:5])
 	}
 
 	reward, totalFee, err := CheckBlockTransfers(*newBlock, lastBlock, false)
@@ -457,8 +465,11 @@ func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *tr
 		return err
 	}
 	head := newBlock.GetHeader()
-
-	if head.Verify() == false {
+	sigName, sigName2, isPaused, isPaused2, err := newBlock.GetSigNames()
+	if err != nil {
+		return fmt.Errorf("%v: CheckBlockAndTransferFunds", err)
+	}
+	if head.Verify(sigName, sigName2, isPaused, isPaused2) == false {
 		return fmt.Errorf("header fails to verify: CheckBlockAndTransferFunds")
 	}
 

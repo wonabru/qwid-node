@@ -31,7 +31,7 @@ func OnMessage(addr [4]byte, m []byte) {
 	switch string(amsg.GetHead()) {
 	case "tx":
 		msg := amsg.(message.TransactionsMessage)
-		txn, err := msg.GetTransactionsFromBytes()
+		txn, err := msg.GetTransactionsFromBytes(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2())
 		if err != nil {
 			return
 		}

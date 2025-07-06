@@ -90,7 +90,7 @@ func SetAccountByAddressBytes(address []byte) Account {
 	return dexAccount
 }
 
-// GetBalanceConfirmedFloat get amount of confirmed OKU in human-readable format
+// GetBalanceConfirmedFloat get amount of confirmed KURA in human-readable format
 func (a *Account) GetBalanceConfirmedFloat() float64 {
 	return float64(a.Balance) * math.Pow10(-int(common.Decimals))
 }
@@ -109,7 +109,7 @@ func (a Account) Marshal() []byte {
 
 func (a *Account) Unmarshal(data []byte) error {
 	if len(data) < 37 {
-		return fmt.Errorf("wrong number of bytes in unmarshal account")
+		return fmt.Errorf("wrong number of bytes in unmarshal account %v", len(data))
 	}
 	a.Balance = common.GetInt64FromByte(data[:8])
 
