@@ -78,7 +78,7 @@ var (
 
 var chainID = int16(23)
 var chainIDMutex = sync.Mutex{}
-var nodeSignPrimary = true
+var nodeSignPrimary = false
 var delegatedAccount Address
 var rewardPercentage int16
 var ShiftToPastInReset int64
@@ -111,12 +111,12 @@ func GetNodeSignPrimary(height int64) bool {
 			return false
 		}
 	}
-	if nodeSignPrimary && (IsPaused() == false) {
-		return true
-	}
-	if (nodeSignPrimary == false) && (IsPaused2() == false) {
-		return false
-	}
+	//if nodeSignPrimary && (IsPaused() == false) {
+	//	return true
+	//}
+	//if (nodeSignPrimary == false) && (IsPaused2() == false) {
+	//	return false
+	//}
 	if IsPaused() == false {
 		return true
 	}
