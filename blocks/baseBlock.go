@@ -145,10 +145,10 @@ func (bh *BaseHeader) Sign(primary bool) (common.Signature, []byte, error) {
 }
 
 func (bh *BaseHeader) GetFromBytes(b []byte) ([]byte, error) {
-	if len(b) < 118 {
+	logger.GetLogger().Println("block decompile len bytes ", len(b))
+	if len(b) < 117 {
 		return nil, fmt.Errorf("not enough bytes to decode BaseHeader")
 	}
-	//logger.GetLogger().Println("block decompile len bytes ", len(b))
 
 	bh.PreviousHash = common.GetHashFromBytes(b[:32])
 	bh.Difficulty = common.GetInt32FromByte(b[32:36])
