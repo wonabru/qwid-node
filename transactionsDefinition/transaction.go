@@ -229,7 +229,7 @@ func CheckFromDBPoolTx(prefix []byte, hashTransaction []byte) bool {
 }
 
 // Verify - checking if hash is correct and signature
-func (tx *Transaction) Verify(sigName, sigName2 string, isPaused, isPaused2 bool) bool {
+func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tmp bool) bool {
 	recipientAddress := tx.TxData.Recipient
 	n, err := account.IntDelegatedAccountFromAddress(recipientAddress)
 	if tx.GetData().Amount < 0 && err != nil && n < 512 {
@@ -307,7 +307,8 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPaused, isPaused2 bool
 		}
 		pkb = pkp.GetBytes()
 	}
-	return wallet.Verify(b, signature.GetBytes(), pkb, sigName, sigName2, isPaused, isPaused2)
+	logger.GetLogger().Println(sigName, sigName2, isPausedTmp, isPaused2Tmp)
+	return wallet.Verify(b, signature.GetBytes(), pkb, sigName, sigName2, isPausedTmp, isPaused2Tmp)
 }
 
 func (tx *Transaction) Sign(w *wallet.Wallet, primary bool) error {
