@@ -229,7 +229,7 @@ func ShowWalletPage() *widgets.QTabWidget {
 			widgets.QMessageBox_Information(nil, "Error", "Passwords do not match", widgets.QMessageBox__Close, widgets.QMessageBox__Close)
 			return
 		}
-		err := MainGeneralWallet.ChangePassword(input.Text(), newPassword.Text())
+		err := MainWallet.ChangePassword(input.Text(), newPassword.Text())
 		if err != nil {
 			widgets.QMessageBox_Information(nil, "Error", "Wrong current password", widgets.QMessageBox__Close, widgets.QMessageBox__Close)
 			return
