@@ -611,9 +611,9 @@ func Verify(msg []byte, sig []byte, pubkey []byte, sigName, sigName2 string, isP
 	var err error
 	primary := sig[0] == 0
 	sig = sig[1:]
-	logger.GetLogger().Println("Primary:", primary)
+	//logger.GetLogger().Println("Primary:", primary)
 	if primary && !isPaused {
-		logger.GetLogger().Println("Primary sign")
+		//logger.GetLogger().Println("Primary sign")
 		err = verifier.Init(sigName, nil)
 		if err != nil {
 			logger.GetLogger().Println("verifier:", err)
@@ -634,7 +634,7 @@ func Verify(msg []byte, sig []byte, pubkey []byte, sigName, sigName2 string, isP
 		logger.GetLogger().Println("verifier.Details().LengthPublicKey:", verifier.Details().LengthPublicKey, "len(pubkey):", len(pubkey))
 	}
 	if !primary && !isPaused2 {
-		logger.GetLogger().Println("Secondary sign")
+		//logger.GetLogger().Println("Secondary sign")
 		err = verifier.Init(sigName2, nil)
 		if err != nil {
 			logger.GetLogger().Println("verifier:", err)
@@ -653,7 +653,7 @@ func Verify(msg []byte, sig []byte, pubkey []byte, sigName, sigName2 string, isP
 		}
 		logger.GetLogger().Println("verifier.Details().LengthPublicKey:", verifier.Details().LengthPublicKey, "len(pubkey):", len(pubkey))
 	}
-	logger.GetLogger().Println(primary, isPaused, isPaused2)
+	//logger.GetLogger().Println(primary, isPaused, isPaused2)
 	return false
 }
 
