@@ -207,7 +207,8 @@ func (bb *BaseBlock) GetBytes() []byte {
 }
 
 func (bb *BaseBlock) GetFromBytes(b []byte) ([]byte, error) {
-	if len(b) < 116+common.SignatureLength(true)+44+16 {
+	logger.GetLogger().Println("bytes to decode BaseBlock", len(b))
+	if len(b) < 116+44+16 {
 		return nil, fmt.Errorf("not enough bytes to decode BaseBlock")
 	}
 	b, err := bb.BaseHeader.GetFromBytes(b)
