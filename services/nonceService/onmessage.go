@@ -123,7 +123,7 @@ func OnMessage(addr [4]byte, m []byte) {
 
 		// checking if enough coins staked
 		if _, sumStaked, operationalAcc := account.GetStakedInDelegatedAccount(n); int64(sumStaked) < common.MinStakingForNode || !bytes.Equal(operationalAcc.Address[:], mainAddress.GetBytes()) {
-			logger.GetLogger().Println("not enough staked coins to be a node or not valid operational account")
+			logger.GetLogger().Println("not enough staked coins to be a node or not valid operational account", sumStaked, common.MinStakingForNode, operationalAcc.Address[:5], mainAddress.GetBytes()[:5])
 			tcpip.ReduceAndCheckIfBanIP(addr)
 			return
 		}
