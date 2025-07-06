@@ -398,18 +398,18 @@ type Signature struct {
 func (s *Signature) Init(b []byte, address Address) error {
 	var primary bool
 	if len(b) == 0 {
-		return fmt.Errorf("error Signature initialization with wrong length, should be %v %v", SignatureLength(true), len(b))
+		return fmt.Errorf("error Signature initialization with wrong length, should be %v %v", SignatureLength(false), len(b))
 	}
 	if b[0] == 0 {
 		primary = true
 	} else {
 		primary = false
 	}
-	if primary && len(b) > SignatureLength(true)+1 {
-		return fmt.Errorf("error Signature initialization with wrong length, should be %v %v", SignatureLength(true), len(b))
+	if primary && len(b) > SignatureLength(false)+1 {
+		return fmt.Errorf("error Signature initialization with wrong length, should be %v %v", SignatureLength(false), len(b))
 	}
-	if !primary && len(b) > SignatureLength2(true)+1 {
-		return fmt.Errorf("error Signature 2 initialization with wrong length, should be %v %v", SignatureLength2(true), len(b))
+	if !primary && len(b) > SignatureLength2(false)+1 {
+		return fmt.Errorf("error Signature 2 initialization with wrong length, should be %v %v", SignatureLength2(false), len(b))
 	}
 	s.ByteValue = b[:]
 	s.Address = address

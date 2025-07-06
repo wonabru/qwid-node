@@ -26,11 +26,9 @@ func ProcessBlockEncryption(block Block, lastBlock Block) error {
 		if err != nil {
 			return err
 		}
-
 		logger.GetLogger().Println("new encryption: ", enc1.ToString())
 		SetVoteEncryption(block.BaseBlock.BaseHeader.Encryption1[:], true)
 		voting.ResetLastVoting()
-
 		err = AddNewPubKeyToActiveWallet(enc1.SigName, true, block.GetHeader().Height)
 		if err != nil {
 			return err
@@ -87,14 +85,14 @@ func SetEncryptionFromBlock(height int64) error {
 		return err
 	}
 
-	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, true, true)
+	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, true)
 
 	enc2, err := FromBytesToEncryptionConfig(block.BaseBlock.BaseHeader.Encryption2[:], false)
 	if err != nil {
 		return err
 	}
 
-	common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, true, false)
+	common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, enc2.IsPaused, false)
 	return nil
 }
 
@@ -104,6 +102,7 @@ func SetEncryptionFromBytes(enc []byte, primary bool) error {
 	if err != nil {
 		return err
 	}
-	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, primary)
+	logger.GetLogger().Println("set encryption changing. Default paused then true")
+	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, true, primary)
 	return nil
 }
