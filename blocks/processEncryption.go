@@ -103,6 +103,12 @@ func SetEncryptionFromBytes(enc []byte, primary bool) error {
 		return err
 	}
 	logger.GetLogger().Println("set encryption changing. Default paused then true")
-	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, true, primary)
+	isPause := enc1.IsPaused
+	if primary && enc1.SigName != common.SigName() {
+		isPause = true
+	} else if !primary && enc1.SigName != common.SigName2() {
+		isPause = true
+	}
+	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, isPause, primary)
 	return nil
 }
