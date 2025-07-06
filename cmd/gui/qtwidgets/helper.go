@@ -83,30 +83,30 @@ func StoreWalletNewGenerated(w *wallet.Wallet) error {
 	return nil
 }
 
-func SetCurrentEncryptions() error {
+func SetCurrentEncryptions() (string, string, error) {
 	clientrpc.InRPC <- SignMessage([]byte("ENCR"))
 	var reply []byte
 	reply = <-clientrpc.OutRPC
 	if bytes.Equal(reply, []byte("Timeout")) {
-		return fmt.Errorf("timout")
+		return "", "", fmt.Errorf("timout")
 	}
 	enc1b, left, err := common.BytesWithLenToBytes(reply)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	enc2b, left, err := common.BytesWithLenToBytes(left)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	enc1, err := blocks.FromBytesToEncryptionConfig(enc1b, true)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, true)
 	enc2, err := blocks.FromBytesToEncryptionConfig(enc2b, false)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, enc2.IsPaused, false)
-	return nil
+	return enc1.SigName, enc2.SigName, nil
 }

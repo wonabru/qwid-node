@@ -60,13 +60,13 @@ func ShowWalletPage() *widgets.QTabWidget {
 			widgets.QMessageBox_Information(nil, "error", info, widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 			return
 		}
-		err = SetCurrentEncryptions()
+		sigName, sigName2, err := SetCurrentEncryptions()
 		if err != nil {
 			widgets.QMessageBox_Information(nil, "Error", "error with retrieving current encryption", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 			return
 		}
 		//Later one needs reload wallet with proper height
-		MainWallet, err = wallet.LoadJSON(uint8(numWallet), input.Text(), common.SigName(), common.SigName2())
+		MainWallet, err = wallet.LoadJSON(uint8(numWallet), input.Text(), sigName, sigName2)
 
 		if err != nil {
 			info = fmt.Sprintf("%v", err)
