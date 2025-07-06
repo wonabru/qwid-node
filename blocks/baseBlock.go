@@ -145,7 +145,7 @@ func (bh *BaseHeader) Sign(primary bool) (common.Signature, []byte, error) {
 }
 
 func (bh *BaseHeader) GetFromBytes(b []byte) ([]byte, error) {
-	if len(b) < 117+common.SignatureLength(true) && len(b) < 117+common.SignatureLength2(true) {
+	if len(b) < 118 {
 		return nil, fmt.Errorf("not enough bytes to decode BaseHeader")
 	}
 	//logger.GetLogger().Println("block decompile len bytes ", len(b))
