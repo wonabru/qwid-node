@@ -30,6 +30,11 @@ func StoreAddress(mainAddress common.Address, pk common.PubKey) error {
 func AddNewPubKeyToActiveWallet(sigName string, primary bool, height int64) error {
 	w := wallet.GetActiveWallet()
 	if w.GetSigName(primary) != sigName {
+		if primary {
+			w.SigName = sigName
+		} else {
+			w.SigName2 = sigName
+		}
 		err := w.AddNewEncryptionToActiveWallet(sigName, primary)
 		if err != nil {
 			return err
