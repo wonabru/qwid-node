@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/database"
-	"github.com/okuralabs/okura-node/logger"
 )
 
 func AddPubKeyToAddress(pk common.PubKey, mainAddress common.Address) error {
@@ -82,7 +81,7 @@ func LoadPubKeyWithPrimary(mainAddress common.Address, primary bool) (common.Pub
 	if err != nil {
 		return common.PubKey{}, err
 	}
-	logger.GetLogger().Println("addresses:", addresses)
+	//logger.GetLogger().Println("addresses:", addresses)
 	if len(addresses) > 0 {
 		for i := len(addresses) - 1; i >= 0; i-- {
 			addr := addresses[i]
