@@ -9,6 +9,7 @@ import (
 	"github.com/okuralabs/okura-node/statistics"
 	"github.com/okuralabs/okura-node/transactionsPool"
 	"github.com/okuralabs/okura-node/wallet"
+	"golang.org/x/crypto/ssh/terminal"
 	_ "net/http/pprof"
 	"os"
 	"strconv"
@@ -35,11 +36,11 @@ func main() {
 	// Now you can use log functions as usual
 	logger.GetLogger().Println("Application started")
 	logger.GetLogger().Println("Password:")
-	//password, err := terminal.ReadPassword(0)
-	//if err != nil {
-	//	logger.GetLogger().Fatal(err)
-	//}
-	password := "a"
+	password, err := terminal.ReadPassword(0)
+	if err != nil {
+		logger.GetLogger().Fatal(err)
+	}
+	//password := "a"
 	// Initialize wallet
 	logger.GetLogger().Println("Initializing wallet...")
 	wallet.InitActiveWallet(0, string(password), common.SigName(), common.SigName2())
