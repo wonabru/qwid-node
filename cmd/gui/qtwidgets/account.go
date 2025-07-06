@@ -54,7 +54,7 @@ func UpdateAccountStats() {
 	if MainWallet.Check() == false {
 		return
 	}
-	inb := append([]byte("ACCT"), MainWallet.Account1.Address.GetBytes()...)
+	inb := append([]byte("ACCT"), MainWallet.MainAddress.GetBytes()...)
 	clientrpc.InRPC <- SignMessage(inb)
 	var re []byte
 	var acc account.Account
@@ -83,7 +83,7 @@ func UpdateAccountStats() {
 		if MainWallet.Check() == false {
 			return
 		}
-		inb = append([]byte("STAK"), MainWallet.Account1.Address.GetBytes()...)
+		inb = append([]byte("STAK"), MainWallet.MainAddress.GetBytes()...)
 		inb = append(inb, byte(i))
 		clientrpc.InRPC <- SignMessage(inb)
 		re = <-clientrpc.OutRPC
@@ -101,7 +101,7 @@ func UpdateAccountStats() {
 		locks += account.Int64toFloat64(common.GetInt64FromByte(re[len(re)-8:]))
 	}
 
-	txt += fmt.Sprintln("\n\nYour Address:", MainWallet.Account1.Address.GetHex())
+	txt += fmt.Sprintln("\n\nYour Address:", MainWallet.MainAddress.GetHex())
 	txt += fmt.Sprintf("Your holdings: %18.8f KURA\n", conf+stake+rewards+uncTx+uncStake+uncRewards)
 	txt += fmt.Sprintf("Confirmed balance: %18.8f KURA\n", conf)
 	//txt += fmt.Sprintf("Transactions unconfirmed balance: %18.8f KURA\n", uncTx)
@@ -157,7 +157,7 @@ func ShowAccountPage() *widgets.QTabWidget {
 	widget.SetLayout(widgets.NewQVBoxLayout())
 
 	ipLineEdit := widgets.NewQLineEdit(nil)
-	ipLineEdit.SetText("192.168.0.139")
+	ipLineEdit.SetText("")
 	widget.Layout().AddWidget(ipLineEdit)
 
 	miningCheckBox := widgets.NewQCheckBox(nil)
