@@ -125,8 +125,8 @@ func BroadcastTxn(ignoreAddr [4]byte, nb []byte) {
 	var peers = tcpip.GetPeersConnected(tcpip.TransactionTopic)
 	num_peers := len(peers)
 	for topicip, _ := range peers {
-		// trying to send randomly to 2 other nodes
-		if rand.Intn(num_peers) > 1 {
+		// trying to send randomly to 1 other nodes
+		if rand.Intn(num_peers) >= 1 {
 			continue
 		}
 		copy(ip[:], topicip[2:])
