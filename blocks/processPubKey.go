@@ -93,9 +93,10 @@ func StorePubKeyInPatriciaTrie(pk common.PubKey) error {
 	addresses, err := pubkeys.LoadAddresses(pk.MainAddress)
 	if err != nil {
 		if err.Error() != "key not found" {
+			logger.GetLogger().Println(err)
 			return err
 		}
-		logger.GetLogger().Println("key not found")
+		logger.GetLogger().Println("OK", err)
 		addresses = []common.Address{}
 	}
 	if len(addresses) == 0 {
