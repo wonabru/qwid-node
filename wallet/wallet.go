@@ -450,6 +450,7 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 	}
 
 	if w.SigName != sigName {
+		w.SigName = sigName
 		if a, ok := w.Accounts[sigName]; ok {
 			w.Account1 = a
 			copy(w.Account1.EncryptedSecretKey[:], a.EncryptedSecretKey[:])
@@ -458,11 +459,13 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 			if err != nil {
 				return nil, err
 			}
+
 			w.Account1 = acc
 			copy(w.Account1.EncryptedSecretKey[:], acc.EncryptedSecretKey[:])
 		}
 	}
 	if w.SigName2 != sigName2 {
+		w.SigName2 = sigName2
 		if a, ok := w.Accounts[sigName2]; ok {
 			w.Account2 = a
 			copy(w.Account2.EncryptedSecretKey[:], a.EncryptedSecretKey[:])
