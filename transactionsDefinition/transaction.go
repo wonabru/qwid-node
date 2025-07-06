@@ -307,7 +307,7 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tm
 		}
 		pkb = pkp.GetBytes()
 	}
-	logger.GetLogger().Println(sigName, sigName2, isPausedTmp, isPaused2Tmp)
+	//logger.GetLogger().Println(sigName, sigName2, isPausedTmp, isPaused2Tmp)
 	return wallet.Verify(b, signature.GetBytes(), pkb, sigName, sigName2, isPausedTmp, isPaused2Tmp)
 }
 
