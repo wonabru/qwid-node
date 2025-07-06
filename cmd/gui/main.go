@@ -39,7 +39,10 @@ func main() {
 	window.SetWindowTitle("Okura Wallet - " + ip_str.String() +
 		" Node Account: " +
 		strconv.Itoa(int(common.NumericalDelegatedAccountAddress(common.GetDelegatedAccount()))))
-
+	err := qtwidgets.SetCurrentEncryptions()
+	if err != nil {
+		widgets.QMessageBox_Information(nil, "Warning", "error with retrieving current encryption", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
+	}
 	w := wallet.EmptyWallet(0, common.SigName(), common.SigName2())
 
 	qtwidgets.MainWallet = &w
@@ -66,10 +69,7 @@ func main() {
 	window.AddTab(voteWidget, "Vote")
 	// make the window visible
 	window.Show()
-	err := qtwidgets.SetCurrentEncryptions()
-	if err != nil {
-		widgets.QMessageBox_Information(nil, "Warning", "error with retrieving current encryption", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
-	}
+
 	go func() {
 		for range time.Tick(time.Second * 3) {
 			qtwidgets.UpdateAccountStats()
