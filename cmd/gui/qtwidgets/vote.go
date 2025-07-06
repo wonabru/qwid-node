@@ -78,10 +78,12 @@ func ShowVotingPage() *widgets.QTabWidget {
 				return
 			}
 			isPaused := pausePrimary.IsChecked()
-			if unpausePrimary.IsChecked() || invalidatePrimary.IsChecked() {
+			if unpausePrimary.IsChecked() {
 				isPaused = false
 			}
-
+			if invalidatePrimary.IsChecked() {
+				isPaused = true
+			}
 			enb1, err := oqs.GenerateBytesFromParams(config.SigName, config.PubKeyLength, config.PrivateKeyLength, config.SignatureLength, isPaused)
 			if err != nil {
 				v = err.Error()
@@ -103,8 +105,11 @@ func ShowVotingPage() *widgets.QTabWidget {
 				return
 			}
 			isPaused := pauseSecondary.IsChecked()
-			if unpauseSecondary.IsChecked() || invalidateSecondary.IsChecked() {
+			if unpauseSecondary.IsChecked() {
 				isPaused = false
+			}
+			if invalidateSecondary.IsChecked() {
+				isPaused = true
 			}
 			enb2, err := oqs.GenerateBytesFromParams(config.SigName, config.PubKeyLength, config.PrivateKeyLength, config.SignatureLength, isPaused)
 			if err != nil {

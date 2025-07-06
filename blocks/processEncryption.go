@@ -2,6 +2,7 @@ package blocks
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/okuralabs/okura-node/common"
 	"github.com/okuralabs/okura-node/logger"
 	"github.com/okuralabs/okura-node/voting"
@@ -108,6 +109,9 @@ func SetEncryptionFromBytes(enc []byte, primary bool) error {
 		isPause = true
 	} else if !primary && enc1.SigName != common.SigName2() {
 		isPause = true
+	}
+	if isPause != enc1.IsPaused {
+		return fmt.Errorf("not proper pause set. should be %v", isPause)
 	}
 	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, isPause, primary)
 	return nil
