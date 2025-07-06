@@ -15,7 +15,7 @@ import (
 	"github.com/okuralabs/okura-node/voting"
 )
 
-func CheckBaseBlock(newBlock Block, lastBlock Block) (*transactionsPool.MerkleTree, error) {
+func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*transactionsPool.MerkleTree, error) {
 	blockHeight := newBlock.GetHeader().Height
 	if newBlock.GetBlockSupply() > common.MaxTotalSupply {
 		return nil, fmt.Errorf("supply is too high")
@@ -66,6 +66,10 @@ func CheckBaseBlock(newBlock Block, lastBlock Block) (*transactionsPool.MerkleTr
 	blockTime := newBlock.GetBlockTimeStamp()
 	currTime := common.GetCurrentTimeStampInSecond()
 	shouldCheck := !((currTime - blockTime) > int64(common.BlockTimeInterval)*common.VotingHeightDistance)
+	logger.GetLogger().Println("should check pausing:", shouldCheck)
+	if forceShouldCheck == false {
+		shouldCheck = false
+	}
 	if !common.IsSyncing.Load() && !bytes.Equal(newBlock.BaseBlock.BaseHeader.Encryption1[:], lastBlock.BaseBlock.BaseHeader.Encryption1[:]) {
 		enc1, err := FromBytesToEncryptionConfig(newBlock.BaseBlock.BaseHeader.Encryption1[:], true)
 		if err != nil {

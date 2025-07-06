@@ -212,7 +212,7 @@ func OnMessage(addr [4]byte, m []byte) {
 					logger.GetLogger().Println("block of too short chain")
 					return
 				}
-				merkleTrie, err := blocks.CheckBaseBlock(newBlock, lastBlock)
+				merkleTrie, err := blocks.CheckBaseBlock(newBlock, lastBlock, true)
 				defer merkleTrie.Destroy()
 				if err != nil {
 					logger.GetLogger().Println(err)

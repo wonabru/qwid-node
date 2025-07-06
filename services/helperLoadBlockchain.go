@@ -12,7 +12,7 @@ import (
 
 func checkBlock(newBlock blocks.Block, lastBlock blocks.Block, checkFinal bool) error {
 	logger.GetLogger().Println("checkFinal:", checkFinal)
-	merkleTrie, err := blocks.CheckBaseBlock(newBlock, lastBlock)
+	merkleTrie, err := blocks.CheckBaseBlock(newBlock, lastBlock, checkFinal)
 	defer merkleTrie.Destroy()
 	if err != nil {
 		logger.GetLogger().Println(err)

@@ -248,7 +248,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			}
 
 			logger.GetLogger().Printf("Performing base block verification for block %d", index)
-			merkleTrie, err := blocks.CheckBaseBlock(block, oldBlock)
+			merkleTrie, err := blocks.CheckBaseBlock(block, oldBlock, false)
 			defer merkleTrie.Destroy()
 			if err != nil {
 				logger.GetLogger().Printf("ERROR: Base block verification failed for block %d: %v", index, err)
