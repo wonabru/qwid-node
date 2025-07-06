@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/okuralabs/okura-node/cmd/gui/qtwidgets"
+	"github.com/therecipe/qt/widgets"
 	rand2 "math/rand"
 	"sync"
 
@@ -14,8 +16,6 @@ import (
 	"github.com/okuralabs/okura-node/statistics"
 	"github.com/okuralabs/okura-node/transactionsDefinition"
 	"github.com/okuralabs/okura-node/wallet"
-	"golang.org/x/crypto/ssh/terminal"
-
 	"os"
 	"time"
 )
@@ -31,12 +31,17 @@ func main() {
 		ip = "127.0.0.1"
 	}
 	go clientrpc.ConnectRPC(ip)
-	fmt.Print("Enter password: ")
-	password, err := terminal.ReadPassword(0)
+	//fmt.Print("Enter password: ")
+	//password, err := terminal.ReadPassword(0)
+	//if err != nil {
+	//	logger.GetLogger().Fatal(err)
+	//}
+	password := "a"
+	sigName, sigName2, err := qtwidgets.SetCurrentEncryptions()
 	if err != nil {
-		logger.GetLogger().Fatal(err)
+		widgets.QMessageBox_Information(nil, "Warning", "error with retrieving current encryption", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
 	}
-	wallet.InitActiveWallet(0, string(password))
+	wallet.InitActiveWallet(0, string(password), sigName, sigName2)
 	MainWallet = wallet.GetActiveWallet()
 
 	for range 2 {
@@ -103,7 +108,7 @@ func SampleTransaction(w *wallet.Wallet) transactionsDefinition.Transaction {
 		Recipient: recv,
 		Amount:    amount,
 		OptData:   nil,
-		Pubkey:    common.PubKey{}, //w.PublicKey, //
+		Pubkey:    common.PubKey{}, //w.Account1.PublicKey,
 	}
 	txParam := transactionsDefinition.TxParam{
 		ChainID:     common.GetChainID(),
@@ -135,7 +140,7 @@ func SampleTransaction(w *wallet.Wallet) transactionsDefinition.Transaction {
 	if err != nil {
 		logger.GetLogger().Println("calc hash error", err)
 	}
-	err = t.Sign(w, w.PublicKey.Primary)
+	err = t.Sign(w, false)
 	if err != nil {
 		logger.GetLogger().Println("Signing error", err)
 	}
@@ -154,7 +159,7 @@ func sendTransactions(w *wallet.Wallet) {
 	batchSize := 1
 	count := int64(0)
 	start := common.GetCurrentTimeStampInSecond()
-	for range time.Tick(time.Millisecond * 1000) {
+	for range time.Tick(time.Millisecond * 100) {
 		var txs []transactionsDefinition.Transaction
 		for i := 0; i < batchSize; i++ {
 			tx := SampleTransaction(w)
