@@ -532,8 +532,8 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 
 	w.HomePath = homePath
 	w.StoreJSON()
-	logger.GetLogger().Println("PubKey:", w.Account1.PublicKey.GetHex())
-	logger.GetLogger().Println("PubKey2:", w.Account2.PublicKey.GetHex())
+	//logger.GetLogger().Println("PubKey:", w.Account1.PublicKey.GetHex())
+	//logger.GetLogger().Println("PubKey2:", w.Account2.PublicKey.GetHex())
 	logger.GetLogger().Println("MainAddress:", w.MainAddress.GetHex())
 	return &w, err
 }
