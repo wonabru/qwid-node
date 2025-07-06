@@ -484,7 +484,7 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 	}
 	// maybe one should limit amount of bytes to pass here
 	cnz := CountNonZeroBytes(ds)
-	logger.GetLogger().Println(ds)
+	logger.GetLogger().Println("cnz:", cnz)
 	err = w.Account1.secretKey.Init(ds[:cnz], w.Account1.Address)
 	if err != nil {
 		return nil, err
@@ -502,6 +502,7 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 		return nil, err
 	}
 	cnz = CountNonZeroBytes(ds)
+	logger.GetLogger().Println("cnz:", cnz)
 	err = w.Account2.secretKey.Init(bytes.TrimSuffix(ds[:cnz], []byte{0}), w.Account2.Address)
 	if err != nil {
 		return nil, err
