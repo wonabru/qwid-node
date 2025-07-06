@@ -79,7 +79,7 @@ func ShowDexPage() *widgets.QTabWidget {
 				}
 				coinAddr.Init(common.Hex2Bytes(coin[0]))
 				addr := common.Address{}
-				addr.Init(MainWallet.Account1.Address.GetBytes())
+				addr.Init(MainWallet.MainAddress.GetBytes())
 				GetAllTokensAccountInfo(addr, coinAddr)
 				GetAllPoolsInfo()
 				//PlotPrices(symbol)
