@@ -121,10 +121,10 @@ func ShowDexPage() *widgets.QTabWidget {
 				t, _ := strconv.ParseFloat(amount, 64)
 
 				price = common.RoundToken(g/t, int(common.Decimals+TokenList[coinAddr.GetHex()].Decimals))
-				priceToken.SetText(fmt.Sprintf("Pool price %s/OKU = %f", symbol, price))
+				priceToken.SetText(fmt.Sprintf("Pool price %s/KURA = %f", symbol, price))
 				if poolCoin > 0 {
 					priceBid = common.CalcNewDEXPrice(0, poolToken, poolCoin)
-					poolPriceToken.SetText(fmt.Sprintf("My Price %s/OKU = %f", symbol, priceBid))
+					poolPriceToken.SetText(fmt.Sprintf("My Price %s/KURA = %f", symbol, priceBid))
 				}
 
 			}
@@ -145,17 +145,17 @@ func ShowDexPage() *widgets.QTabWidget {
 			if poolCoin > 0 {
 				priceBid = common.CalcNewDEXPrice(0, poolToken, poolCoin)
 				priceAsk = common.CalcNewDEXPrice(0, poolToken, poolCoin)
-				poolPriceToken.SetText(fmt.Sprintf("My Price %s/OKU = %f/%f", symbol, priceAsk, priceBid))
+				poolPriceToken.SetText(fmt.Sprintf("My Price %s/KURA = %f/%f", symbol, priceAsk, priceBid))
 			}
-			priceToken.SetText(fmt.Sprintf("Pool price %s/OKU = %f", symbol, priceAsk))
+			priceToken.SetText(fmt.Sprintf("Pool price %s/KURA = %f", symbol, priceAsk))
 
 		}
 	})
 
-	removePoolButtonQAD = widgets.NewQRadioButton2("Withdraw OKU", nil)
+	removePoolButtonQAD = widgets.NewQRadioButton2("Withdraw KURA", nil)
 	widget.Layout().AddWidget(removePoolButtonQAD)
 	removePoolButtonQAD.ConnectClicked(func(bool) {
-		poolTokensButton.SetText("Withdraw OKU from Pool")
+		poolTokensButton.SetText("Withdraw KURA from Pool")
 		amountTokens.SetEnabled(false)
 		amountQAD.SetEnabled(true)
 		qad := amountQAD.Text()
@@ -165,11 +165,11 @@ func ShowDexPage() *widgets.QTabWidget {
 			t := common.RoundCoin(poolToken / poolCoin * g)
 			amountTokens.SetText(fmt.Sprintf("%f", t))
 
-			priceToken.SetText(fmt.Sprintf("Pool price %s/OKU = %f", symbol, priceAsk))
+			priceToken.SetText(fmt.Sprintf("Pool price %s/KURA = %f", symbol, priceAsk))
 			if poolCoin > 0 {
 				priceBid = common.CalcNewDEXPrice(0, poolToken, poolCoin)
 				priceAsk = common.CalcNewDEXPrice(0, poolToken, poolCoin)
-				poolPriceToken.SetText(fmt.Sprintf("My Price %s/OKU = %f/%f", symbol, priceAsk, priceBid))
+				poolPriceToken.SetText(fmt.Sprintf("My Price %s/KURA = %f/%f", symbol, priceAsk, priceBid))
 			}
 
 		}
@@ -188,11 +188,11 @@ func ShowDexPage() *widgets.QTabWidget {
 
 			g *= -1
 			price = common.RoundCoin(math.Abs(g / t))
-			priceToken.SetText(fmt.Sprintf("Pool price %s/OKU = %f", symbol, price))
+			priceToken.SetText(fmt.Sprintf("Pool price %s/KURA = %f", symbol, price))
 			if poolCoin > 0 {
 				priceBid = common.CalcNewDEXPrice(-t, poolToken, poolCoin)
 				priceAsk = common.CalcNewDEXPrice(t, poolToken, poolCoin)
-				poolPriceToken.SetText(fmt.Sprintf("My Price %s/OKU = %f/%f", symbol, priceAsk, priceBid))
+				poolPriceToken.SetText(fmt.Sprintf("My Price %s/KURA = %f/%f", symbol, priceAsk, priceBid))
 			}
 
 		}
@@ -205,20 +205,20 @@ func ShowDexPage() *widgets.QTabWidget {
 	widget.Layout().AddWidget(amountTokens)
 	amountTokens.ConnectTextChanged(func(amount string) {
 		if amount != "" {
-			OKU := amountQAD.Text()
-			if OKU != "" {
-				g, _ := strconv.ParseFloat(OKU, 64)
+			KURA := amountQAD.Text()
+			if KURA != "" {
+				g, _ := strconv.ParseFloat(KURA, 64)
 				t, _ := strconv.ParseFloat(amount, 64)
 				if tradeButton.IsChecked() {
 					g *= -1
 				}
 
 				price = common.RoundCoin(math.Abs(g / t))
-				priceToken.SetText(fmt.Sprintf("Pool price %s/OKU = %f", symbol, price))
+				priceToken.SetText(fmt.Sprintf("Pool price %s/KURA = %f", symbol, price))
 				if poolCoin > 0 {
 					priceBid = common.CalcNewDEXPrice(0, poolToken, poolCoin)
 					priceAsk = common.CalcNewDEXPrice(0, poolToken, poolCoin)
-					poolPriceToken.SetText(fmt.Sprintf("My Price %s/OKU = %f/%f", symbol, priceAsk, priceBid))
+					poolPriceToken.SetText(fmt.Sprintf("My Price %s/KURA = %f/%f", symbol, priceAsk, priceBid))
 				}
 
 			}
@@ -226,36 +226,36 @@ func ShowDexPage() *widgets.QTabWidget {
 	})
 
 	amountQAD = widgets.NewQLineEdit(nil)
-	amountQAD.SetPlaceholderText("Amount of OKU")
+	amountQAD.SetPlaceholderText("Amount of KURA")
 	widget.Layout().AddWidget(amountQAD)
-	amountQAD.ConnectTextChanged(func(OKU string) {
-		if OKU != "" {
+	amountQAD.ConnectTextChanged(func(KURA string) {
+		if KURA != "" {
 			amount := amountTokens.Text()
 			if amount != "" {
-				g, _ := strconv.ParseFloat(OKU, 64)
+				g, _ := strconv.ParseFloat(KURA, 64)
 				t, _ := strconv.ParseFloat(amount, 64)
 				if tradeButton.IsChecked() {
 					g *= -1
 				}
 
 				price = common.RoundCoin(math.Abs(g / t))
-				priceToken.SetText(fmt.Sprintf("Pool price %s/OKU = %f", symbol, price))
+				priceToken.SetText(fmt.Sprintf("Pool price %s/KURA = %f", symbol, price))
 				if poolCoin > 0 {
 					priceBid = common.CalcNewDEXPrice(0, poolToken, poolCoin)
 					priceAsk = common.CalcNewDEXPrice(0, poolToken, poolCoin)
-					poolPriceToken.SetText(fmt.Sprintf("My Price %s/OKU = %f/%f", symbol, priceAsk, priceBid))
+					poolPriceToken.SetText(fmt.Sprintf("My Price %s/KURA = %f/%f", symbol, priceAsk, priceBid))
 				}
 
 			}
 		}
 	})
 	priceToken = widgets.NewQLineEdit(nil)
-	priceToken.SetPlaceholderText("Price of token in OKU")
+	priceToken.SetPlaceholderText("Price of token in KURA")
 	priceToken.SetEnabled(false)
 	widget.Layout().AddWidget(priceToken)
 
 	poolPriceToken = widgets.NewQLineEdit(nil)
-	poolPriceToken.SetPlaceholderText("Price of token you get in OKU")
+	poolPriceToken.SetPlaceholderText("Price of token you get in KURA")
 	widget.Layout().AddWidget(poolPriceToken)
 
 	poolTokensButton = widgets.NewQPushButton2("Add liquidity to Pool", nil)
@@ -436,11 +436,11 @@ func GetAllPoolsInfo() string {
 		symb := strings.Trim(info.Symbols, string(byte(0)))
 
 		txt += fmt.Sprintln(addr, " = ", tokenPoolFloat, " ", symb)
-		txt += fmt.Sprintln("Users provided liquidity into pool: ", coinPoolFloat, " OKU")
+		txt += fmt.Sprintln("Users provided liquidity into pool: ", coinPoolFloat, " KURA")
 		if tokenPoolFloat > 0 {
 			price = common.RoundCoin(coinPoolFloat / tokenPoolFloat)
 		}
-		txt += fmt.Sprintf("Pool price %s/OKU = %f", symb, price)
+		txt += fmt.Sprintf("Pool price %s/KURA = %f", symb, price)
 		if bytes.Equal(a.GetBytes(), coinAddr.GetBytes()) {
 			poolCoin = coinPoolFloat
 			poolToken = tokenPoolFloat
@@ -459,7 +459,7 @@ func GetAllTokensAccountInfo(a common.Address, symbolAddr common.Address) string
 	txt := "My Address:\n" + a.GetHex() + "\n\nMy Holding:\n"
 	myacc, _ := GetAccount(a)
 	myBal := myacc.GetBalanceConfirmedFloat()
-	txt += fmt.Sprintln(myBal, " OKU\n\nTokens:")
+	txt += fmt.Sprintln(myBal, " KURA\n\nTokens:")
 	ti := GetAllTokens()
 	for addr, info := range ti {
 
@@ -486,7 +486,7 @@ func GetAllTokensAccountInfo(a common.Address, symbolAddr common.Address) string
 			humanReadable = account.Int64toFloat64ByDecimals(bal.TokenBalance, info.Decimals)
 			txt += fmt.Sprintln(addr, " = ", humanReadable, " ", symb)
 			humanReadableQAD = account.Int64toFloat64ByDecimals(bal.CoinBalance, common.Decimals)
-			txt += fmt.Sprintln(addr, " = ", humanReadableQAD, " OKU")
+			txt += fmt.Sprintln(addr, " = ", humanReadableQAD, " KURA")
 		}
 	}
 	AmountLabelData.SetPlainText(txt)
@@ -516,13 +516,13 @@ func MakeTransaction(sender, coinAddr common.Address, primary bool) {
 			return
 		}
 		am := int64(af * math.Pow10(int(ti.Decimals)))
-		OKU, err := strconv.ParseFloat(amountQAD.Text(), 64)
+		KURA, err := strconv.ParseFloat(amountQAD.Text(), 64)
 		if err != nil {
 			v = fmt.Sprint(err)
 			info = &v
 			return
 		}
-		QADam := int64(OKU * math.Pow10(int(common.Decimals)))
+		QADam := int64(KURA * math.Pow10(int(common.Decimals)))
 		operation := 2
 		if removePoolButton.IsChecked() {
 			operation = 5
@@ -531,7 +531,7 @@ func MakeTransaction(sender, coinAddr common.Address, primary bool) {
 			operation = 6
 		}
 		//if -QADam > myAcc.GetBalance() {
-		//	v = fmt.Sprint("Not enough OKU balance at account")
+		//	v = fmt.Sprint("Not enough KURA balance at account")
 		//	info = &v
 		//	return
 		//}
@@ -718,7 +718,7 @@ func MakeTrade(sender, coinAddr common.Address, isBuy bool, primary bool) {
 //
 //	chart := charts.NewQChart(nil, 0)
 //	chart.AddSeries(PriceTokenSeries)
-//	chart.SetTitle(fmt.Sprintf("Prices of OKU/%s from DEX", symbol))
+//	chart.SetTitle(fmt.Sprintf("Prices of KURA/%s from DEX", symbol))
 //	chart.SetAnimationOptions(charts.QChart__SeriesAnimations)
 //
 //	chart.CreateDefaultAxes()

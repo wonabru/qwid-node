@@ -106,7 +106,7 @@ func generateNonceMsg(topic [2]byte) (message.TransactionsMessage, error) {
 	optData := common.GetByteInt64(h)
 	optData = append(optData, lastBlockHash...)
 
-	//TODO Price oracle currently is random: 0.9 - 1.1 OKU/USD
+	//TODO Price oracle currently is random: 0.9 - 1.1 KURA/USD
 	priceOracle := int64(rand.Intn(10000000) - 5000000 + 100000000)
 	randOracle := rand.Int63()
 	optData = append(optData, common.GetByteInt64(priceOracle)...)

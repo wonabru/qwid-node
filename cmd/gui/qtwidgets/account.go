@@ -43,7 +43,7 @@ func UpdateAccountStats() {
 	txt += fmt.Sprintln("Heights max:", st.HeightMax)
 	txt += fmt.Sprintln("Time interval [sec.]:", st.TimeInterval)
 	txt += fmt.Sprintln("Difficulty:", st.Difficulty)
-	txt += fmt.Sprintln("\nPrice Oracle:", st.PriceOracle, " OKU/USD")
+	txt += fmt.Sprintln("\nPrice Oracle:", st.PriceOracle, " KURA/USD")
 	txt += fmt.Sprintln("Rand Oracle:", st.RandOracle)
 	txt += fmt.Sprintln("\nNumber of transactions : ", st.Transactions, "/", st.TransactionsPending)
 	txt += fmt.Sprintln("Size of transactions [kB] : ", st.TransactionsSize/1024, "/", st.TransactionsPendingSize/1024)
@@ -102,14 +102,14 @@ func UpdateAccountStats() {
 	}
 
 	txt += fmt.Sprintln("\n\nYour Address:", MainWallet.Account1.Address.GetHex())
-	txt += fmt.Sprintf("Your holdings: %18.8f OKU\n", conf+stake+rewards+uncTx+uncStake+uncRewards)
-	txt += fmt.Sprintf("Confirmed balance: %18.8f OKU\n", conf)
-	//txt += fmt.Sprintf("Transactions unconfirmed balance: %18.8f OKU\n", uncTx)
-	txt += fmt.Sprintf("Staked amount: %18.8f OKU\n", stake)
-	txt += fmt.Sprintf("Locked amount: %18.8f OKU\n", locks)
-	//txt += fmt.Sprintf("Unconfirmed staked amount: %18.8f OKU\n", uncStake)
-	txt += fmt.Sprintf("Rewards amount: %18.8f OKU\n", rewards)
-	//txt += fmt.Sprintf("Unconfirmed rewards amount: %18.8f OKU\n", uncRewards)
+	txt += fmt.Sprintf("Your holdings: %18.8f KURA\n", conf+stake+rewards+uncTx+uncStake+uncRewards)
+	txt += fmt.Sprintf("Confirmed balance: %18.8f KURA\n", conf)
+	//txt += fmt.Sprintf("Transactions unconfirmed balance: %18.8f KURA\n", uncTx)
+	txt += fmt.Sprintf("Staked amount: %18.8f KURA\n", stake)
+	txt += fmt.Sprintf("Locked amount: %18.8f KURA\n", locks)
+	//txt += fmt.Sprintf("Unconfirmed staked amount: %18.8f KURA\n", uncStake)
+	txt += fmt.Sprintf("Rewards amount: %18.8f KURA\n", rewards)
+	//txt += fmt.Sprintf("Unconfirmed rewards amount: %18.8f KURA\n", uncRewards)
 	txt += fmt.Sprintf("\nStaking details:\n")
 	for i, acc := range stakeAccs {
 		if acc.StakedBalance == 0 && acc.StakingRewards == 0 {

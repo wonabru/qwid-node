@@ -90,7 +90,7 @@ func SetAccountByAddressBytes(address []byte) Account {
 	return dexAccount
 }
 
-// GetBalanceConfirmedFloat get amount of confirmed OKU in human-readable format
+// GetBalanceConfirmedFloat get amount of confirmed KURA in human-readable format
 func (a *Account) GetBalanceConfirmedFloat() float64 {
 	return float64(a.Balance) * math.Pow10(-int(common.Decimals))
 }
