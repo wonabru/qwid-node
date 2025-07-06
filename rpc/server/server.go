@@ -88,7 +88,7 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 			pubKey = activeWallet.Account2.PublicKey
 		}
 
-		if !wallet.Verify(common.BytesToLenAndBytes(line), signatureBytes, pubKey.GetBytes(), common.SigName(), common.SigName2()) {
+		if !wallet.Verify(common.BytesToLenAndBytes(line), signatureBytes, pubKey.GetBytes(), common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2()) {
 			*reply = []byte("Invalid signature")
 			return nil
 		}

@@ -106,7 +106,7 @@ func (b *BaseHeader) GetBytes() []byte {
 	return rb
 }
 
-func (bh *BaseHeader) Verify(sigName, sigName2 string) bool {
+func (bh *BaseHeader) Verify(sigName, sigName2 string, isPaused, isPaused2 bool) bool {
 	signatureBlockHeaderMessage := bh.GetBytesWithoutSignature()
 	if !bytes.Equal(signatureBlockHeaderMessage, bh.SignatureMessage) {
 		logger.GetLogger().Println("signatures are different")
@@ -127,7 +127,7 @@ func (bh *BaseHeader) Verify(sigName, sigName2 string) bool {
 		logger.GetLogger().Println(err)
 		return false
 	}
-	return wallet.Verify(calcHash, bh.Signature.GetBytes(), pk.GetBytes(), sigName, sigName2)
+	return wallet.Verify(calcHash, bh.Signature.GetBytes(), pk.GetBytes(), sigName, sigName2, isPaused, isPaused2)
 }
 
 func (bh *BaseHeader) Sign(primary bool) (common.Signature, []byte, error) {

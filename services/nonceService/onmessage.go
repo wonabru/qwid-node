@@ -49,7 +49,7 @@ func OnMessage(addr [4]byte, m []byte) {
 		//defer common.NonceMutex.Unlock()
 		//fmt.Printf("%v", nonceTransaction)
 		//var topic [2]byte
-		txn, err := amsg.(message.TransactionsMessage).GetTransactionsFromBytes(common.SigName(), common.SigName2())
+		txn, err := amsg.(message.TransactionsMessage).GetTransactionsFromBytes(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2())
 		if err != nil {
 			return
 		}
@@ -71,7 +71,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			return
 		}
 
-		isValid = transaction.Verify(common.SigName(), common.SigName2())
+		isValid = transaction.Verify(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2())
 		if isValid == false {
 			logger.GetLogger().Println("nonce signature is invalid")
 			tcpip.ReduceAndCheckIfBanIP(addr)

@@ -602,13 +602,13 @@ func (w *Wallet) Sign(data []byte, primary bool) (*common.Signature, error) {
 	return nil, fmt.Errorf("input data are empty")
 }
 
-func Verify(msg []byte, sig []byte, pubkey []byte, sigName, sigName2 string) bool {
+func Verify(msg []byte, sig []byte, pubkey []byte, sigName, sigName2 string, isPaused, isPaused2 bool) bool {
 	var verifier oqs.Signature
 	var err error
 	primary := sig[0] == 0
 	sig = sig[1:]
 	logger.GetLogger().Println("Primary:", primary)
-	if primary && !common.IsPaused() {
+	if primary && !isPaused {
 		logger.GetLogger().Println("Primary sign")
 		err = verifier.Init(sigName, nil)
 		if err != nil {
@@ -623,13 +623,13 @@ func Verify(msg []byte, sig []byte, pubkey []byte, sigName, sigName2 string) boo
 				return false
 			}
 			if !isVerified {
-				logger.GetLogger().Println("msg:", msg, "sig:", sig, "pubkey:", pubkey)
+				logger.GetLogger().Println("msg:", string(msg[:5]), "sig:", string(sig[:5]), "pubkey:", string(pubkey[:5]))
 			}
 			return isVerified
 		}
 		logger.GetLogger().Println("verifier.Details().LengthPublicKey:", verifier.Details().LengthPublicKey, "len(pubkey):", len(pubkey))
 	}
-	if !primary && !common.IsPaused2() {
+	if !primary && !isPaused2 {
 		logger.GetLogger().Println("Secondary sign")
 		err = verifier.Init(sigName2, nil)
 		if err != nil {
@@ -642,10 +642,14 @@ func Verify(msg []byte, sig []byte, pubkey []byte, sigName, sigName2 string) boo
 				logger.GetLogger().Println(err)
 				return false
 			}
+			if !isVerified {
+				logger.GetLogger().Println("msg:", string(msg[:5]), "sig:", string(sig[:5]), "pubkey:", string(pubkey[:5]))
+			}
 			return isVerified
 		}
 		logger.GetLogger().Println("verifier.Details().LengthPublicKey:", verifier.Details().LengthPublicKey, "len(pubkey):", len(pubkey))
 	}
+	logger.GetLogger().Println(primary, isPaused, isPaused2)
 	return false
 }
 

@@ -65,16 +65,16 @@ func SetVoteEncryption(enc []byte, primary bool) {
 	logger.GetLogger().Println(string(<-VoteChannel))
 }
 
-func (bl *Block) GetSigNames() (string, string, error) {
+func (bl *Block) GetSigNames() (string, string, bool, bool, error) {
 	enc1, err := FromBytesToEncryptionConfig(bl.BaseBlock.BaseHeader.Encryption1[:], true)
 	if err != nil {
-		return "", "", err
+		return "", "", false, false, err
 	}
 	enc2, err := FromBytesToEncryptionConfig(bl.BaseBlock.BaseHeader.Encryption2[:], false)
 	if err != nil {
-		return "", "", err
+		return "", "", false, false, err
 	}
-	return enc1.SigName, enc2.SigName, nil
+	return enc1.SigName, enc2.SigName, enc1.IsPaused, enc2.IsPaused, nil
 }
 
 func SetEncryptionFromBlock(height int64) error {

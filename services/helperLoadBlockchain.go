@@ -49,7 +49,7 @@ func checkMainChain() (int64, error) {
 		if err != nil {
 			logger.GetLogger().Println(err)
 		} else {
-			sn1, sn2, err := bl.GetSigNames()
+			sn1, sn2, _, _, err := bl.GetSigNames()
 			if err == nil {
 				cw, err := wallet.GetCurrentWallet(sn1, sn2)
 				if err == nil {
@@ -84,7 +84,7 @@ func checkMainChain() (int64, error) {
 			//err = checkBlock(bl, lastBlock, true)
 			return h - 1, err
 		}
-		sn1, sn2, err := bl.GetSigNames()
+		sn1, sn2, _, _, err := bl.GetSigNames()
 		if err == nil {
 			cw, err := wallet.GetCurrentWallet(sn1, sn2)
 			if err == nil {
