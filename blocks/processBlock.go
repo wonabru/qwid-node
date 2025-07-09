@@ -83,7 +83,7 @@ func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*tr
 			if !oqs.VerifyEncConfig(enc1) {
 				return nil, fmt.Errorf("encryption 1 verification fails")
 			}
-			if common.IsPaused() == false && common.SigName() != enc1.SigName {
+			if shouldCheck && common.IsPaused() == false && common.SigName() != enc1.SigName {
 				return nil, fmt.Errorf("you need to pause first to replace encryption, 1")
 			}
 			if enc1.IsPaused == true && common.IsPaused() == true && enc1.SigName == common.SigName() {
@@ -117,7 +117,7 @@ func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*tr
 			if !oqs.VerifyEncConfig(enc2) {
 				return nil, fmt.Errorf("encryption 2 verification fails")
 			}
-			if common.IsPaused2() == false && common.SigName2() != enc2.SigName {
+			if shouldCheck && common.IsPaused2() == false && common.SigName2() != enc2.SigName {
 				return nil, fmt.Errorf("you need to pause first to replace encryption, 2")
 			}
 			if enc2.IsPaused == true && common.IsPaused2() == true && enc2.SigName == common.SigName2() {
