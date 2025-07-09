@@ -185,7 +185,7 @@ func GenerateNewAccount(w Wallet, sigName string) (Account, error) {
 	}
 	acc.Address = acc.PublicKey.GetAddress()
 
-	err = acc.secretKey.Init(signer.ExportSecretKey(), acc.Address)
+	err = acc.secretKey.Init(signer.ExportSecretKey(), acc.Address, false)
 	if err != nil {
 		return Account{}, err
 	}
@@ -229,7 +229,7 @@ func (w *Wallet) AddNewEncryptionToActiveWallet(sigName string, primary bool) er
 			return err
 		}
 		(*w).Account1.Address = w.Account1.PublicKey.GetAddress()
-		err = w.Account1.secretKey.Init(signer.ExportSecretKey(), w.Account1.Address)
+		err = w.Account1.secretKey.Init(signer.ExportSecretKey(), w.Account1.Address, true)
 		if err != nil {
 			return err
 		}
@@ -241,7 +241,7 @@ func (w *Wallet) AddNewEncryptionToActiveWallet(sigName string, primary bool) er
 			return err
 		}
 		(*w).Account2.Address = w.Account2.PublicKey.GetAddress()
-		err = w.Account2.secretKey.Init(signer.ExportSecretKey(), w.Account2.Address)
+		err = w.Account2.secretKey.Init(signer.ExportSecretKey(), w.Account2.Address, false)
 		if err != nil {
 			return err
 		}
@@ -330,10 +330,10 @@ func (w *Wallet) RestoreSecretKeyFromMnemonic(mnemonic string, primary bool) err
 	}
 	var signer oqs.Signature
 	if primary {
-		if len(secretKey) < common.PrivateKeyLength() {
-			return fmt.Errorf("not enough bytes for primary encryption private key")
-		}
-		err = w.Account1.secretKey.Init(secretKey[:common.PrivateKeyLength()], w.Account1.Address)
+		//if len(secretKey) < common.PrivateKeyLength() {
+		//	return fmt.Errorf("not enough bytes for primary encryption private key")
+		//}
+		err = w.Account1.secretKey.Init(secretKey[:], w.Account1.Address, true)
 		if err != nil {
 			return err
 		}
@@ -344,10 +344,10 @@ func (w *Wallet) RestoreSecretKeyFromMnemonic(mnemonic string, primary bool) err
 		}
 		(*w).Account1.signer = signer
 	} else {
-		if len(secretKey) < common.PrivateKeyLength2() {
-			return fmt.Errorf("not enough bytes for secondary encryption private key")
-		}
-		err = w.Account2.secretKey.Init(secretKey[:common.PrivateKeyLength2()], w.Account2.Address)
+		//if len(secretKey) < common.PrivateKeyLength2() {
+		//	return fmt.Errorf("not enough bytes for secondary encryption private key")
+		//}
+		err = w.Account2.secretKey.Init(secretKey[:], w.Account2.Address, false)
 		if err != nil {
 			return err
 		}
@@ -379,15 +379,6 @@ func (w *Wallet) StoreJSON() error {
 		logger.GetLogger().Println("not properly structured wallet. Now OK")
 		w.Accounts[w.SigName2] = w.Account2
 		copy(w.Accounts[w.SigName2].EncryptedSecretKey[:], w.Account2.EncryptedSecretKey[:])
-	}
-
-	for k, v := range w.Accounts {
-		se, err := w.encrypt(v.secretKey.GetBytes())
-		if err != nil {
-			logger.GetLogger().Println(err)
-			return err
-		}
-		copy(w.Accounts[k].EncryptedSecretKey, se)
 	}
 
 	se, err := w.encrypt(w.Account1.secretKey.GetBytes())
@@ -485,37 +476,48 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 		logger.GetLogger().Println(err)
 		return nil, err
 	}
-	// maybe one should limit amount of bytes to pass here
-	cnz := CountNonZeroBytes(ds)
-	logger.GetLogger().Println("cnz:", cnz)
-	err = w.Account1.secretKey.Init(ds[:cnz], w.Account1.Address)
+	var signer oqs.Signature
+	err = signer.Init(w.SigName, ds)
 	if err != nil {
 		return nil, err
 	}
-	var signer oqs.Signature
-	err = signer.Init(w.SigName, w.Account1.secretKey.GetBytes())
+	ds = ds[:signer.Details().LengthSecretKey]
+	err = signer.Init(w.SigName, ds)
 	if err != nil {
 		return nil, err
 	}
 	w.Account1.signer = signer
+	// maybe one should limit amount of bytes to pass here
+	cnz := CountNonZeroBytes(ds)
+	logger.GetLogger().Println("cnz:", cnz)
+
+	err = w.Account1.secretKey.Init(ds, w.Account1.Address, true)
+	if err != nil {
+		return nil, err
+	}
 
 	ds, err = w.decrypt(w.Account2.EncryptedSecretKey)
 	if err != nil {
 		logger.GetLogger().Println(err)
 		return nil, err
 	}
-	cnz = CountNonZeroBytes(ds)
-	logger.GetLogger().Println("cnz:", cnz)
-	err = w.Account2.secretKey.Init(bytes.TrimSuffix(ds[:cnz], []byte{0}), w.Account2.Address)
+	var signer2 oqs.Signature
+	err = signer2.Init(w.SigName2, ds)
 	if err != nil {
 		return nil, err
 	}
-	var signer2 oqs.Signature
-	err = signer2.Init(w.SigName2, w.Account2.secretKey.GetBytes())
+	ds = ds[:signer2.Details().LengthSecretKey]
+	err = signer2.Init(w.SigName2, ds)
 	if err != nil {
 		return nil, err
 	}
 	w.Account2.signer = signer2
+	cnz = CountNonZeroBytes(ds)
+	logger.GetLogger().Println("cnz:", cnz)
+	err = w.Account2.secretKey.Init(ds, w.Account2.Address, false)
+	if err != nil {
+		return nil, err
+	}
 
 	w.MainAddress.Primary = true
 	w.Account1.Address.Primary = true
@@ -563,6 +565,19 @@ func (w *Wallet) ChangePassword(password, newPassword string) error {
 		Accounts:      w.Accounts,
 	}
 
+	for k, v := range w.Accounts {
+		ds, err := w.decrypt(v.EncryptedSecretKey)
+		if err != nil {
+			logger.GetLogger().Println(err)
+			return err
+		}
+		se, err := w2.encrypt(ds)
+		if err != nil {
+			logger.GetLogger().Println(err)
+			return err
+		}
+		copy(w2.Accounts[k].EncryptedSecretKey, se)
+	}
 	err := w2.StoreJSON()
 	if err != nil {
 		logger.GetLogger().Println("Can not store new wallet")

@@ -362,16 +362,17 @@ type PrivKey struct {
 	Primary   bool    `json:"primary"`
 }
 
-func (pk *PrivKey) Init(b []byte, address Address) error {
+func (pk *PrivKey) Init(b []byte, address Address, primary bool) error {
 
-	if len(b) != PrivateKeyLength() && len(b) != PrivateKeyLength2() && encryptionConfigInstance.isPaused == 0 && encryptionConfigInstance.isPaused2 == 0 {
-		return fmt.Errorf("error Private key initialization with wrong length, should be %v", pk.GetLength())
-	}
-	if len(b) == PrivateKeyLength() {
-		pk.Primary = true
-	} else {
-		pk.Primary = false
-	}
+	//if len(b) != PrivateKeyLength() && len(b) != PrivateKeyLength2() && encryptionConfigInstance.isPaused == 0 && encryptionConfigInstance.isPaused2 == 0 {
+	//	return fmt.Errorf("error Private key initialization with wrong length, should be %v", pk.GetLength())
+	//}
+	//if len(b) == PrivateKeyLength() {
+	//	pk.Primary = true
+	//} else {
+	//	pk.Primary = false
+	//}
+	pk.Primary = primary
 	pk.ByteValue = b[:]
 	pk.Address = address
 	return nil
