@@ -89,7 +89,7 @@ func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*tr
 			if enc1.IsPaused == true && common.IsPaused() == true && enc1.SigName == common.SigName() {
 				return nil, fmt.Errorf("pausing fails, encryption is just puased, 1")
 			}
-			if enc1.SigName != common.SigName() && (enc1.IsPaused == false) {
+			if shouldCheck && (enc1.SigName != common.SigName()) && (enc1.IsPaused == false) {
 				return nil, fmt.Errorf("new encryption has to be paused, 1")
 			}
 
@@ -123,7 +123,7 @@ func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*tr
 			if enc2.IsPaused == true && common.IsPaused2() == true && enc2.SigName == common.SigName2() {
 				return nil, fmt.Errorf("pausing fails, encryption is just puased, 2")
 			}
-			if enc2.SigName != common.SigName2() && (enc2.IsPaused == false) {
+			if shouldCheck && (enc2.SigName != common.SigName2()) && (enc2.IsPaused == false) {
 				return nil, fmt.Errorf("new encryption has to be paused, 2")
 			}
 			if shouldCheck && (enc2.SigName != common.SigName2()) && !voting.VerifyEncryptionForReplacing(blockHeight, totalStaked, false) {
