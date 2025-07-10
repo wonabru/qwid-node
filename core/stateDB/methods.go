@@ -57,10 +57,13 @@ func (sa *StateAccount) CreateAccount(a common.Address) {
 	addrb := [common.AddressLength]byte{}
 	copy(addrb[:], a.ByteValue[:])
 	acc := account.Account{
-		Balance:          0,
-		Address:          addrb,
-		TransactionDelay: 0,
-		MultiSignNumber:  0,
+		Balance:               0,
+		Address:               addrb,
+		TransactionDelay:      0,
+		MultiSignNumber:       0,
+		MultiSignAddresses:    make([][20]byte, 0),
+		TransactionsSender:    make([]common.Hash, 0),
+		TransactionsRecipient: make([]common.Hash, 0),
 	}
 	(*sa).Accounts[a.ByteValue] = acc
 }

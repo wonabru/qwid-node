@@ -321,18 +321,24 @@ func GetStakedInDelegatedAccount(n int) ([]Account, float64, Account) {
 	defer StakingRWMutex.RUnlock()
 	sum := int64(0)
 	intAcc := Account{
-		Balance:          0,
-		Address:          [20]byte{},
-		TransactionDelay: 0,
-		MultiSignNumber:  0,
+		Balance:               0,
+		Address:               [20]byte{},
+		TransactionDelay:      0,
+		MultiSignNumber:       0,
+		MultiSignAddresses:    make([][20]byte, 0),
+		TransactionsSender:    make([]common.Hash, 0),
+		TransactionsRecipient: make([]common.Hash, 0),
 	}
 	accs := []Account{}
 	for _, sa := range StakingAccounts[n].AllStakingAccounts {
 		acc := Account{
-			Balance:          sa.StakedBalance,
-			Address:          [20]byte{},
-			TransactionDelay: 0,
-			MultiSignNumber:  0,
+			Balance:               sa.StakedBalance,
+			Address:               [20]byte{},
+			TransactionDelay:      0,
+			MultiSignNumber:       0,
+			MultiSignAddresses:    make([][20]byte, 0),
+			TransactionsSender:    make([]common.Hash, 0),
+			TransactionsRecipient: make([]common.Hash, 0),
 		}
 		copy(acc.Address[:], sa.Address[:])
 		if intAcc.Balance < sa.StakedBalance && sa.OperationalAccount {

@@ -144,23 +144,25 @@ func (a *Account) Unmarshal(data []byte) error {
 			}
 		}
 	}
-	nts := common.GetInt64FromByte(data[:8])
-	data = data[8:]
-	a.TransactionsSender = make([]common.Hash, nts)
-	for i := int64(0); i < nts; i++ {
-		th := common.Hash{}
-		copy(th[:], data[:32])
-		a.TransactionsSender[i] = th
-		data = data[32:]
-	}
-	ntr := common.GetInt64FromByte(data[:8])
-	data = data[8:]
-	a.TransactionsRecipient = make([]common.Hash, ntr)
-	for i := int64(0); i < ntr; i++ {
-		th := common.Hash{}
-		copy(th[:], data[:32])
-		a.TransactionsRecipient[i] = th
-		data = data[32:]
+	if len(data) >= 16 {
+		nts := common.GetInt64FromByte(data[:8])
+		data = data[8:]
+		a.TransactionsSender = make([]common.Hash, nts)
+		for i := int64(0); i < nts; i++ {
+			th := common.Hash{}
+			copy(th[:], data[:32])
+			a.TransactionsSender[i] = th
+			data = data[32:]
+		}
+		ntr := common.GetInt64FromByte(data[:8])
+		data = data[8:]
+		a.TransactionsRecipient = make([]common.Hash, ntr)
+		for i := int64(0); i < ntr; i++ {
+			th := common.Hash{}
+			copy(th[:], data[:32])
+			a.TransactionsRecipient[i] = th
+			data = data[32:]
+		}
 	}
 	return nil
 }

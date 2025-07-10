@@ -22,7 +22,11 @@ func AddTransactionsSender(address [common.AddressLength]byte, hashTxn common.Ha
 	AccountsRWMutex.Lock()
 	defer AccountsRWMutex.Unlock()
 	acc := Accounts.AllAccounts[address]
-	acc.TransactionsSender = append(acc.TransactionsSender, hashTxn)
+	if acc.TransactionsSender != nil {
+		acc.TransactionsSender = append(acc.TransactionsSender, hashTxn)
+	} else {
+		acc.TransactionsSender = []common.Hash{hashTxn}
+	}
 	Accounts.AllAccounts[address] = acc
 }
 
@@ -30,7 +34,11 @@ func AddTransactionsRecipient(address [common.AddressLength]byte, hashTxn common
 	AccountsRWMutex.Lock()
 	defer AccountsRWMutex.Unlock()
 	acc := Accounts.AllAccounts[address]
-	acc.TransactionsRecipient = append(acc.TransactionsRecipient, hashTxn)
+	if acc.TransactionsRecipient != nil {
+		acc.TransactionsRecipient = append(acc.TransactionsRecipient, hashTxn)
+	} else {
+		acc.TransactionsRecipient = []common.Hash{hashTxn}
+	}
 	Accounts.AllAccounts[address] = acc
 }
 
@@ -59,8 +67,8 @@ func (at AccountsType) Marshal() []byte {
 
 	// Iterate over map and marshal each account
 	for address, acc := range at.AllAccounts {
-		buffer.Write(address[:])    // Write address
-		buffer.Write(acc.Marshal()) // Marshal and write account
+		buffer.Write(address[:])                               // Write address
+		buffer.Write(common.BytesToLenAndBytes(acc.Marshal())) // Marshal and write account
 	}
 	buffer.Write(common.GetByteInt64(at.Height))
 	return buffer.Bytes()
@@ -68,35 +76,34 @@ func (at AccountsType) Marshal() []byte {
 
 // Unmarshal decodes AccountsType from a binary format.
 func (at *AccountsType) Unmarshal(data []byte) error {
-	buffer := bytes.NewBuffer(data)
 	// Number of accounts
-	accountCount := common.GetInt64FromByte(buffer.Next(8))
+	accountCount := common.GetInt64FromByte(data[:8])
 
 	at.AllAccounts = make(map[[common.AddressLength]byte]Account, accountCount)
 
+	data = data[8:]
 	// Read each account
 	for i := int64(0); i < accountCount; i++ {
 		var address [common.AddressLength]byte
 		var acc Account
+		copy(address[:], data[:20])
+		data = data[20:]
 
-		// Read address
-		if n, err := buffer.Read(address[:]); err != nil || n != common.AddressLength {
-			return fmt.Errorf("failed to read address: %w", err)
+		bs, leftBs, err := common.BytesWithLenToBytes(data)
+		if err != nil {
+			return err
 		}
-
-		// Account binary data
-		accountData := buffer.Next(common.AddressLength + 17) // Account data length (8 bytes for delay + 1 for multisignNumber + 8 bytes for balance + 20 bytes for address)
-		if len(accountData) != common.AddressLength+17 {
-			return fmt.Errorf("incorrect account data length: got %d, want 33", len(accountData))
-		}
-
-		if err := acc.Unmarshal(accountData); err != nil {
+		data = leftBs[:]
+		if err := acc.Unmarshal(bs); err != nil {
 			return fmt.Errorf("failed to unmarshal account: %w", err)
 		}
 
 		at.AllAccounts[address] = acc
 	}
-	at.Height = common.GetInt64FromByte(buffer.Next(8))
+	if len(data) != 8 {
+		return fmt.Errorf("error with unmarshal account")
+	}
+	at.Height = common.GetInt64FromByte(data)
 	return nil
 }
 
