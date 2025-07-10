@@ -11,11 +11,13 @@ import (
 )
 
 type Account struct {
-	Balance            int64                        `json:"balance"`
-	Address            [common.AddressLength]byte   `json:"address"`
-	TransactionDelay   int64                        `json:"transactionDelay"`
-	MultiSignNumber    uint8                        `json:"multiSignNumber"`
-	MultiSignAddresses [][common.AddressLength]byte `json:"multiSignAddresses,omitempty"`
+	Balance               int64                        `json:"balance"`
+	Address               [common.AddressLength]byte   `json:"address"`
+	TransactionDelay      int64                        `json:"transactionDelay"`
+	MultiSignNumber       uint8                        `json:"multiSignNumber"`
+	MultiSignAddresses    [][common.AddressLength]byte `json:"multiSignAddresses,omitempty"`
+	TransactionsSender    []common.Hash                `json:"transactionsSender,omitempty"`
+	TransactionsRecipient []common.Hash                `json:"transactionsRecipient,omitempty"`
 }
 
 func GetAccountByAddressBytes(address []byte) Account {
@@ -78,10 +80,12 @@ func SetAccountByAddressBytes(address []byte) Account {
 		addrb := [common.AddressLength]byte{}
 		copy(addrb[:], address[:common.AddressLength])
 		dexAccount = Account{
-			Balance:          0,
-			Address:          addrb,
-			TransactionDelay: 0,
-			MultiSignNumber:  0,
+			Balance:               0,
+			Address:               addrb,
+			TransactionDelay:      0,
+			MultiSignNumber:       0,
+			TransactionsSender:    make([]common.Hash, 0),
+			TransactionsRecipient: make([]common.Hash, 0),
 		}
 		AccountsRWMutex.Lock()
 		Accounts.AllAccounts[addrb] = dexAccount
@@ -103,6 +107,16 @@ func (a Account) Marshal() []byte {
 	b = append(b, a.MultiSignNumber)
 	for _, msa := range a.MultiSignAddresses {
 		b = append(b, msa[:]...)
+	}
+	nts := common.GetByteInt64(int64(len(a.TransactionsSender)))
+	b = append(b, nts...)
+	for _, txHash := range a.TransactionsSender {
+		b = append(b, txHash.GetBytes()...)
+	}
+	ntr := common.GetByteInt64(int64(len(a.TransactionsRecipient)))
+	b = append(b, ntr...)
+	for _, txHash := range a.TransactionsRecipient {
+		b = append(b, txHash.GetBytes()...)
 	}
 	return b
 }
@@ -130,7 +144,24 @@ func (a *Account) Unmarshal(data []byte) error {
 			}
 		}
 	}
-
+	nts := common.GetInt64FromByte(data[:8])
+	data = data[8:]
+	a.TransactionsSender = make([]common.Hash, nts)
+	for i := int64(0); i < nts; i++ {
+		th := common.Hash{}
+		copy(th[:], data[:32])
+		a.TransactionsSender[i] = th
+		data = data[32:]
+	}
+	ntr := common.GetInt64FromByte(data[:8])
+	data = data[8:]
+	a.TransactionsRecipient = make([]common.Hash, ntr)
+	for i := int64(0); i < ntr; i++ {
+		th := common.Hash{}
+		copy(th[:], data[:32])
+		a.TransactionsRecipient[i] = th
+		data = data[32:]
+	}
 	return nil
 }
 
@@ -147,6 +178,18 @@ func (a Account) GetString() string {
 		r += "Multi Signature Addresses: \n"
 		for i, msa := range a.MultiSignAddresses {
 			r += "\t" + strconv.FormatInt(int64(i), 10) + ": " + hexutil.Encode(msa[:]) + "\n"
+		}
+	}
+	if len(a.TransactionsSender) > 0 {
+		r += "Sent Transactions: \n"
+		for _, txnHash := range a.TransactionsSender {
+			r += txnHash.GetHex() + "\n"
+		}
+	}
+	if len(a.TransactionsRecipient) > 0 {
+		r += "Received Transactions: \n"
+		for _, txnHash := range a.TransactionsRecipient {
+			r += txnHash.GetHex() + "\n"
 		}
 	}
 	return r

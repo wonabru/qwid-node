@@ -47,7 +47,7 @@ func ListenRPC() {
 
 func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 	listenerMutex.Lock()
-	defer listenerMutex.Unlock()
+
 	if len(lineBeg) < 4 {
 		*reply = []byte("Error with message. Too small length calling server")
 		return nil
@@ -93,6 +93,7 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 			return nil
 		}
 	}
+	listenerMutex.Unlock()
 	switch operation {
 	case "STAT":
 		handleSTAT(byt, reply)
@@ -114,8 +115,6 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 		handleENCR(byt, reply)
 	case "VOTE":
 		handleVOTE(byt, reply)
-	//case "ACCS":
-	//	handleACCS(byt, reply)
 	case "DETS":
 		handleDETS(byt, reply)
 	case "STAK":
