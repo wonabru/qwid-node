@@ -325,6 +325,7 @@ func LoadTreeWithoutTxHashes(height int64) (*MerkleTree, error) {
 }
 
 func FindTransactionInBlocks(targetHash []byte, height int64) (int64, error) {
+
 	tree, err := LoadTreeWithoutTxHashes(height)
 	if err != nil {
 		return -1, err
@@ -350,7 +351,16 @@ func FindTransactionInBlocks(targetHash []byte, height int64) (int64, error) {
 			return hr, nil
 		}
 	}
-
+	//TODO the least
+	hashes, err := LoadTxHashes(height)
+	if err != nil {
+		return 0, err
+	}
+	for _, h := range hashes {
+		if bytes.Equal(h[:], targetHash[:]) {
+			return height, nil
+		}
+	}
 	return -1, fmt.Errorf("tx hash not found")
 }
 

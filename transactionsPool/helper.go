@@ -47,13 +47,8 @@ func CheckTransactionInDBAndInMarkleTrie(hash []byte) error {
 		if err != nil {
 			return err
 		}
-		if txHeight < 0 {
+		if txHeight <= 0 {
 			logger.GetLogger().Println("transaction not in merkle tree. removing transaction: checkTransactionInDBAndInMarkleTrie")
-			//TODO
-			//err = transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], hash)
-			//if err != nil {
-			//	return err
-			//}
 		} else {
 			return fmt.Errorf("transaction was previously added in chain: checkTransactionInDBAndInMarkleTrie")
 		}
