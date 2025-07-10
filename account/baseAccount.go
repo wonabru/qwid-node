@@ -105,6 +105,7 @@ func (a Account) Marshal() []byte {
 	delay := common.GetByteInt64(a.TransactionDelay)
 	b = append(b, delay...)
 	b = append(b, a.MultiSignNumber)
+	b = append(b, byte(len(a.MultiSignAddresses)))
 	for _, msa := range a.MultiSignAddresses {
 		b = append(b, msa[:]...)
 	}
@@ -122,7 +123,7 @@ func (a Account) Marshal() []byte {
 }
 
 func (a *Account) Unmarshal(data []byte) error {
-	if len(data) < 37 {
+	if len(data) < 38 {
 		return fmt.Errorf("wrong number of bytes in unmarshal account %v", len(data))
 	}
 	a.Balance = common.GetInt64FromByte(data[:8])
@@ -130,8 +131,9 @@ func (a *Account) Unmarshal(data []byte) error {
 	copy(a.Address[:], data[8:28])
 	a.TransactionDelay = common.GetInt64FromByte(data[28:36])
 	a.MultiSignNumber = data[36]
-	if len(data) > 37 {
-		data = data[37:]
+	msa := data[37]
+	if msa > 0 {
+		data = data[38:]
 		lenAccMS := len(data) / 20
 		if int(a.MultiSignNumber) > lenAccMS {
 			return fmt.Errorf("wrongly defined multisign account")
