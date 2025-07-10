@@ -18,6 +18,22 @@ type AccountsType struct {
 var Accounts AccountsType
 var AccountsRWMutex sync.RWMutex
 
+func AddTransactionsSender(address [common.AddressLength]byte, hashTxn common.Hash) {
+	AccountsRWMutex.Lock()
+	defer AccountsRWMutex.Unlock()
+	acc := Accounts.AllAccounts[address]
+	acc.TransactionsSender = append(acc.TransactionsSender, hashTxn)
+	Accounts.AllAccounts[address] = acc
+}
+
+func AddTransactionsRecipient(address [common.AddressLength]byte, hashTxn common.Hash) {
+	AccountsRWMutex.Lock()
+	defer AccountsRWMutex.Unlock()
+	acc := Accounts.AllAccounts[address]
+	acc.TransactionsRecipient = append(acc.TransactionsRecipient, hashTxn)
+	Accounts.AllAccounts[address] = acc
+}
+
 // error is not checked one should do the checking before
 func SetBalance(address [common.AddressLength]byte, balance int64) {
 	AccountsRWMutex.Lock()

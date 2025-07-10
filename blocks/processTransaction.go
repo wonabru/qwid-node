@@ -151,7 +151,9 @@ func ProcessTransaction(tx transactionsDefinition.Transaction, height int64) err
 	amount := tx.TxData.Amount
 	operational := len(tx.TxData.OptData) > 0
 	address := tx.GetSenderAddress()
+	account.AddTransactionsSender(address.ByteValue, tx.GetHash())
 	addressRecipient := tx.TxData.Recipient
+	account.AddTransactionsRecipient(addressRecipient.ByteValue, tx.GetHash())
 	var err error
 	var n int
 	if tx.GetLockedAmount() > 0 {
