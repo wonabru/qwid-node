@@ -63,7 +63,9 @@ Q:
 
 		topic := [2]byte{'T', 'T'}
 
-		SendTransactionMsg(tcpip.MyIP, topic)
+		if SendTransactionMsg(tcpip.MyIP, topic) {
+			break
+		}
 
 		timeout := time.After(time.Second)
 
@@ -82,20 +84,22 @@ Q:
 	}
 }
 
-func SendTransactionMsg(ip [4]byte, topic [2]byte) {
+func SendTransactionMsg(ip [4]byte, topic [2]byte) bool {
 	isync := common.IsSyncing.Load()
 	if isync == true {
-		return
+		return true
 	}
 	txs := transactionsPool.PoolsTx.PeekTransactions(int(common.MaxTransactionsPerBlock), 0)
 	n, err := GenerateTransactionMsg(txs, []byte("tx"), topic)
 	if err != nil {
 		logger.GetLogger().Println(err)
-		return
+		return false
 	}
 	if !Send(ip, n.GetBytes()) {
 		logger.GetLogger().Println("could not send standard transaction")
+		return false
 	}
+	return true
 }
 
 func SendGT(ip [4]byte, txsHashes [][]byte, syncPre string) {
