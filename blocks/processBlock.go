@@ -21,7 +21,7 @@ func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*tr
 		return nil, fmt.Errorf("supply is too high")
 	}
 
-	if !bytes.Equal(lastBlock.BlockHash.GetBytes(), newBlock.GetHeader().PreviousHash.GetBytes()) {
+	if newBlock.GetHeader().Height > 0 && !bytes.Equal(lastBlock.BlockHash.GetBytes(), newBlock.GetHeader().PreviousHash.GetBytes()) {
 		logger.GetLogger().Println("lastBlock.BlockHash", lastBlock.BlockHash.GetHex(), newBlock.GetHeader().PreviousHash.GetHex())
 		return nil, fmt.Errorf("last block hash not match to one stored in new block")
 	}
@@ -47,7 +47,7 @@ func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*tr
 	if err != nil {
 		return nil, err
 	}
-	if !bytes.Equal(merkleTrie.GetRootHash(), rootMerkleTrie.GetBytes()) {
+	if newBlock.GetHeader().Height > 0 && !bytes.Equal(merkleTrie.GetRootHash(), rootMerkleTrie.GetBytes()) {
 		return nil, fmt.Errorf("root merkleTrie hash check fails")
 	}
 	totalStaked := account.GetStakedInAllDelegatedAccounts()

@@ -127,7 +127,15 @@ func GetDetails(h string) string {
 		}
 		return tx.GetString()
 	case "AC":
-		acc := account.Account{}
+		acc := account.Account{
+			Balance:               0,
+			Address:               [20]byte{},
+			TransactionDelay:      0,
+			MultiSignNumber:       0,
+			MultiSignAddresses:    make([][20]byte, 0),
+			TransactionsSender:    make([]common.Hash, 0),
+			TransactionsRecipient: make([]common.Hash, 0),
+		}
 		err = (&acc).Unmarshal(reply[2:])
 		if err != nil {
 			logger.GetLogger().Println(err)

@@ -11,11 +11,13 @@ import (
 )
 
 type Account struct {
-	Balance            int64                        `json:"balance"`
-	Address            [common.AddressLength]byte   `json:"address"`
-	TransactionDelay   int64                        `json:"transactionDelay"`
-	MultiSignNumber    uint8                        `json:"multiSignNumber"`
-	MultiSignAddresses [][common.AddressLength]byte `json:"multiSignAddresses,omitempty"`
+	Balance               int64                        `json:"balance"`
+	Address               [common.AddressLength]byte   `json:"address"`
+	TransactionDelay      int64                        `json:"transactionDelay"`
+	MultiSignNumber       uint8                        `json:"multiSignNumber"`
+	MultiSignAddresses    [][common.AddressLength]byte `json:"multiSignAddresses,omitempty"`
+	TransactionsSender    []common.Hash                `json:"transactionsSender,omitempty"`
+	TransactionsRecipient []common.Hash                `json:"transactionsRecipient,omitempty"`
 }
 
 func GetAccountByAddressBytes(address []byte) Account {
@@ -78,10 +80,12 @@ func SetAccountByAddressBytes(address []byte) Account {
 		addrb := [common.AddressLength]byte{}
 		copy(addrb[:], address[:common.AddressLength])
 		dexAccount = Account{
-			Balance:          0,
-			Address:          addrb,
-			TransactionDelay: 0,
-			MultiSignNumber:  0,
+			Balance:               0,
+			Address:               addrb,
+			TransactionDelay:      0,
+			MultiSignNumber:       0,
+			TransactionsSender:    make([]common.Hash, 0),
+			TransactionsRecipient: make([]common.Hash, 0),
 		}
 		AccountsRWMutex.Lock()
 		Accounts.AllAccounts[addrb] = dexAccount
@@ -101,14 +105,25 @@ func (a Account) Marshal() []byte {
 	delay := common.GetByteInt64(a.TransactionDelay)
 	b = append(b, delay...)
 	b = append(b, a.MultiSignNumber)
+	b = append(b, byte(len(a.MultiSignAddresses)))
 	for _, msa := range a.MultiSignAddresses {
 		b = append(b, msa[:]...)
+	}
+	nts := common.GetByteInt64(int64(len(a.TransactionsSender)))
+	b = append(b, nts...)
+	for _, txHash := range a.TransactionsSender {
+		b = append(b, txHash.GetBytes()...)
+	}
+	ntr := common.GetByteInt64(int64(len(a.TransactionsRecipient)))
+	b = append(b, ntr...)
+	for _, txHash := range a.TransactionsRecipient {
+		b = append(b, txHash.GetBytes()...)
 	}
 	return b
 }
 
 func (a *Account) Unmarshal(data []byte) error {
-	if len(data) < 37 {
+	if len(data) < 38 {
 		return fmt.Errorf("wrong number of bytes in unmarshal account %v", len(data))
 	}
 	a.Balance = common.GetInt64FromByte(data[:8])
@@ -116,21 +131,51 @@ func (a *Account) Unmarshal(data []byte) error {
 	copy(a.Address[:], data[8:28])
 	a.TransactionDelay = common.GetInt64FromByte(data[28:36])
 	a.MultiSignNumber = data[36]
-	if len(data) > 37 {
-		data = data[37:]
-		lenAccMS := len(data) / 20
-		if int(a.MultiSignNumber) > lenAccMS {
-			return fmt.Errorf("wrongly defined multisign account")
+	msa := data[37]
+	data = data[38:]
+	// MultiSignAddresses
+	if msa > 0 {
+		// check if enough data
+		if len(data) < int(msa)*20 {
+			return fmt.Errorf("not enough data for multisign addresses: need %d, have %d", int(msa)*20, len(data))
 		}
-		if lenAccMS > 0 {
-			a.MultiSignAddresses = make([][common.AddressLength]byte, lenAccMS)
-			for i := 0; i < lenAccMS; i++ {
-				copy(a.MultiSignAddresses[i][:], data[:20])
-				data = data[20:]
-			}
+
+		a.MultiSignAddresses = make([][common.AddressLength]byte, msa)
+		for i := 0; i < int(msa); i++ {
+			copy(a.MultiSignAddresses[i][:], data[:20])
+			data = data[20:]
 		}
 	}
 
+	if len(data) >= 16 {
+		nts := common.GetInt64FromByte(data[:8])
+		data = data[8:]
+		// check if enough data
+		if len(data) < int(nts)*32 {
+			return fmt.Errorf("not enough data for sender transactions: need %d, have %d", int(nts)*32, len(data))
+		}
+
+		a.TransactionsSender = make([]common.Hash, nts)
+		for i := int64(0); i < nts; i++ {
+			th := common.Hash{}
+			copy(th[:], data[:32])
+			a.TransactionsSender[i] = th
+			data = data[32:]
+		}
+		ntr := common.GetInt64FromByte(data[:8])
+		data = data[8:]
+		// check if enough data
+		if len(data) < int(ntr)*32 {
+			return fmt.Errorf("not enough data for recipient transactions: need %d, have %d", int(nts)*32, len(data))
+		}
+		a.TransactionsRecipient = make([]common.Hash, ntr)
+		for i := int64(0); i < ntr; i++ {
+			th := common.Hash{}
+			copy(th[:], data[:32])
+			a.TransactionsRecipient[i] = th
+			data = data[32:]
+		}
+	}
 	return nil
 }
 
@@ -147,6 +192,18 @@ func (a Account) GetString() string {
 		r += "Multi Signature Addresses: \n"
 		for i, msa := range a.MultiSignAddresses {
 			r += "\t" + strconv.FormatInt(int64(i), 10) + ": " + hexutil.Encode(msa[:]) + "\n"
+		}
+	}
+	if len(a.TransactionsSender) > 0 {
+		r += "Sent Transactions: \n"
+		for _, txnHash := range a.TransactionsSender {
+			r += txnHash.GetHex() + "\n"
+		}
+	}
+	if len(a.TransactionsRecipient) > 0 {
+		r += "Received Transactions: \n"
+		for _, txnHash := range a.TransactionsRecipient {
+			r += txnHash.GetHex() + "\n"
 		}
 	}
 	return r

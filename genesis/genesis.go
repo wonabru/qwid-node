@@ -8,6 +8,7 @@ import (
 	"github.com/okuralabs/okura-node/account"
 	"github.com/okuralabs/okura-node/blocks"
 	"github.com/okuralabs/okura-node/common"
+	"github.com/okuralabs/okura-node/crypto/oqs"
 	"github.com/okuralabs/okura-node/logger"
 	"github.com/okuralabs/okura-node/pubkeys"
 	"github.com/okuralabs/okura-node/transactionsDefinition"
@@ -125,6 +126,7 @@ func CreateBlockFromGenesis(genesis Genesis) blocks.Block {
 		if err != nil {
 			logger.GetLogger().Fatal("cannot decode address from bytes in genesis block")
 		}
+
 		tx := GenesisTransaction(addressOp1, a, genTx, walletNonce, genesis.Timestamp)
 		err = tx.CalcHashAndSet()
 		if err != nil {
@@ -198,6 +200,14 @@ func CreateBlockFromGenesis(genesis Genesis) blocks.Block {
 	rootHash := common.Hash{}
 	rootHash.Set(genesisMerkleTrie.GetRootHash())
 
+	enc1, err := oqs.GenerateBytesFromParams(common.SigName(), common.PubKeyLength(false), common.PrivateKeyLength(), common.SignatureLength(false), common.IsPaused())
+	if err != nil {
+		logger.GetLogger().Fatalf("connot generate encryption bytes %v", err)
+	}
+	enc2, err := oqs.GenerateBytesFromParams(common.SigName2(), common.PubKeyLength2(false), common.PrivateKeyLength2(), common.SignatureLength2(false), common.IsPaused2())
+	if err != nil {
+		logger.GetLogger().Fatalf("connot generate encryption bytes %v", err)
+	}
 	bh := blocks.BaseHeader{
 		PreviousHash:     common.EmptyHash(),
 		Difficulty:       genesis.Difficulty,
@@ -205,6 +215,8 @@ func CreateBlockFromGenesis(genesis Genesis) blocks.Block {
 		DelegatedAccount: common.GetDelegatedAccountAddress(1),
 		OperatorAccount:  addressOp1,
 		RootMerkleTree:   rootHash,
+		Encryption1:      enc1,
+		Encryption2:      enc2,
 		Signature:        common.Signature{},
 		SignatureMessage: []byte{},
 	}
@@ -273,6 +285,8 @@ func GenesisTransaction(sender common.Address, recipient common.Address, genTx G
 	if err != nil {
 		logger.GetLogger().Fatal(err)
 	}
+
+	account.SetAccountByAddressBytes(recipient.GetBytes())
 
 	msa := [][common.AddressLength]byte{}
 
@@ -359,6 +373,32 @@ func InitGenesis(processTransactions bool) {
 	} else {
 		setInitParams(genesis)
 		genesisBlock := CreateBlockFromGenesis(genesis)
+
+		merkleTrie, err := blocks.CheckBaseBlock(genesisBlock, genesisBlock, false)
+		defer merkleTrie.Destroy()
+		if err != nil {
+			logger.GetLogger().Fatalf(err.Error())
+			return
+		}
+		err = merkleTrie.StoreTree(0)
+		if err != nil {
+			logger.GetLogger().Fatalf(err.Error())
+			return
+		}
+		hashes := genesisBlock.TransactionsHashes
+		for _, h := range hashes {
+			tx, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], h.GetBytes())
+			if err != nil {
+				logger.GetLogger().Fatalf(err.Error())
+				return
+			}
+			err = tx.StoreToDBPoolTx(common.TransactionDBPrefix[:])
+			if err != nil {
+				logger.GetLogger().Fatalf(err.Error())
+				return
+			}
+
+		}
 		reward := account.GetReward(common.InitSupply)
 		err = blocks.ProcessBlockTransfers(genesisBlock, reward)
 		if err != nil {
