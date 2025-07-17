@@ -132,23 +132,29 @@ func (a *Account) Unmarshal(data []byte) error {
 	a.TransactionDelay = common.GetInt64FromByte(data[28:36])
 	a.MultiSignNumber = data[36]
 	msa := data[37]
+	data = data[38:]
+	// MultiSignAddresses
 	if msa > 0 {
-		data = data[38:]
-		lenAccMS := len(data) / 20
-		if int(a.MultiSignNumber) > lenAccMS {
-			return fmt.Errorf("wrongly defined multisign account")
+		// check if enough data
+		if len(data) < int(msa)*20 {
+			return fmt.Errorf("not enough data for multisign addresses: need %d, have %d", int(msa)*20, len(data))
 		}
-		if lenAccMS > 0 {
-			a.MultiSignAddresses = make([][common.AddressLength]byte, lenAccMS)
-			for i := 0; i < lenAccMS; i++ {
-				copy(a.MultiSignAddresses[i][:], data[:20])
-				data = data[20:]
-			}
+
+		a.MultiSignAddresses = make([][common.AddressLength]byte, msa)
+		for i := 0; i < int(msa); i++ {
+			copy(a.MultiSignAddresses[i][:], data[:20])
+			data = data[20:]
 		}
 	}
+
 	if len(data) >= 16 {
 		nts := common.GetInt64FromByte(data[:8])
 		data = data[8:]
+		// check if enough data
+		if len(data) < int(nts)*32 {
+			return fmt.Errorf("not enough data for sender transactions: need %d, have %d", int(nts)*32, len(data))
+		}
+
 		a.TransactionsSender = make([]common.Hash, nts)
 		for i := int64(0); i < nts; i++ {
 			th := common.Hash{}
@@ -158,6 +164,10 @@ func (a *Account) Unmarshal(data []byte) error {
 		}
 		ntr := common.GetInt64FromByte(data[:8])
 		data = data[8:]
+		// check if enough data
+		if len(data) < int(ntr)*32 {
+			return fmt.Errorf("not enough data for recipient transactions: need %d, have %d", int(nts)*32, len(data))
+		}
 		a.TransactionsRecipient = make([]common.Hash, ntr)
 		for i := int64(0); i < ntr; i++ {
 			th := common.Hash{}
