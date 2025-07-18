@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/okuralabs/okura-node/cmd/gui/qtwidgets"
-	"github.com/okuralabs/okura-node/crypto/oqs/rand"
 	"github.com/therecipe/qt/widgets"
 	rand2 "math/rand"
 	"sync"
@@ -44,7 +43,7 @@ func main() {
 	wallet.InitActiveWallet(0, string(password), sigName, sigName2)
 	MainWallet = wallet.GetActiveWallet()
 
-	for range 2 {
+	for range 1 {
 		go sendTransactions(MainWallet)
 		//time.Sleep(time.Millisecond * 1)
 	}
@@ -98,8 +97,8 @@ func SampleTransaction(w *wallet.Wallet) transactionsDefinition.Transaction {
 	defer mutex.Unlock()
 	sender := w.MainAddress
 	recv := common.Address{}
-	//br := common.Hex2Bytes("5b21c69aaea1ddd18bd17ad6f23f109479cca304")
-	br := rand.RandomBytes(20)
+	br := common.Hex2Bytes("5b21c69aaea1ddd18bd17ad6f23f109479cca304")
+	//br := rand.RandomBytes(20)
 	err := recv.Init(append([]byte{0}, br...))
 	if err != nil {
 		return transactionsDefinition.Transaction{}

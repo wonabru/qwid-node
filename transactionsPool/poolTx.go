@@ -79,11 +79,13 @@ func (tp *TransactionPool) AddTransaction(tx transactionsDefinition.Transaction,
 	var hash [common.HashLength]byte
 	copy(hash[:], tx.GetHash().GetBytes())
 	tp.rwmutex.Lock()
-	if _, exists := tp.bannedTransactions[hash]; exists {
-		tp.rwmutex.Unlock()
-		logger.GetLogger().Println("transaction not added. banned")
-		tp.BanTransactionByHash(hash[:])
-		return false
+	if numBans, exists := tp.bannedTransactions[hash]; exists {
+		if numBans > common.NumberWhenWillBan {
+			tp.rwmutex.Unlock()
+			logger.GetLogger().Println("transaction not added. banned")
+			tp.BanTransactionByHash(hash[:])
+			return false
+		}
 	}
 	if _, exists := tp.transactions[hash]; !exists {
 		tp.transactions[hash] = tx
