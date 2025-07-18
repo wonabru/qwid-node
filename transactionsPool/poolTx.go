@@ -164,7 +164,7 @@ func (tp *TransactionPool) BanTransactionByHash(hash []byte) {
 	defer tp.rwmutex.Unlock()
 	tp.bannedTransactions[h]++
 	if tp.bannedTransactions[h] > common.MaxNumberOfTxBans {
-		delete(tp.transactionIndices, h)
+		delete(tp.bannedTransactions, h)
 	}
 }
 
