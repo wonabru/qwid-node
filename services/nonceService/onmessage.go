@@ -225,7 +225,7 @@ func OnMessage(addr [4]byte, m []byte) {
 					return
 				}
 
-				err = blocks.CheckBlockAndTransferFunds(&newBlock, lastBlock, merkleTrie)
+				err = blocks.CheckBlockAndTransferFunds(&newBlock, lastBlock, merkleTrie, true)
 				if err != nil {
 					services.ResetAccountsAndBlocksSync(lastBlock.GetHeader().Height)
 					logger.GetLogger().Println("check transfer transactions in block fails", err)

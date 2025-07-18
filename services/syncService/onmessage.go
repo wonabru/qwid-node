@@ -311,7 +311,7 @@ func OnMessage(addr [4]byte, m []byte) {
 				was = true
 			}
 
-			err := blocks.CheckBlockAndTransferFunds(&block, oldBlock, merkleTries[index])
+			err := blocks.CheckBlockAndTransferFunds(&block, oldBlock, merkleTries[index], false)
 			if err != nil {
 				logger.GetLogger().Printf("ERROR: Fund transfer failed for block %d: %v", index, err)
 				hashesMissing := blocks.IsAllTransactions(block)
