@@ -29,8 +29,8 @@ var (
 	MaxPeersConnected              int     = 6
 	NumberOfHashesInBucket         int64   = 20
 	NumberOfBlocksInBucket         int64   = 20
-	MaxNumberOfTxBans              int     = 20 // number of bans
-	NumberWhenWillBan                      = 3
+	MaxNumberOfTxBans              int     = 50 // number of bans
+	NumberWhenWillBan                      = 10
 	MinStakingForNode              int64   = 100000000000000
 	MinStakingUser                 int64   = 100000000000 // should be 100000000000
 	OraclesHeightDistance          int64   = 6            // one minute on average
