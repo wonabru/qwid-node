@@ -16,8 +16,8 @@ func CheckStakingTransaction(tx transactionsDefinition.Transaction, sumAmount in
 	fee := tx.GasPrice * tx.GasUsage
 	amount := tx.TxData.Amount
 	address := tx.GetSenderAddress()
-	acc := account.GetAccountByAddressBytes(address.GetBytes())
-	if !bytes.Equal(acc.Address[:], address.GetBytes()) {
+	acc, exist := account.GetAccountByAddressBytes(address.GetBytes())
+	if !exist || !bytes.Equal(acc.Address[:], address.GetBytes()) {
 		logger.GetLogger().Println("no account found in check staking transaction: CheckStakingTransaction")
 		return false
 	}
@@ -232,8 +232,10 @@ func ProcessTransaction(tx transactionsDefinition.Transaction, height int64) err
 		}
 	} else { // this is not delegated account so standard transaction
 
-		senderAcc := account.GetAccountByAddressBytes(address.GetBytes())
-
+		senderAcc, exist := account.GetAccountByAddressBytes(address.GetBytes())
+		if !exist {
+			return fmt.Errorf("no account found")
+		}
 		if senderAcc.TransactionDelay > 0 && tx.GetHeight()+senderAcc.TransactionDelay > height && bytes.Equal(tx.TxParam.MultiSignTx.GetBytes(), ZerosHash) {
 			transactionsPool.PoolTxEscrow.AddTransaction(tx, tx.Hash)
 
@@ -300,8 +302,10 @@ func ProcessTransactionsMultiSign(tx transactionsDefinition.Transaction, height 
 		return fmt.Errorf("no main transaction in multi signature pool")
 	}
 
-	acc := account.GetAccountByAddressBytes(mainTx.TxParam.Sender.GetBytes())
-
+	acc, exist := account.GetAccountByAddressBytes(mainTx.TxParam.Sender.GetBytes())
+	if !exist {
+		return fmt.Errorf("no account found: MultiSign")
+	}
 	if len(txs) < int(acc.MultiSignNumber) {
 		logger.GetLogger().Println("not enough signatures for transactions to process ", tx.TxParam.MultiSignTx.GetHex())
 		return nil
@@ -391,8 +395,10 @@ func ProcessTransactionsEscrow(height int64) error {
 		if err == nil { // delegated account any transfer should be processed for staking unstaking and reward withdrawal
 			return nil
 		} else { // this is not delegated account so standard transaction
-			senderAcc := account.GetAccountByAddressBytes(address.GetBytes())
-
+			senderAcc, exist := account.GetAccountByAddressBytes(address.GetBytes())
+			if !exist {
+				return fmt.Errorf("no account found: Escrow")
+			}
 			if senderAcc.TransactionDelay > 0 && tx.GetHeight()+senderAcc.TransactionDelay > height && bytes.Equal(tx.TxParam.MultiSignTx.GetBytes(), ZerosHash) {
 				return fmt.Errorf("transaction should not be executed %v", tx.Hash.GetHex())
 			} else if senderAcc.MultiSignNumber > 0 && bytes.Equal(tx.TxParam.MultiSignTx.GetBytes(), ZerosHash) {

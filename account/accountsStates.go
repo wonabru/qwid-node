@@ -21,7 +21,11 @@ var AccountsRWMutex sync.RWMutex
 func AddTransactionsSender(address [common.AddressLength]byte, hashTxn common.Hash) {
 	AccountsRWMutex.Lock()
 	defer AccountsRWMutex.Unlock()
-	acc := Accounts.AllAccounts[address]
+	var acc Account
+	var isOK bool
+	if acc, isOK = Accounts.AllAccounts[address]; !isOK {
+		SetAccountByAddressBytes(address[:])
+	}
 	if acc.TransactionsSender != nil {
 		acc.TransactionsSender = append(acc.TransactionsSender, hashTxn)
 	} else {

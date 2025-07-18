@@ -224,8 +224,8 @@ func CheckBlockTransfers(block Block, lastBlock Block, onlyCheck bool) (int64, i
 				return 0, 0, fmt.Errorf("staking transactions checking fails: CheckBlockTransfers")
 			}
 		}
-		acc := account.GetAccountByAddressBytes(address.GetBytes())
-		if !bytes.Equal(acc.Address[:], address.GetBytes()) {
+		acc, exist := account.GetAccountByAddressBytes(address.GetBytes())
+		if !exist || !bytes.Equal(acc.Address[:], address.GetBytes()) {
 			// remove bad transaction from pool
 			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height)
 			return 0, 0, fmt.Errorf("no account found in check block transafer: CheckBlockTransfers")
@@ -450,7 +450,7 @@ func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *tr
 
 	staked, rewarded := GetSupplyInStakedAccounts()
 	//coinsInDex := account.GetCoinLiquidityInDex()
-	if checkWhenNotSync && GetSupplyInAccounts()+staked+rewarded+reward+lastBlock.BlockFee != newBlock.GetBlockSupply() {
+	if GetSupplyInAccounts()+staked+rewarded+reward+lastBlock.BlockFee != newBlock.GetBlockSupply() {
 		logger.GetLogger().Println("GetSupplyInAccounts()", GetSupplyInAccounts())
 		logger.GetLogger().Println("staked:", staked)
 		logger.GetLogger().Println("rewarded", rewarded)

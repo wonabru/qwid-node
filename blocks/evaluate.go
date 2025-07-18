@@ -112,8 +112,8 @@ func GenerateOptDataDEX(tx transactionsDefinition.Transaction, operation int) ([
 		return nil, common.Address{}, 0, 0, 0, fmt.Errorf("wrong operation on dex")
 	}
 
-	senderAccount := account.GetAccountByAddressBytes(tx.TxParam.Sender.GetBytes())
-	if !bytes.Equal(senderAccount.Address[:], tx.TxParam.Sender.GetBytes()) {
+	senderAccount, exist := account.GetAccountByAddressBytes(tx.TxParam.Sender.GetBytes())
+	if !exist || !bytes.Equal(senderAccount.Address[:], tx.TxParam.Sender.GetBytes()) {
 		return nil, common.Address{}, 0, 0, 0, fmt.Errorf("no account found in dex transfer")
 	}
 
@@ -186,8 +186,11 @@ func EvaluateSCForBlock(bl Block) (bool, map[[common.HashLength]byte]string, map
 			}
 		}
 
-		senderAcc := account.GetAccountByAddressBytes(t.TxParam.Sender.GetBytes())
-
+		senderAcc, exist := account.GetAccountByAddressBytes(t.TxParam.Sender.GetBytes())
+		if !exist {
+			loggerMain.GetLogger().Println("no account exist with this address")
+			continue
+		}
 		if senderAcc.TransactionDelay > 0 && t.GetHeight()+senderAcc.TransactionDelay > height {
 			//TODO escrow does not execute SC
 			continue

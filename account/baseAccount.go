@@ -20,17 +20,22 @@ type Account struct {
 	TransactionsRecipient []common.Hash                `json:"transactionsRecipient,omitempty"`
 }
 
-func GetAccountByAddressBytes(address []byte) Account {
+func GetAccountByAddressBytes(address []byte) (Account, bool) {
 	AccountsRWMutex.RLock()
 	defer AccountsRWMutex.RUnlock()
 	addrb := [common.AddressLength]byte{}
 	copy(addrb[:], address[:common.AddressLength])
-	return Accounts.AllAccounts[addrb]
+	acc, ok := Accounts.AllAccounts[addrb]
+	return acc, ok
 }
 
 func CanBeModifiedAccount(address []byte) bool {
-	acc := GetAccountByAddressBytes(address)
-	return acc.MultiSignNumber == 0 && acc.TransactionDelay == 0
+	acc, exist := GetAccountByAddressBytes(address)
+	if exist {
+		return acc.MultiSignNumber == 0 && acc.TransactionDelay == 0
+	} else {
+		return false
+	}
 }
 
 func (a *Account) ModifyAccountToEscrow(transactionDelay int64) error {
@@ -74,12 +79,12 @@ func (a *Account) ModifyAccountToMultiSign(numApprovals uint8, addresses []commo
 }
 
 func SetAccountByAddressBytes(address []byte) Account {
-	dexAccount := GetAccountByAddressBytes(address)
-	if !bytes.Equal(dexAccount.Address[:], address) {
+	account, exist := GetAccountByAddressBytes(address)
+	if !exist {
 		logger.GetLogger().Println("no account found, will be created")
 		addrb := [common.AddressLength]byte{}
 		copy(addrb[:], address[:common.AddressLength])
-		dexAccount = Account{
+		account = Account{
 			Balance:               0,
 			Address:               addrb,
 			TransactionDelay:      0,
@@ -88,10 +93,14 @@ func SetAccountByAddressBytes(address []byte) Account {
 			TransactionsRecipient: make([]common.Hash, 0),
 		}
 		AccountsRWMutex.Lock()
-		Accounts.AllAccounts[addrb] = dexAccount
+		Accounts.AllAccounts[addrb] = account
 		AccountsRWMutex.Unlock()
 	}
-	return dexAccount
+	if !bytes.Equal(account.Address[:], address) {
+		logger.GetLogger().Println("WARNING: account has wrong address set. Rewrite address")
+		copy(account.Address[:], address)
+	}
+	return account
 }
 
 // GetBalanceConfirmedFloat get amount of confirmed KURA in human-readable format

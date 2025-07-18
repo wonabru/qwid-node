@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/okuralabs/okura-node/cmd/gui/qtwidgets"
+	"github.com/okuralabs/okura-node/crypto/oqs/rand"
 	"github.com/therecipe/qt/widgets"
 	rand2 "math/rand"
 	"sync"
 
 	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/crypto/oqs/rand"
 	"github.com/okuralabs/okura-node/logger"
 	clientrpc "github.com/okuralabs/okura-node/rpc/client"
 	"github.com/okuralabs/okura-node/services/transactionServices"
@@ -98,6 +98,7 @@ func SampleTransaction(w *wallet.Wallet) transactionsDefinition.Transaction {
 	defer mutex.Unlock()
 	sender := w.MainAddress
 	recv := common.Address{}
+	//br := common.Hex2Bytes("5b21c69aaea1ddd18bd17ad6f23f109479cca304")
 	br := rand.RandomBytes(20)
 	err := recv.Init(append([]byte{0}, br...))
 	if err != nil {
