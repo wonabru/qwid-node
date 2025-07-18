@@ -82,6 +82,7 @@ func (tp *TransactionPool) AddTransaction(tx transactionsDefinition.Transaction,
 	if _, exists := tp.bannedTransactions[hash]; exists {
 		tp.rwmutex.Unlock()
 		logger.GetLogger().Println("transaction not added. banned")
+		tp.BanTransactionByHash(hash[:])
 		return false
 	}
 	if _, exists := tp.transactions[hash]; !exists {
