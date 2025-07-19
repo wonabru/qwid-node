@@ -42,7 +42,6 @@ func OnMessage(addr [4]byte, m []byte) {
 		// need to check transactions
 		for _, v := range txn {
 			for _, t := range v {
-				//if t.Verify() {
 				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
 					//logger.GetLogger().Println("transaction just exists in Pool")
 					continue
@@ -61,19 +60,50 @@ func OnMessage(addr [4]byte, m []byte) {
 						if err != nil {
 							logger.GetLogger().Println(err)
 						}
-						//err = transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], t.Hash.GetBytes())
-						//if err != nil {
-						//	logger.GetLogger().Println(err)
-						//}
 						logger.GetLogger().Println(err)
 						continue
 					}
-					//maybe we should not broadcast automatically transactions. Third party should care about it
-					BroadcastTxn(addr, m)
+					if !common.IsSyncing.Load() {
+						//maybe we should not broadcast automatically transactions. Third party should care about it
+						BroadcastTxn(addr, m)
+					}
 				}
 			}
 		}
+	case "bx":
+		// transaction in sync
+		msg := amsg.(message.TransactionsMessage)
+		txn, err := msg.GetTransactionsFromBytes(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2())
+		if err != nil {
+			return
+		}
+		// need to check transactions
+		for _, v := range txn {
+			for _, t := range v {
+				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
+					//logger.GetLogger().Println("transaction just exists in Pool")
+					continue
+				}
+				if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], t.Hash.GetBytes()) {
+					//logger.GetLogger().Println("transaction just exists in DB")
+					continue
+				}
 
+				isAdded := transactionsPool.PoolsTx.AddTransaction(t, t.Hash)
+				if isAdded {
+					err := t.StoreToDBPoolTx(common.TransactionDBPrefix[:])
+					if err != nil {
+						transactionsPool.PoolsTx.RemoveTransactionByHash(t.Hash.GetBytes())
+						err := transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], t.Hash.GetBytes())
+						if err != nil {
+							logger.GetLogger().Println(err)
+						}
+						logger.GetLogger().Println(err)
+						continue
+					}
+				}
+			}
+		}
 	case "st":
 		txn := amsg.(message.TransactionsMessage).GetTransactionsBytes()
 		for topic, v := range txn {
@@ -85,14 +115,6 @@ func OnMessage(addr [4]byte, m []byte) {
 
 					transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionPoolHashesDBPrefix[:], hs)
 					continue
-
-					//t, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hs)
-					//if err != nil {
-					//	transactionsPool.PoolsTx.RemoveTransactionByHash(hs)
-					//	transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], hs)
-					//	//logger.GetLogger().Println("cannot load transaction", err)
-					//	continue
-					//}
 				}
 				if len(t.GetBytes()) > 0 {
 					txs = append(txs, t)
@@ -116,21 +138,12 @@ func OnMessage(addr [4]byte, m []byte) {
 				if err != nil {
 					logger.GetLogger().Println("cannot load transaction from DB", err)
 					continue
-					//transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionPoolHashesDBPrefix[:], hs)
-
-					//t, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hs)
-					//if err != nil {
-					//	transactionsPool.PoolsTx.RemoveTransactionByHash(hs)
-					//	transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], hs)
-					//logger.GetLogger().Println("cannot load transaction", err)
-					//continue
-					//}
 				}
 				if len(t.GetBytes()) > 0 {
 					txs = append(txs, t)
 				}
 			}
-			transactionMsg, err := GenerateTransactionMsg(txs, []byte("tx"), topic)
+			transactionMsg, err := GenerateTransactionMsg(txs, []byte("bx"), topic)
 			if err != nil {
 				logger.GetLogger().Println("cannot generate transaction msg", err)
 			}
