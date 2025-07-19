@@ -300,10 +300,7 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 				delete(peersConnected, topicipBytes)
 			} else {
 				logger.GetLogger().Printf("active existing connection for peer %v on topic %v", ip, topic)
-				existingConn.Close()
-				delete(tcpConnections[topic], ip)
-				delete(peersConnected, topicipBytes)
-				return false
+				return true
 			}
 		}
 
