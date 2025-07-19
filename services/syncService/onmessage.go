@@ -276,7 +276,6 @@ func OnMessage(addr [4]byte, m []byte) {
 			logger.GetLogger().Printf("Sync incomplete - requesting %d missing transactions from peer", len(hashesMissingAll))
 			transactionServices.SendGT(addr, hashesMissingAll, "bt")
 			logger.GetLogger().Println("Incomplete transactions stored in DB")
-			return
 		}
 		logger.GetLogger().Println("Starting final block processing and fund transfers")
 
