@@ -296,6 +296,7 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 			//if err != nil {
 			logger.GetLogger().Printf("Error setting keep-alive period. Closing for peer %v on topic %v", ip, topic)
 			existingConn.Close()
+			//}
 			//} else {
 			//	logger.GetLogger().Printf("active existing connection for peer %v on topic %v", ip, topic)
 			//	return false
@@ -303,7 +304,7 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 			// Remove the old connection from our maps
 			delete(tcpConnections[topic], ip)
 			delete(peersConnected, topicipBytes)
-			return false
+			//return false
 		}
 
 	} else {
