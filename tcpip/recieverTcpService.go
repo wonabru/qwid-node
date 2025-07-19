@@ -302,8 +302,8 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 			}
 		}
 		// Remove the old connection from our maps
-		//delete(tcpConnections[topic], ip)
-		//delete(peersConnected, topicipBytes)
+		delete(tcpConnections[topic], ip)
+		delete(peersConnected, topicipBytes)
 	} else {
 		validPeersConnected[ip] = common.ConnectionMaxTries
 	}
