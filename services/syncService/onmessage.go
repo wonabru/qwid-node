@@ -269,9 +269,9 @@ func OnMessage(addr [4]byte, m []byte) {
 			} else {
 				logger.GetLogger().Printf("Block %d has all transactions verified", index)
 			}
-			//common.IsSyncing.Store(true)
-		}
 
+		}
+		common.IsSyncing.Store(true)
 		if incompleteTxn {
 			logger.GetLogger().Printf("Sync incomplete - requesting %d missing transactions from peer", len(hashesMissingAll))
 			transactionServices.SendGT(addr, hashesMissingAll, "bt")
@@ -279,7 +279,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			return
 		}
 		logger.GetLogger().Println("Starting final block processing and fund transfers")
-		common.IsSyncing.Store(true)
+
 		defer func() {
 			//hMax := common.GetHeightMax()
 			h := common.GetHeight()
