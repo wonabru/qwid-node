@@ -105,6 +105,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			if !Send(addr, transactionMsg.GetBytes()) {
 				logger.GetLogger().Println("could not send transaction in sync")
 			}
+			logger.GetLogger().Println("SENT transaction is sync st to ", string(addr[:]))
 		}
 	case "bt":
 		txn := amsg.(message.TransactionsMessage).GetTransactionsBytes()
@@ -136,6 +137,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			if !Send(addr, transactionMsg.GetBytes()) {
 				logger.GetLogger().Println("could not send transaction is sync bt")
 			}
+			logger.GetLogger().Println("SENT transaction is sync bt to ", string(addr[:]))
 		}
 	default:
 	}
