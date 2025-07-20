@@ -293,6 +293,7 @@ func CloseAndRemoveConnection(tcpConn *net.TCPConn) {
 				delete(peersConnected, topicipBytes)
 				delete(validPeersConnected, k)
 				delete(nodePeersConnected, k)
+				delete(oldPeers, topicipBytes)
 			}
 		}
 	}

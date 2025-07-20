@@ -175,6 +175,7 @@ func Accept(topic [2]byte, conn *net.TCPListener) (*net.TCPConn, error) {
 
 	if !RegisterPeer(topic, tcpConn) {
 		tcpConn.Close()
+		FullyDeleteConnection(tcpConn)
 		return nil, fmt.Errorf("error with registration of connection: %w", err)
 	}
 	tcpConn.SetKeepAlive(true)
@@ -261,6 +262,12 @@ func ReduceTrustRegisterPeer(ip [4]byte) {
 	}
 }
 
+func FullyDeleteConnection(tcpConn *net.TCPConn) {
+	PeersMutex.Lock()
+	defer PeersMutex.Unlock()
+	CloseAndRemoveConnection(tcpConn)
+}
+
 // RegisterPeer registers a new peer connection
 func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 
@@ -295,12 +302,10 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 			err := existingConn.SetKeepAlivePeriod(time.Duration(rand.Intn(10)) * time.Second)
 			if err != nil {
 				logger.GetLogger().Printf("Error setting keep-alive period. Closing for peer %v on topic %v", ip, topic)
-				existingConn.Close()
-				delete(tcpConnections[topic], ip)
-				delete(peersConnected, topicipBytes)
+
 			} else {
 				logger.GetLogger().Printf("active existing connection for peer %v on topic %v", ip, topic)
-				return true
+				return false
 			}
 		}
 

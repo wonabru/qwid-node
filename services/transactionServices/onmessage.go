@@ -77,6 +77,7 @@ func OnMessage(addr [4]byte, m []byte) {
 		if err != nil {
 			return
 		}
+		logger.GetLogger().Println("get bx from ", addr[:])
 		// need to check transactions
 		for _, v := range txn {
 			for _, t := range v {
@@ -127,7 +128,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			if !Send(addr, transactionMsg.GetBytes()) {
 				logger.GetLogger().Println("could not send transaction in sync")
 			}
-			logger.GetLogger().Println("SENT transaction is sync st to ", string(addr[:]))
+			logger.GetLogger().Println("SENT transaction is sync st to ", addr[:])
 		}
 	case "bt":
 		txn := amsg.(message.TransactionsMessage).GetTransactionsBytes()
@@ -150,7 +151,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			if !Send(addr, transactionMsg.GetBytes()) {
 				logger.GetLogger().Println("could not send transaction is sync bt")
 			}
-			logger.GetLogger().Println("SENT transaction is sync bt to ", string(addr[:]))
+			logger.GetLogger().Println("SENT transaction is sync bt to ", addr[:])
 		}
 	default:
 	}
