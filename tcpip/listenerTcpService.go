@@ -279,21 +279,29 @@ func CloseAndRemoveConnection(tcpConn *net.TCPConn) {
 	if tcpConn == nil {
 		return
 	}
-	//PeersMutex.Lock()
-	//defer PeersMutex.Unlock()
-	topicipBytes := [6]byte{}
-	for topic, c := range tcpConnections {
-		for k, v := range c {
-			if tcpConn.RemoteAddr().String() == v.RemoteAddr().String() {
 
-				fmt.Println("Closing connection (send)", topic, k)
-				tcpConnections[topic][k].Close()
-				copy(topicipBytes[:], append(topic[:], k[:]...))
-				delete(tcpConnections[topic], k)
-				delete(peersConnected, topicipBytes)
-				delete(validPeersConnected, k)
-				delete(nodePeersConnected, k)
-				delete(oldPeers, topicipBytes)
+	topicipBytes := [6]byte{}
+	// Method 2: Compare TCP addresses directly (more robust)
+	targetTCPAddr := tcpConn.RemoteAddr().(*net.TCPAddr)
+
+	// Find and remove the connection
+	for topic, connections := range tcpConnections {
+		for peerIP, conn := range connections {
+			// Using direct TCP address comparison for more robust matching
+			if connTCPAddr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
+				if connTCPAddr.IP.Equal(targetTCPAddr.IP) && connTCPAddr.Port == targetTCPAddr.Port {
+					fmt.Printf("Closing connection for topic %v, peer %v (IP: %v, Port: %d)\n",
+						topic, peerIP, targetTCPAddr.IP, targetTCPAddr.Port)
+
+					fmt.Println("Closing connection (send)", topic, peerIP)
+					tcpConnections[topic][peerIP].Close()
+					copy(topicipBytes[:], append(topic[:], peerIP[:]...))
+					delete(tcpConnections[topic], peerIP)
+					delete(peersConnected, topicipBytes)
+					//delete(validPeersConnected, peerIP)
+					//delete(nodePeersConnected, peerIP)
+					//delete(oldPeers, topicipBytes)
+				}
 			}
 		}
 	}

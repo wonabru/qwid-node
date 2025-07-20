@@ -35,19 +35,20 @@ func OnMessage(addr [4]byte, m []byte) {
 		if err != nil {
 			return
 		}
+		logger.GetLogger().Println("get tx from ", addr[:])
 		if transactionsPool.PoolsTx.NumberOfTransactions() > common.MaxTransactionInPool {
-			//logger.GetLogger().Println("no more transactions can be accepted to the pool")
+			logger.GetLogger().Println("no more transactions can be accepted to the pool")
 			return
 		}
 		// need to check transactions
 		for _, v := range txn {
 			for _, t := range v {
 				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
-					//logger.GetLogger().Println("transaction just exists in Pool")
+					logger.GetLogger().Println("transaction just exists in Pool")
 					continue
 				}
 				if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], t.Hash.GetBytes()) {
-					//logger.GetLogger().Println("transaction just exists in DB")
+					logger.GetLogger().Println("transaction just exists in DB")
 					continue
 				}
 
@@ -81,10 +82,10 @@ func OnMessage(addr [4]byte, m []byte) {
 		// need to check transactions
 		for _, v := range txn {
 			for _, t := range v {
-				//if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
-				//	logger.GetLogger().Println("transaction just exists in Pool")
-				//	continue
-				//}
+				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
+					logger.GetLogger().Println("transaction just exists in Pool")
+					continue
+				}
 				if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], t.Hash.GetBytes()) {
 					logger.GetLogger().Println("transaction just exists in DB")
 					continue
@@ -92,6 +93,7 @@ func OnMessage(addr [4]byte, m []byte) {
 
 				isAdded := transactionsPool.PoolsTx.AddTransaction(t, t.Hash)
 				if isAdded {
+					logger.GetLogger().Println("transactions added to pool bx")
 					err := t.StoreToDBPoolTx(common.TransactionDBPrefix[:])
 					if err != nil {
 						transactionsPool.PoolsTx.RemoveTransactionByHash(t.Hash.GetBytes())
@@ -100,7 +102,6 @@ func OnMessage(addr [4]byte, m []byte) {
 							logger.GetLogger().Println(err)
 						}
 						logger.GetLogger().Println(err)
-						//continue
 					}
 				}
 			}
