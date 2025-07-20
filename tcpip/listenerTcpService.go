@@ -289,7 +289,7 @@ func CloseAndRemoveConnection(tcpConn *net.TCPConn) {
 		for peerIP, conn := range connections {
 			// Using direct TCP address comparison for more robust matching
 			if connTCPAddr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
-				if connTCPAddr.IP.Equal(targetTCPAddr.IP) { // && connTCPAddr.Port == targetTCPAddr.Port
+				if connTCPAddr.IP.Equal(targetTCPAddr.IP) && connTCPAddr.Port == targetTCPAddr.Port {
 					fmt.Printf("Closing connection for topic %v, peer %v (IP: %v, Port: %d)\n",
 						topic, peerIP, targetTCPAddr.IP, targetTCPAddr.Port)
 
