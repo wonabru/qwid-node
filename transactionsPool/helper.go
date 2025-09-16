@@ -7,7 +7,7 @@ import (
 	"github.com/okuralabs/okura-node/transactionsDefinition"
 )
 
-func RemoveBadTransactionByHash(hash []byte, height int64) error {
+func RemoveBadTransactionByHash(hash []byte, height int64, tree *MerkleTree) error {
 	PoolsTx.RemoveTransactionByHash(hash)
 	PoolTxEscrow.RemoveTransactionByHash(hash)
 	PoolTxMultiSign.RemoveTransactionByHash(hash)
@@ -20,7 +20,7 @@ func RemoveBadTransactionByHash(hash []byte, height int64) error {
 	if err != nil {
 		logger.GetLogger().Println(err)
 	}
-	err = CheckTransactionInDBAndInMarkleTrie(hash)
+	err = CheckTransactionInDBAndInMarkleTrie(hash, tree)
 	if err == nil {
 		logger.GetLogger().Println("transaction is in trie")
 	}
@@ -34,7 +34,7 @@ func RemoveBadTransactionByHash(hash []byte, height int64) error {
 	return nil
 }
 
-func CheckTransactionInDBAndInMarkleTrie(hash []byte) error {
+func CheckTransactionInDBAndInMarkleTrie(hash []byte, tree *MerkleTree) error {
 	if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], hash) {
 		dbTx, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hash)
 		if err != nil {
@@ -43,10 +43,15 @@ func CheckTransactionInDBAndInMarkleTrie(hash []byte) error {
 			return err
 		}
 		h := dbTx.Height
+
 		txHeight, err := FindTransactionInBlocks(hash, h)
 		if err != nil {
+			if !tree.IsTxHashInTree(hash) {
+				return nil
+			}
 			return err
 		}
+
 		if txHeight <= 0 {
 			logger.GetLogger().Println("transaction not in merkle tree. removing transaction: checkTransactionInDBAndInMarkleTrie")
 		} else {

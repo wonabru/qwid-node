@@ -153,7 +153,7 @@ func IsAllTransactions(block Block) [][]byte {
 	return hashes
 }
 
-func CheckBlockTransfers(block Block, lastBlock Block, onlyCheck bool) (int64, int64, error) {
+func CheckBlockTransfers(block Block, lastBlock Block, tree *transactionsPool.MerkleTree, onlyCheck bool) (int64, int64, error) {
 	txs := block.TransactionsHashes
 	lastSupply := lastBlock.GetBlockSupply()
 	accounts := map[[common.AddressLength]byte]account.Account{}
@@ -182,7 +182,7 @@ func CheckBlockTransfers(block Block, lastBlock Block, onlyCheck bool) (int64, i
 				return 0, 0, err
 			}
 		}
-		err = transactionsPool.CheckTransactionInDBAndInMarkleTrie(hash)
+		err = transactionsPool.CheckTransactionInDBAndInMarkleTrie(hash, tree)
 		if err != nil {
 			return 0, 0, err
 		}
@@ -220,18 +220,18 @@ func CheckBlockTransfers(block Block, lastBlock Block, onlyCheck bool) (int64, i
 			ret := CheckStakingTransaction(poolTx, stakingAccounts[stakingAcc.Address].StakedBalance, stakingAccounts[stakingAcc.Address].StakingRewards)
 			if ret == false {
 				// remove bad transaction from pool
-				transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height)
+				transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height, tree)
 				return 0, 0, fmt.Errorf("staking transactions checking fails: CheckBlockTransfers")
 			}
 		}
 		acc, exist := account.GetAccountByAddressBytes(address.GetBytes())
 		if !exist || !bytes.Equal(acc.Address[:], address.GetBytes()) {
 			// remove bad transaction from pool
-			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height)
+			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height, tree)
 			return 0, 0, fmt.Errorf("no account found in check block transafer: CheckBlockTransfers")
 		}
 		if bytes.Equal(poolTx.TxParam.MultiSignTx.GetBytes(), ZerosHash) == false && (poolTx.TxData.Amount > 0 || len(poolTx.TxData.OptData) > 0 || poolTx.TxData.LockedAmount > 0 || poolTx.TxData.MultiSignNumber > 0) {
-			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height)
+			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height, tree)
 			return 0, 0, fmt.Errorf("transaction which confirms in multi signature account should have amount == 0, OptData = nil, LockedAmount = 0, MultiSignNumber = 0")
 		}
 
@@ -245,7 +245,7 @@ func CheckBlockTransfers(block Block, lastBlock Block, onlyCheck bool) (int64, i
 		}
 		if acc.Balance < 0 {
 			// remove bad transaction from pool
-			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height)
+			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height, tree)
 			return 0, 0, fmt.Errorf("not enough funds on account: CheckBlockTransfers")
 		}
 
@@ -260,8 +260,8 @@ func CheckBlockTransfers(block Block, lastBlock Block, onlyCheck bool) (int64, i
 	return reward, totalFee, nil
 }
 
-func ProcessBlockTransfers(block Block, reward int64) error {
-	err := ProcessTransactionsEscrow(block.GetHeader().Height)
+func ProcessBlockTransfers(block Block, reward int64, tree *transactionsPool.MerkleTree) error {
+	err := ProcessTransactionsEscrow(block.GetHeader().Height, tree)
 	if err != nil {
 		logger.GetLogger().Println("ProcessTransactionsEscrow: ", err)
 	}
@@ -269,7 +269,7 @@ func ProcessBlockTransfers(block Block, reward int64) error {
 	txs := block.TransactionsHashes
 	for _, tx := range txs {
 		hash := tx.GetBytes()
-		err := transactionsPool.CheckTransactionInDBAndInMarkleTrie(hash)
+		err := transactionsPool.CheckTransactionInDBAndInMarkleTrie(hash, tree)
 		if err != nil {
 			return err
 		}
@@ -279,20 +279,20 @@ func ProcessBlockTransfers(block Block, reward int64) error {
 		}
 
 		if poolTx.Height > block.GetHeader().Height {
-			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height)
+			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height, tree)
 			return fmt.Errorf("transaction height is wrong: ProcessBlockTransfers")
 		}
 
 		err = ProcessTransaction(poolTx, block.GetHeader().Height)
 		if err != nil {
 			// remove bad transaction from pool
-			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height)
+			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height, tree)
 			return err
 		}
-		err = ProcessTransactionsMultiSign(poolTx, block.GetHeader().Height)
+		err = ProcessTransactionsMultiSign(poolTx, block.GetHeader().Height, tree)
 		if err != nil {
 			// remove bad transaction from pool
-			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height)
+			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height, tree)
 			return err
 		}
 	}
@@ -394,7 +394,7 @@ func CheckBlockAndTransactions(newBlock *Block, lastBlock Block, merkleTrie *tra
 		return fmt.Errorf("not enough staked coins to be a node or not valid operetional account: CheckBlockAndTransactions")
 	}
 
-	reward, totalFee, err := CheckBlockTransfers(*newBlock, lastBlock, true)
+	reward, totalFee, err := CheckBlockTransfers(*newBlock, lastBlock, merkleTrie, true)
 	if err != nil {
 		return err
 	}
@@ -438,7 +438,7 @@ func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *tr
 		return fmt.Errorf("not enough staked coins to be a node or not valid operetional account: CheckBlockAndTransferFunds %v %v %v %v", int64(sumStaked), common.MinStakingForNode, opAcc.Address[:5], opAccBlockAddr.GetBytes()[:5])
 	}
 
-	reward, totalFee, err := CheckBlockTransfers(*newBlock, lastBlock, false)
+	reward, totalFee, err := CheckBlockTransfers(*newBlock, lastBlock, merkleTrie, false)
 	if err != nil {
 		return err
 	}
@@ -477,7 +477,7 @@ func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *tr
 	if err != nil {
 		return err
 	}
-	err = ProcessBlockTransfers(*newBlock, reward)
+	err = ProcessBlockTransfers(*newBlock, reward, merkleTrie)
 	if err != nil {
 		return err
 	}
