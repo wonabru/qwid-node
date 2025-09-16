@@ -63,7 +63,7 @@ Q:
 		topic := [2]byte{'T', 'T'}
 
 		if SendTransactionMsg(tcpip.MyIP, topic) {
-			logger.GetLogger().Println("broadcastTransactionsMsgInLoop: Sent transaction")
+			//logger.GetLogger().Println("broadcastTransactionsMsgInLoop: Sent transaction")
 		}
 
 		timeout := time.After(time.Second)
@@ -76,7 +76,7 @@ Q:
 			}
 		case <-timeout:
 			// Handle timeout
-			logger.GetLogger().Println("broadcastTransactionsMsgInLoop: Timeout occurred")
+			//logger.GetLogger().Println("broadcastTransactionsMsgInLoop: Timeout occurred")
 			// You can break the loop or return from the function here
 			break
 		}
