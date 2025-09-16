@@ -207,8 +207,7 @@ func main() {
 	time.Sleep(time.Second)
 
 	logger.GetLogger().Println("Starting peer discovery...")
-	chanPeer := make(chan []byte)
-	go tcpip.LookUpForNewPeersToConnect(chanPeer)
+	go tcpip.LookUpForNewPeersToConnect(tcpip.ChanPeer)
 	topic := [2]byte{}
 	ip := [4]byte{}
 
@@ -217,7 +216,7 @@ QF:
 	for {
 		select {
 
-		case topicip := <-chanPeer:
+		case topicip := <-tcpip.ChanPeer:
 			copy(topic[:], topicip[:2])
 			copy(ip[:], topicip[2:])
 			logger.GetLogger().Printf("Received peer message - Topic: %s, IP: %v", string(topic[:]), ip)

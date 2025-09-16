@@ -11,6 +11,8 @@ import (
 	"github.com/okuralabs/okura-node/logger"
 )
 
+var ChanPeer = make(chan []byte)
+
 func StartNewListener(topic [2]byte) {
 
 	conn, err := Listen([4]byte{0, 0, 0, 0}, Ports[topic])
@@ -50,7 +52,7 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 				logger.GetLogger().Println("wrong message")
 				continue
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 
 			PeersMutex.Lock()
 			select {
@@ -75,10 +77,11 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 						} else if !bytes.Equal(k[:], MyIP[:]) {
 							//logger.GetLogger().Println("send to ipr", k)
 							err := Send(tcpConn0, s[4:])
-							//if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.ECONNABORTED) {
-							logger.GetLogger().Println("error in sending to all ", err)
-							CloseAndRemoveConnection(tcpConn0)
-							//}
+							if err != nil {
+								logger.GetLogger().Println("error in sending to all ", err)
+								deletedIP := CloseAndRemoveConnection(tcpConn0)
+								ChanPeer <- deletedIP[0]
+							}
 						}
 					}
 				} else {
@@ -97,7 +100,8 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 						if err != nil {
 							logger.GetLogger().Println("error in sending to ", ipr, err)
 							//if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.ECONNABORTED) {
-							CloseAndRemoveConnection(tcpConn)
+							deletedIP := CloseAndRemoveConnection(tcpConn)
+							ChanPeer <- deletedIP[0]
 							//}
 						}
 					} else {
@@ -274,15 +278,16 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 	}
 }
 
-func CloseAndRemoveConnection(tcpConn *net.TCPConn) {
+func CloseAndRemoveConnection(tcpConn *net.TCPConn) [][]byte {
 	if tcpConn == nil {
-		return
+		return [][]byte{}
 	}
 
 	topicipBytes := [6]byte{}
 	// Method 2: Compare TCP addresses directly (more robust)
 	targetTCPAddr := tcpConn.RemoteAddr().(*net.TCPAddr)
 
+	deletedIP := [][]byte{}
 	// Find and remove the connection
 	for topic, connections := range tcpConnections {
 		for peerIP, conn := range connections {
@@ -292,6 +297,7 @@ func CloseAndRemoveConnection(tcpConn *net.TCPConn) {
 					fmt.Printf("Closing connection for topic %v, peer %v (IP: %v, Port: %d)\n",
 						topic, peerIP, targetTCPAddr.IP, targetTCPAddr.Port)
 
+					deletedIP = append(deletedIP, append(topic[:], peerIP[:]...))
 					fmt.Println("Closing connection (send)", topic, peerIP)
 					tcpConnections[topic][peerIP].Close()
 					copy(topicipBytes[:], append(topic[:], peerIP[:]...))
@@ -302,4 +308,5 @@ func CloseAndRemoveConnection(tcpConn *net.TCPConn) {
 			}
 		}
 	}
+	return deletedIP
 }
