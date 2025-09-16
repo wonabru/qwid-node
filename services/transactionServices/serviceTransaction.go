@@ -63,7 +63,7 @@ Q:
 		topic := [2]byte{'T', 'T'}
 
 		if SendTransactionMsg(tcpip.MyIP, topic) {
-			break Q
+			logger.GetLogger().Println("broadcastTransactionsMsgInLoop: Sent transaction")
 		}
 
 		timeout := time.After(time.Second)
@@ -71,13 +71,14 @@ Q:
 		select {
 		case s := <-chanRecv:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
+				logger.GetLogger().Println("broadcastTransactionsMsgInLoop: EXIT")
 				break Q
 			}
 		case <-timeout:
 			// Handle timeout
-			//logger.GetLogger().Println("broadcastTransactionsMsgInLoop: Timeout occurred")
+			logger.GetLogger().Println("broadcastTransactionsMsgInLoop: Timeout occurred")
 			// You can break the loop or return from the function here
-			break Q
+			break
 		}
 
 	}
