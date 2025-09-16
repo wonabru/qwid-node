@@ -43,7 +43,7 @@ func main() {
 	wallet.InitActiveWallet(0, string(password), sigName, sigName2)
 	MainWallet = wallet.GetActiveWallet()
 
-	for range 10 {
+	for range 1 {
 		go sendTransactions(MainWallet)
 		//time.Sleep(time.Millisecond * 1)
 	}
