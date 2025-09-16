@@ -13,7 +13,7 @@ import (
 	"github.com/okuralabs/okura-node/logger"
 )
 
-func StartNewListener(sendChan <-chan []byte, topic [2]byte) {
+func StartNewListener(topic [2]byte) {
 
 	conn, err := Listen([4]byte{0, 0, 0, 0}, Ports[topic])
 	if err != nil {
@@ -27,7 +27,6 @@ func StartNewListener(sendChan <-chan []byte, topic [2]byte) {
 			tcpConn.Close()
 		}
 	}()
-	go LoopSend(sendChan, topic)
 	for {
 		select {
 		case <-Quit:

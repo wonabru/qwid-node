@@ -144,7 +144,8 @@ func BroadcastTxn(ignoreAddr [4]byte, nb []byte) {
 }
 
 func startPublishingTransactionMsg() {
-	go tcpip.StartNewListener(services.SendChanTx, tcpip.TransactionTopic)
+	go tcpip.StartNewListener(tcpip.TransactionTopic)
+	go tcpip.LoopSend(services.SendChanTx, tcpip.TransactionTopic)
 }
 
 func StartSubscribingTransactionMsg(ip [4]byte) {

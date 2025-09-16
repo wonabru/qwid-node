@@ -155,7 +155,8 @@ func sendSyncMsgInLoop() {
 
 func startPublishingSyncMsg() {
 
-	go tcpip.StartNewListener(services.SendChanSync, tcpip.SyncTopic)
+	go tcpip.StartNewListener(tcpip.SyncTopic)
+	go tcpip.LoopSend(services.SendChanSync, tcpip.SyncTopic)
 }
 
 func StartSubscribingSyncMsg(ip [4]byte) {

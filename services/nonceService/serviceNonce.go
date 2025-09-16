@@ -231,8 +231,10 @@ func sendNonceMsgInLoop() {
 }
 
 func startPublishingNonceMsg() {
-	go tcpip.StartNewListener(services.SendChanNonce, tcpip.NonceTopic)
-	go tcpip.StartNewListener(services.SendChanSelfNonce, tcpip.SelfNonceTopic)
+	go tcpip.StartNewListener(tcpip.NonceTopic)
+	go tcpip.LoopSend(services.SendChanNonce, tcpip.NonceTopic)
+	go tcpip.StartNewListener(tcpip.SelfNonceTopic)
+	go tcpip.LoopSend(services.SendChanSelfNonce, tcpip.SelfNonceTopic)
 }
 
 func StartSubscribingNonceMsg(ip [4]byte) {
