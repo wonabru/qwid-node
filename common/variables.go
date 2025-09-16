@@ -28,7 +28,7 @@ func SetHeight(h int64) {
 func GetHeightMax() int64 {
 	heightMutex.RLock()
 	defer heightMutex.RUnlock()
-	r := rand.Intn(3)
+	r := rand.Intn(20)
 	if r < 1 {
 		heightMax = 0
 	}
