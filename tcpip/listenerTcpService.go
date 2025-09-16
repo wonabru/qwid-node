@@ -3,10 +3,8 @@ package tcpip
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"net"
-	"syscall"
 	"time"
 
 	"github.com/okuralabs/okura-node/common"
@@ -77,10 +75,10 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 						} else if !bytes.Equal(k[:], MyIP[:]) {
 							//logger.GetLogger().Println("send to ipr", k)
 							err := Send(tcpConn0, s[4:])
-							if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.ECONNABORTED) {
-								logger.GetLogger().Println("error in sending to all ", err)
-								CloseAndRemoveConnection(tcpConn0)
-							}
+							//if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.ECONNABORTED) {
+							logger.GetLogger().Println("error in sending to all ", err)
+							CloseAndRemoveConnection(tcpConn0)
+							//}
 						}
 					}
 				} else {
