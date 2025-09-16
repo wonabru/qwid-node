@@ -67,10 +67,10 @@ func OnMessage(addr [4]byte, m []byte) {
 						logger.GetLogger().Println(err)
 						continue
 					}
-					if !common.IsSyncing.Load() {
-						//maybe we should not broadcast automatically transactions. Third party should care about it
-						BroadcastTxn(addr, m)
-					}
+					//if !common.IsSyncing.Load() {
+					//	//maybe we should not broadcast automatically transactions. Third party should care about it
+					//	BroadcastTxn(addr, m)
+					//}
 				}
 			}
 		}
