@@ -135,7 +135,7 @@ func BroadcastTxn(ignoreAddr [4]byte, nb []byte) {
 		//}
 		copy(ip[:], topicip[2:])
 		if !bytes.Equal(ip[:], ignoreAddr[:]) && !bytes.Equal(ip[:], tcpip.MyIP[:]) {
-			//logger.GetLogger().Println("send transactions to ", int(ip[0]), int(ip[1]), int(ip[2]), int(ip[3]))
+			logger.GetLogger().Println("send transactions to ", int(ip[0]), int(ip[1]), int(ip[2]), int(ip[3]))
 			if !Send(ip, nb) {
 				logger.GetLogger().Println("could not broadcast transaction")
 			}

@@ -96,9 +96,11 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 					} else if ok {
 						//logger.GetLogger().Println("send to ip", ipr)
 						err := Send(tcpConn, s[4:])
-						if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.ECONNABORTED) {
+						if err != nil {
 							logger.GetLogger().Println("error in sending to ", ipr, err)
+							//if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.ECONNABORTED) {
 							CloseAndRemoveConnection(tcpConn)
+							//}
 						}
 					} else {
 						//fmt.Println("no connection to given ip", ipr, topic)
