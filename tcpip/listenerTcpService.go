@@ -177,8 +177,8 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 			logger.GetLogger().Printf("Recovered from panic in connection to %v: %v", ip, r)
 			receiveChan <- []byte("EXIT")
 			PeersMutex.Lock()
-			defer PeersMutex.Unlock()
 			deletedIP := CloseAndRemoveConnection(tcpConn)
+			PeersMutex.Unlock()
 			ChanPeer <- deletedIP[0]
 		}
 	}()
@@ -198,8 +198,8 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 			logger.GetLogger().Printf("Received quit signal for connection to %v", ip)
 			receiveChan <- []byte("EXIT")
 			PeersMutex.Lock()
-			defer PeersMutex.Unlock()
 			deletedIP := CloseAndRemoveConnection(tcpConn)
+			PeersMutex.Unlock()
 			ChanPeer <- deletedIP[0]
 			return
 		default:
@@ -227,8 +227,8 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 				logger.GetLogger().Println("Closing connection", ip, r)
 				receiveChan <- []byte("EXIT")
 				PeersMutex.Lock()
-				defer PeersMutex.Unlock()
 				deletedIP := CloseAndRemoveConnection(tcpConn)
+				PeersMutex.Unlock()
 				ChanPeer <- deletedIP[0]
 				return
 			}
