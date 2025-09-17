@@ -95,7 +95,7 @@ func OnMessage(addr [4]byte, m []byte) {
 				isAdded := transactionsPool.PoolsTx.AddTransaction(t, t.Hash)
 				if isAdded {
 					logger.GetLogger().Println("transactions added to pool bx")
-					err := t.StoreToDBPoolTx(common.TransactionDBPrefix[:])
+					err := t.StoreToDBPoolTx(common.TransactionPoolHashesDBPrefix[:])
 					if err != nil {
 						transactionsPool.PoolsTx.RemoveTransactionByHash(t.Hash.GetBytes())
 						err := transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], t.Hash.GetBytes())

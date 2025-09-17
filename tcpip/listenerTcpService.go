@@ -30,7 +30,7 @@ func StartNewListener(topic [2]byte) {
 	for {
 		select {
 		case <-Quit:
-			return
+			logger.GetLogger().Println("Should exit StartNewListener")
 		default:
 			_, err := Accept(topic, conn)
 			if err != nil {
@@ -118,7 +118,7 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 				time.Sleep(time.Millisecond * 10)
 			}
 		case <-Quit:
-			return
+			logger.GetLogger().Println("Should exit LoopSend")
 		default:
 		}
 	}

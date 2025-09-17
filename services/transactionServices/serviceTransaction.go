@@ -19,7 +19,7 @@ func InitTransactionService() {
 
 	services.SendMutexTx.Unlock()
 	startPublishingTransactionMsg()
-	go broadcastTransactionsMsgInLoop(services.SendChanTx)
+	//go broadcastTransactionsMsgInLoop(services.SendChanTx)
 }
 
 func GenerateTransactionMsg(txs []transactionsDefinition.Transaction, mesgHead []byte, topic [2]byte) (message.TransactionsMessage, error) {
