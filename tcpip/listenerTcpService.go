@@ -231,13 +231,15 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 
 				logger.GetLogger().Println("Closing connection", ip, r)
 				receiveChan <- []byte("EXIT")
-				PeersMutex.Lock()
-				deletedIP := CloseAndRemoveConnection(tcpConn)
-				PeersMutex.Unlock()
-				if len(deletedIP) >= 1 {
-					ChanPeer <- deletedIP[0]
+				if PeersMutex.TryLock() {
+					deletedIP := CloseAndRemoveConnection(tcpConn)
+					PeersMutex.Unlock()
+					if len(deletedIP) >= 1 {
+						ChanPeer <- deletedIP[0]
+					}
+					return
 				}
-				return
+				continue
 			}
 			//if bytes.Equal(r, []byte("WAIT")) {
 			//	waitChan <- topic[:]
