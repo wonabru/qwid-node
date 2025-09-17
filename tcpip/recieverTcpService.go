@@ -170,13 +170,13 @@ func Listen(ip [4]byte, port int) (*net.TCPListener, error) {
 func Accept(topic [2]byte, conn *net.TCPListener) (*net.TCPConn, error) {
 	tcpConn, err := conn.AcceptTCP()
 	if err != nil {
-		return nil, fmt.Errorf("error accepting connection: %v", err)
+		return nil, fmt.Errorf("error accepting connection: %v", err.Error())
 	}
 
 	if !RegisterPeer(topic, tcpConn) {
 		tcpConn.Close()
 		FullyDeleteConnection(tcpConn)
-		return nil, fmt.Errorf("error with registration of connection: %v", err)
+		return nil, fmt.Errorf("error with registration of connection: %v", err.Error())
 	}
 	tcpConn.SetKeepAlive(true)
 	return tcpConn, nil
@@ -215,7 +215,7 @@ func Receive(topic [2]byte, conn *net.TCPConn) []byte {
 		}
 		logger.GetLogger().Println("n=", n, "err", err.Error())
 		//handleConnectionError(err, topic, conn)
-		return []byte("<-CLS->") // []byte("<-ERR->")
+		return []byte("<-ERR->")
 	}
 
 	return buf[:n]
