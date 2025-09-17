@@ -131,12 +131,12 @@ func BroadcastTxn(ignoreAddr [4]byte, nb []byte) {
 	num_peers := len(peers)
 	for topicip, _ := range peers {
 		// trying to send randomly to 1 other nodes
-		if rand.Intn(num_peers) >= 2 {
+		if rand.Intn(num_peers) >= 1 {
 			continue
 		}
 		copy(ip[:], topicip[2:])
 		if !bytes.Equal(ip[:], ignoreAddr[:]) && !bytes.Equal(ip[:], tcpip.MyIP[:]) {
-			logger.GetLogger().Println("send transactions to ", int(ip[0]), int(ip[1]), int(ip[2]), int(ip[3]))
+			//logger.GetLogger().Println("send transactions to ", int(ip[0]), int(ip[1]), int(ip[2]), int(ip[3]))
 			if !Send(ip, nb) {
 				logger.GetLogger().Println("could not broadcast transaction")
 			}
