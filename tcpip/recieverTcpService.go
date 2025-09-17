@@ -170,13 +170,13 @@ func Listen(ip [4]byte, port int) (*net.TCPListener, error) {
 func Accept(topic [2]byte, conn *net.TCPListener) (*net.TCPConn, error) {
 	tcpConn, err := conn.AcceptTCP()
 	if err != nil {
-		return nil, fmt.Errorf("error accepting connection: %w", err)
+		return nil, fmt.Errorf("error accepting connection: %v", err)
 	}
 
 	if !RegisterPeer(topic, tcpConn) {
 		tcpConn.Close()
 		FullyDeleteConnection(tcpConn)
-		return nil, fmt.Errorf("error with registration of connection: %w", err)
+		return nil, fmt.Errorf("error with registration of connection: %v", err)
 	}
 	tcpConn.SetKeepAlive(true)
 	return tcpConn, nil
@@ -302,10 +302,10 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 			err := existingConn.SetKeepAlivePeriod(time.Duration(rand.Intn(10)) * time.Second)
 			if err != nil {
 				logger.GetLogger().Printf("Error setting keep-alive period. Closing for peer %v on topic %v", ip, topic)
-
+				return false
 			} else {
 				logger.GetLogger().Printf("active existing connection for peer %v on topic %v", ip, topic)
-				return false
+				return true
 			}
 		}
 

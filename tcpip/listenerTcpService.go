@@ -49,7 +49,7 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 			if len(s) > 4 {
 				copy(ipr[:], s[:4])
 			} else {
-				logger.GetLogger().Println("wrong message")
+				logger.GetLogger().Println("wrong message", topic)
 				continue
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -230,16 +230,15 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 			if bytes.Equal(r, []byte("<-CLS->")) {
 
 				logger.GetLogger().Println("Closing connection", ip, r)
+				PeersMutex.Lock()
 				receiveChan <- []byte("EXIT")
-				if PeersMutex.TryLock() {
-					deletedIP := CloseAndRemoveConnection(tcpConn)
-					PeersMutex.Unlock()
-					if len(deletedIP) >= 1 {
-						ChanPeer <- deletedIP[0]
-					}
-					return
+				deletedIP := CloseAndRemoveConnection(tcpConn)
+				PeersMutex.Unlock()
+				if len(deletedIP) >= 1 {
+					ChanPeer <- deletedIP[0]
 				}
-				continue
+				return
+
 			}
 			//if bytes.Equal(r, []byte("WAIT")) {
 			//	waitChan <- topic[:]
@@ -297,17 +296,19 @@ func CloseAndRemoveConnection(tcpConn *net.TCPConn) [][]byte {
 
 	topicipBytes := [6]byte{}
 	// Method 2: Compare TCP addresses directly (more robust)
-	targetTCPAddr := tcpConn.RemoteAddr().(*net.TCPAddr)
-
+	remoteAddr := tcpConn.RemoteAddr().(*net.TCPAddr)
+	localAddr := tcpConn.LocalAddr().(*net.TCPAddr)
 	deletedIP := [][]byte{}
 	// Find and remove the connection
 	for topic, connections := range tcpConnections {
 		for peerIP, conn := range connections {
+			rTCPAddr, ok := conn.RemoteAddr().(*net.TCPAddr)
+			lTCPAddr, ok2 := conn.LocalAddr().(*net.TCPAddr)
 			// Using direct TCP address comparison for more robust matching
-			if connTCPAddr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
-				if connTCPAddr.IP.Equal(targetTCPAddr.IP) && connTCPAddr.Port == targetTCPAddr.Port {
+			if ok && ok2 {
+				if rTCPAddr.IP.Equal(remoteAddr.IP) && (rTCPAddr.Port == localAddr.Port || lTCPAddr.Port == localAddr.Port || rTCPAddr.Port == remoteAddr.Port || lTCPAddr.Port == remoteAddr.Port) {
 					fmt.Printf("Closing connection for topic %v, peer %v (IP: %v, Port: %d)\n",
-						topic, peerIP, targetTCPAddr.IP, targetTCPAddr.Port)
+						topic, peerIP, remoteAddr.IP, remoteAddr.Port)
 
 					deletedIP = append(deletedIP, append(topic[:], peerIP[:]...))
 					fmt.Println("Closing connection (send)", topic, peerIP)
