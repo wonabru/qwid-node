@@ -200,7 +200,6 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 		select {
 		case <-Quit:
 			logger.GetLogger().Printf("Received quit signal for connection to %v", ip)
-			receiveChan <- []byte("EXIT")
 			PeersMutex.Lock()
 			deletedIP := CloseAndRemoveConnection(tcpConn)
 			PeersMutex.Unlock()
