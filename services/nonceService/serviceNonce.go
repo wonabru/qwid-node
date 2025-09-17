@@ -199,10 +199,10 @@ func sendNonceMsg(ip [4]byte, topic [2]byte) {
 	if h < common.CurrentHeightOfNetwork {
 		return
 	}
-	isync := common.IsSyncing.Load()
-	if isync == true {
-		return
-	}
+	//isync := common.IsSyncing.Load()
+	//if isync == true {
+	//	return
+	//}
 	n, err := generateNonceMsg(topic)
 	if err != nil {
 		logger.GetLogger().Println(err)
