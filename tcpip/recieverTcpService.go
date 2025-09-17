@@ -395,6 +395,6 @@ func LookUpForNewPeersToConnect(chanPeer chan []byte) {
 		}
 		PeersMutex.Unlock()
 
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 1)
 	}
 }
