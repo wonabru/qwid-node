@@ -65,10 +65,10 @@ func OnMessage(addr [4]byte, m []byte) {
 						logger.GetLogger().Println(err)
 						continue
 					}
-					//if !common.IsSyncing.Load() {
-					//	//maybe we should not broadcast automatically transactions. Third party should care about it
-					//	BroadcastTxn(addr, m)
-					//}
+					if !common.IsSyncing.Load() {
+						//maybe we should not broadcast automatically transactions. Third party should care about it
+						BroadcastTxn(addr, m)
+					}
 				}
 			}
 		}
@@ -87,11 +87,6 @@ func OnMessage(addr [4]byte, m []byte) {
 					logger.GetLogger().Println("transaction just exists in Pool. bx")
 					continue
 				}
-				//if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], t.Hash.GetBytes()) {
-				//	logger.GetLogger().Println("transaction just exists in DB")
-				//	t.StoreToDBPoolTx(common.TransactionPoolHashesDBPrefix[:])
-				//	continue
-				//}
 
 				isAdded := transactionsPool.PoolsTx.AddTransaction(t, t.Hash)
 				if isAdded {
