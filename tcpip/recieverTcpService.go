@@ -215,7 +215,7 @@ func Receive(topic [2]byte, conn *net.TCPConn) []byte {
 		}
 		logger.GetLogger().Println("n=", n, "err", err.Error())
 		//handleConnectionError(err, topic, conn)
-		return []byte("<-ERR->")
+		return []byte("<-CLS->") // []byte("<-ERR->")
 	}
 
 	return buf[:n]

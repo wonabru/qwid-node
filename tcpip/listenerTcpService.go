@@ -115,10 +115,10 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 				PeersMutex.Unlock()
 				cancel()
 			}
-		case b := <-waitChan:
-			if bytes.Equal(b, topic[:]) {
-				time.Sleep(time.Millisecond * 10)
-			}
+		//case b := <-waitChan:
+		//	if bytes.Equal(b, topic[:]) {
+		//		time.Sleep(time.Millisecond * 10)
+		//	}
 		case <-Quit:
 			logger.GetLogger().Println("Should exit LoopSend")
 		default:
@@ -171,8 +171,8 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 		logger.GetLogger().Printf("Successfully connected for TRANSACTIONS TOPIC with %v", ip)
 	}
 
-	reconnectionTries := 0
-	resetNumber := 0
+	//reconnectionTries := 0
+	//resetNumber := 0
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -192,10 +192,10 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 	rTopic := map[[2]byte][]byte{}
 
 	for {
-		resetNumber++
-		if resetNumber%100 == 0 {
-			reconnectionTries = 0
-		}
+		//resetNumber++
+		//if resetNumber%100 == 0 {
+		//	reconnectionTries = 0
+		//}
 
 		select {
 		case <-Quit:
@@ -212,22 +212,22 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 			if r == nil {
 				continue
 			}
-			if bytes.Equal(r, []byte("<-ERR->")) {
-				if reconnectionTries > common.ConnectionMaxTries {
-					logger.GetLogger().Println("error in read. Closing connection", ip, string(r))
-					tcpConn.Close()
-					tcpConn, err = net.DialTCP("tcp", nil, tcpAddr)
-					if err != nil {
-						logger.GetLogger().Printf("Connection attempt %d to %s failed: %v", ipport, err.Error())
-					}
-					reconnectionTries = 0
-					continue
-				}
-				reconnectionTries++
-				time.Sleep(time.Millisecond * 10)
-				continue
-			}
-			if bytes.Equal(r, []byte("<-CLS->")) || bytes.Equal(r, []byte("QUITFOR")) {
+			//if bytes.Equal(r, []byte("<-ERR->")) {
+			//	if reconnectionTries > common.ConnectionMaxTries {
+			//		logger.GetLogger().Println("error in read. Closing connection", ip, string(r))
+			//		tcpConn.Close()
+			//		tcpConn, err = net.DialTCP("tcp", nil, tcpAddr)
+			//		if err != nil {
+			//			logger.GetLogger().Printf("Connection attempt %d to %s failed: %v", ipport, err.Error())
+			//		}
+			//		reconnectionTries = 0
+			//		continue
+			//	}
+			//	reconnectionTries++
+			//	time.Sleep(time.Millisecond * 10)
+			//	continue
+			//}
+			if bytes.Equal(r, []byte("<-CLS->")) {
 
 				logger.GetLogger().Println("Closing connection", ip, r)
 				receiveChan <- []byte("EXIT")
@@ -239,10 +239,10 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 				}
 				return
 			}
-			if bytes.Equal(r, []byte("WAIT")) {
-				waitChan <- topic[:]
-				continue
-			}
+			//if bytes.Equal(r, []byte("WAIT")) {
+			//	waitChan <- topic[:]
+			//	continue
+			//}
 
 			rt, ok := rTopic[topic]
 			if ok {
