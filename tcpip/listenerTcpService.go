@@ -178,7 +178,8 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 			receiveChan <- []byte("EXIT")
 			PeersMutex.Lock()
 			defer PeersMutex.Unlock()
-			CloseAndRemoveConnection(tcpConn)
+			deletedIP := CloseAndRemoveConnection(tcpConn)
+			ChanPeer <- deletedIP[0]
 		}
 	}()
 
@@ -198,7 +199,8 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 			receiveChan <- []byte("EXIT")
 			PeersMutex.Lock()
 			defer PeersMutex.Unlock()
-			CloseAndRemoveConnection(tcpConn)
+			deletedIP := CloseAndRemoveConnection(tcpConn)
+			ChanPeer <- deletedIP[0]
 			return
 		default:
 			r := Receive(topic, tcpConn)
@@ -226,7 +228,8 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 				receiveChan <- []byte("EXIT")
 				PeersMutex.Lock()
 				defer PeersMutex.Unlock()
-				CloseAndRemoveConnection(tcpConn)
+				deletedIP := CloseAndRemoveConnection(tcpConn)
+				ChanPeer <- deletedIP[0]
 				return
 			}
 			if bytes.Equal(r, []byte("WAIT")) {
