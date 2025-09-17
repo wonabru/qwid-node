@@ -36,7 +36,7 @@ func OnMessage(addr [4]byte, m []byte) {
 		if err != nil {
 			return
 		}
-		logger.GetLogger().Println("get tx from ", addr[:])
+		//logger.GetLogger().Println("get tx from ", addr[:])
 		if transactionsPool.PoolsTx.NumberOfTransactions() > common.MaxTransactionInPool {
 			logger.GetLogger().Println("no more transactions can be accepted to the pool")
 			return
@@ -45,7 +45,7 @@ func OnMessage(addr [4]byte, m []byte) {
 		for _, v := range txn {
 			for _, t := range v {
 				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
-					logger.GetLogger().Println("transaction just exists in Pool")
+					//logger.GetLogger().Println("transaction just exists in Pool")
 					continue
 				}
 				if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], t.Hash.GetBytes()) {
@@ -84,7 +84,7 @@ func OnMessage(addr [4]byte, m []byte) {
 		for _, v := range txn {
 			for _, t := range v {
 				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
-					logger.GetLogger().Println("transaction just exists in Pool. bx")
+					//logger.GetLogger().Println("transaction just exists in Pool. bx")
 					continue
 				}
 
