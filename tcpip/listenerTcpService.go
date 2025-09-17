@@ -80,7 +80,9 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 							if err != nil {
 								logger.GetLogger().Println("error in sending to all ", err)
 								deletedIP := CloseAndRemoveConnection(tcpConn0)
-								ChanPeer <- deletedIP[0]
+								if len(deletedIP) >= 1 {
+									ChanPeer <- deletedIP[0]
+								}
 							}
 						}
 					}
@@ -99,10 +101,10 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 						err := Send(tcpConn, s[4:])
 						if err != nil {
 							logger.GetLogger().Println("error in sending to ", ipr, err)
-							//if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.ECONNABORTED) {
 							deletedIP := CloseAndRemoveConnection(tcpConn)
-							ChanPeer <- deletedIP[0]
-							//}
+							if len(deletedIP) >= 1 {
+								ChanPeer <- deletedIP[0]
+							}
 						}
 					} else {
 						//fmt.Println("no connection to given ip", ipr, topic)
@@ -179,7 +181,9 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 			PeersMutex.Lock()
 			deletedIP := CloseAndRemoveConnection(tcpConn)
 			PeersMutex.Unlock()
-			ChanPeer <- deletedIP[0]
+			if len(deletedIP) >= 1 {
+				ChanPeer <- deletedIP[0]
+			}
 		}
 	}()
 
@@ -200,7 +204,9 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 			PeersMutex.Lock()
 			deletedIP := CloseAndRemoveConnection(tcpConn)
 			PeersMutex.Unlock()
-			ChanPeer <- deletedIP[0]
+			if len(deletedIP) >= 1 {
+				ChanPeer <- deletedIP[0]
+			}
 			return
 		default:
 			r := Receive(topic, tcpConn)
@@ -229,7 +235,9 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 				PeersMutex.Lock()
 				deletedIP := CloseAndRemoveConnection(tcpConn)
 				PeersMutex.Unlock()
-				ChanPeer <- deletedIP[0]
+				if len(deletedIP) >= 1 {
+					ChanPeer <- deletedIP[0]
+				}
 				return
 			}
 			if bytes.Equal(r, []byte("WAIT")) {
