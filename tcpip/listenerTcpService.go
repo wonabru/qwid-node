@@ -306,7 +306,7 @@ func CloseAndRemoveConnection(tcpConn *net.TCPConn) [][]byte {
 			lTCPAddr, ok2 := conn.LocalAddr().(*net.TCPAddr)
 			// Using direct TCP address comparison for more robust matching
 			if ok && ok2 {
-				if rTCPAddr.IP.Equal(remoteAddr.IP) && (rTCPAddr.Port == localAddr.Port || lTCPAddr.Port == localAddr.Port || rTCPAddr.Port == remoteAddr.Port || lTCPAddr.Port == remoteAddr.Port) {
+				if (rTCPAddr.IP.Equal(remoteAddr.IP) || lTCPAddr.IP.Equal(remoteAddr.IP)) && (rTCPAddr.Port == localAddr.Port || lTCPAddr.Port == localAddr.Port || rTCPAddr.Port == remoteAddr.Port || lTCPAddr.Port == remoteAddr.Port) {
 					fmt.Printf("Closing connection for topic %v, peer %v (IP: %v, Port: %d)\n",
 						topic, peerIP, remoteAddr.IP, remoteAddr.Port)
 
