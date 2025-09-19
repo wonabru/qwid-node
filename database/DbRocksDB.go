@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
+	gorocksdb "github.com/linxGnu/grocksdb"
 	commoneth "github.com/okuralabs/okura-node/common"
-	"github.com/tecbot/gorocksdb"
 )
 
 type BlockchainDB struct {
