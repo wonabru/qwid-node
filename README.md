@@ -16,6 +16,14 @@ Install prerequisites
     sudo apt install nano git
     git config --global credential.helper store
 
+Install RocksDB:
+
+    git clone https://github.com/facebook/rocksdb.git
+    cd rocksdb
+    make static_lib
+    sudo make install-static
+    sudo ldconfig
+
 Install OQS library:
 
     git clone https://github.com/open-quantum-safe/liboqs.git
