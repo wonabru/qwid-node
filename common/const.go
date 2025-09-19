@@ -37,7 +37,7 @@ var (
 	VotingHeightDistance           int64   = 60           // 60 => ten minute on average
 	MaxTransactionDelay            int64   = 60480        // one week
 	MaxTransactionInMultiSigPool   int64   = 60480        //one week
-	ConnectionMaxTries                     = 2
+	ConnectionMaxTries                     = 10
 	BannedTimeSeconds              int64   = 10                  // 1 minute
 	MessageInitialization                  = [4]byte{2, 0, 2, 9} // will be overwrite in init() by MaxMessageSizeBytes
 	MaxMessageSizeBytes            int32   = 151126018           // should be adjusted to maximal message sent
