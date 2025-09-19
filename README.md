@@ -1,6 +1,6 @@
 # Node go OKURA
 
-Works for Ubuntu 22.04 (gcc 11) and go1.23.6
+Works for Ubuntu 24.04 (gcc 11) and go1.23.6
 Only one network interface should be with external public IP
 
 Install prerequisites
@@ -20,7 +20,7 @@ Install RocksDB:
 
     git clone https://github.com/facebook/rocksdb.git
     cd rocksdb
-    git checkout v10.5.1
+    git checkout v10.2.1
     make static_lib
     sudo make install-static
     sudo ldconfig
