@@ -20,6 +20,7 @@ Install RocksDB:
 
     git clone https://github.com/facebook/rocksdb.git
     cd rocksdb
+    git checkout v10.5.1
     make static_lib
     sudo make install-static
     sudo ldconfig
