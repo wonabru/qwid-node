@@ -65,8 +65,10 @@ func OnMessage(addr [4]byte, m []byte) {
 						logger.GetLogger().Println(err)
 						continue
 					}
-					if !common.IsSyncing.Load() {
-						//maybe we should not broadcast automatically transactions. Third party should care about it
+					// Always broadcast local transactions (from RPC/wallet with addr 0.0.0.0)
+					// For remote transactions, only broadcast if not syncing
+					isLocalTx := addr == [4]byte{0, 0, 0, 0}
+					if isLocalTx || !common.IsSyncing.Load() {
 						BroadcastTxn(addr, m)
 					}
 				}
