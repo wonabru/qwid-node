@@ -135,10 +135,15 @@ func OnMessage(addr [4]byte, m []byte) {
 		for topic, v := range txn {
 			txs := []transactionsDefinition.Transaction{}
 			for _, hs := range v {
+				// First try to load from confirmed DB
 				t, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hs)
 				if err != nil {
-					logger.GetLogger().Println("cannot load transaction from DB", err)
-					continue
+					// If not in DB, try to load from Pool
+					t, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hs)
+					if err != nil {
+						logger.GetLogger().Println("cannot load transaction from DB or Pool", err)
+						continue
+					}
 				}
 				if len(t.GetBytes()) > 0 {
 					txs = append(txs, t)
