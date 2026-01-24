@@ -173,7 +173,12 @@ func ProcessBlockPubKey(block Block) error {
 		pk := t.TxData.Pubkey
 		zeroBytes := make([]byte, common.AddressLength)
 		if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
-			return nil
+			// If MainAddress not set in pubkey, use sender address
+			pk.MainAddress = t.GetSenderAddress()
+		}
+		// Skip if pubkey bytes are empty (no pubkey included in transaction)
+		if len(pk.GetBytes()) == 0 {
+			continue
 		}
 		err = StorePubKey(pk)
 		if err != nil {

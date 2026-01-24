@@ -526,6 +526,9 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 	w.Account2.PublicKey.Address.Primary = false
 	w.Account1.PublicKey.Primary = true
 	w.Account2.PublicKey.Primary = false
+	// Ensure MainAddress is set on PublicKeys (may be empty from older wallet JSON)
+	w.Account1.PublicKey.MainAddress = w.MainAddress
+	w.Account2.PublicKey.MainAddress = w.MainAddress
 
 	w.Account1.secretKey.Address.Primary = true
 	w.Account2.secretKey.Address.Primary = false
