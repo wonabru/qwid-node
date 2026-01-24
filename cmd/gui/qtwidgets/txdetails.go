@@ -50,11 +50,11 @@ func AccountDetailsToString(acc account.Account) string {
 	//stake := 0.0  // acc.GetStakeConfirmedFloat(st.Heights)
 
 	txt := fmt.Sprintln("\n\nAccount:\n", acc.GetString())
-	//txt += fmt.Sprintf("Holdings: %18.8f KURA\n", conf)
-	txt += fmt.Sprintf("Balance: %18.8f KURA\n", conf)
-	//txt += fmt.Sprintf("Transactions unconfirmed balance: %18.8f KURA\n", uncTx)
-	//txt += fmt.Sprintf("Staked amount: %18.8f KURA\n", stake)
-	//txt += fmt.Sprintf("Unconfirmed staked amount: %18.8f KURA\n", uncStake)
+	//txt += fmt.Sprintf("Holdings: %18.8f QWD\n", conf)
+	txt += fmt.Sprintf("Balance: %18.8f QWD\n", conf)
+	//txt += fmt.Sprintf("Transactions unconfirmed balance: %18.8f QWD\n", uncTx)
+	//txt += fmt.Sprintf("Staked amount: %18.8f QWD\n", stake)
+	//txt += fmt.Sprintf("Unconfirmed staked amount: %18.8f QWD\n", uncStake)
 	//txt += fmt.Sprintf("\nStaking details:\n")
 	//for k, v := range acc.StakingAddresses {
 	//	if v == 0 {
