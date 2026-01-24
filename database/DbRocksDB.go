@@ -81,7 +81,7 @@ func (db *BlockchainDB) InitInMemory() (*BlockchainDB, error) {
 	opts := gorocksdb.NewDefaultOptions()
 	opts.SetCreateIfMissing(true)
 	opts.SetEnv(gorocksdb.NewMemEnv())
-	db.db, err = gorocksdb.OpenDb(opts, "okura_node")
+	db.db, err = gorocksdb.OpenDb(opts, "qwid_node")
 	if err != nil {
 		logger.GetLogger().Fatal(err)
 	}

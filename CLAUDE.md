@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Okura-Node is a quantum-resistant blockchain node written in Go 1.23.6. It features post-quantum cryptography (Falcon-512 and MAYO-5), proof-of-synergy consensus, EVM smart contracts, staking, DEX, and voting systems.
+QWID-Node is a quantum-resistant blockchain node written in Go 1.23.6. It features post-quantum cryptography (Falcon-512 and MAYO-5), proof-of-synergy consensus, EVM smart contracts, staking, DEX, and voting systems.
 
 ## Build & Run Commands
 
