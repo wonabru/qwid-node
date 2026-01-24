@@ -21,28 +21,40 @@ var AccountsRWMutex sync.RWMutex
 func AddTransactionsSender(address [common.AddressLength]byte, hashTxn common.Hash) {
 	AccountsRWMutex.Lock()
 	defer AccountsRWMutex.Unlock()
-	var acc Account
-	var isOK bool
-	if acc, isOK = Accounts.AllAccounts[address]; !isOK {
-		SetAccountByAddressBytes(address[:])
+	acc, isOK := Accounts.AllAccounts[address]
+	if !isOK {
+		// Create new account
+		acc = Account{
+			Balance:               0,
+			Address:               address,
+			TransactionDelay:      0,
+			MultiSignNumber:       0,
+			TransactionsSender:    make([]common.Hash, 0),
+			TransactionsRecipient: make([]common.Hash, 0),
+		}
+		logger.GetLogger().Println("AddTransactionsSender: created new account for", common.Bytes2Hex(address[:]))
 	}
-	if acc.TransactionsSender != nil {
-		acc.TransactionsSender = append(acc.TransactionsSender, hashTxn)
-	} else {
-		acc.TransactionsSender = []common.Hash{hashTxn}
-	}
+	acc.TransactionsSender = append(acc.TransactionsSender, hashTxn)
 	Accounts.AllAccounts[address] = acc
 }
 
 func AddTransactionsRecipient(address [common.AddressLength]byte, hashTxn common.Hash) {
 	AccountsRWMutex.Lock()
 	defer AccountsRWMutex.Unlock()
-	acc := Accounts.AllAccounts[address]
-	if acc.TransactionsRecipient != nil {
-		acc.TransactionsRecipient = append(acc.TransactionsRecipient, hashTxn)
-	} else {
-		acc.TransactionsRecipient = []common.Hash{hashTxn}
+	acc, isOK := Accounts.AllAccounts[address]
+	if !isOK {
+		// Create new account for recipient
+		acc = Account{
+			Balance:               0,
+			Address:               address,
+			TransactionDelay:      0,
+			MultiSignNumber:       0,
+			TransactionsSender:    make([]common.Hash, 0),
+			TransactionsRecipient: make([]common.Hash, 0),
+		}
+		logger.GetLogger().Println("AddTransactionsRecipient: created new account for", common.Bytes2Hex(address[:]))
 	}
+	acc.TransactionsRecipient = append(acc.TransactionsRecipient, hashTxn)
 	Accounts.AllAccounts[address] = acc
 }
 

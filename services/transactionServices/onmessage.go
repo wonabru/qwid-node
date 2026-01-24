@@ -48,12 +48,27 @@ func OnMessage(addr [4]byte, m []byte) {
 		// need to check transactions
 		for _, v := range txn {
 			for _, t := range v {
+				logger.GetLogger().Println("Processing transaction:", t.Hash.GetHex())
+				pk := t.TxData.Pubkey
+				if len(pk.GetBytes()) > 0 {
+					logger.GetLogger().Println("  Transaction has pubkey, length:", len(pk.GetBytes()))
+				}
 				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
-					//logger.GetLogger().Println("transaction just exists in Pool")
+					logger.GetLogger().Println("  Transaction already exists in Pool, skipping")
+					// Even if already in pool, store the pubkey if present
+					if len(pk.GetBytes()) > 0 {
+						logger.GetLogger().Println("  Storing pubkey from existing transaction")
+						storePubKeyFromTransaction(pk, t.GetSenderAddress())
+					}
 					continue
 				}
 				if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], t.Hash.GetBytes()) {
-					logger.GetLogger().Println("transaction just exists in DB")
+					logger.GetLogger().Println("  Transaction already exists in DB, skipping")
+					// Even if already in DB, store the pubkey if present
+					if len(pk.GetBytes()) > 0 {
+						logger.GetLogger().Println("  Storing pubkey from existing transaction in DB")
+						storePubKeyFromTransaction(pk, t.GetSenderAddress())
+					}
 					continue
 				}
 
