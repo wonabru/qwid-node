@@ -171,14 +171,21 @@ func ProcessBlockPubKey(block Block) error {
 			return err
 		}
 		pk := t.TxData.Pubkey
-		zeroBytes := make([]byte, common.AddressLength)
-		if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
-			// If MainAddress not set in pubkey, use sender address
-			pk.MainAddress = t.GetSenderAddress()
-		}
 		// Skip if pubkey bytes are empty (no pubkey included in transaction)
 		if len(pk.GetBytes()) == 0 {
 			continue
+		}
+		zeroBytes := make([]byte, common.AddressLength)
+		if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
+			// If MainAddress not set in pubkey, use the pubkey's own address
+			// This is important for staking transactions that register a new node
+			// where the pubkey belongs to the new node, not the sender
+			if !bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
+				pk.MainAddress = pk.Address
+			} else {
+				// Fallback to sender address if pubkey address is also empty
+				pk.MainAddress = t.GetSenderAddress()
+			}
 		}
 		err = StorePubKey(pk)
 		if err != nil {
