@@ -1,0 +1,321 @@
+package account
+
+import (
+	"testing"
+
+	"github.com/okuralabs/okura-node/common"
+	"github.com/okuralabs/okura-node/logger"
+	"github.com/stretchr/testify/assert"
+)
+
+func initTestStakingAccounts() {
+	for i := 0; i < 256; i++ {
+		StakingAccounts[i] = StakingAccountsType{
+			AllStakingAccounts: make(map[[20]byte]StakingAccount),
+		}
+	}
+}
+
+func TestStakingAccountMarshalUnmarshal(t *testing.T) {
+	logger.InitLogger()
+	defer logger.CloseLogger()
+
+	t.Run("marshal and unmarshal basic staking account", func(t *testing.T) {
+		addr := [common.AddressLength]byte{}
+		copy(addr[:], []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20})
+
+		original := StakingAccount{
+			StakedBalance:      1000000,
+			StakingRewards:     50000,
+			LockedAmount:       []int64{},
+			ReleasePerBlock:    []int64{},
+			LockedInitBlock:    []int64{},
+			DelegatedAccount:   addr,
+			Address:            addr,
+			OperationalAccount: true,
+			StakingDetails:     make(map[int64][]StakingDetail),
+		}
+
+		data := original.Marshal()
+		assert.NotEmpty(t, data)
+
+		var restored StakingAccount
+		err := restored.Unmarshal(data)
+		assert.NoError(t, err)
+		assert.Equal(t, original.StakedBalance, restored.StakedBalance)
+		assert.Equal(t, original.StakingRewards, restored.StakingRewards)
+		assert.Equal(t, original.OperationalAccount, restored.OperationalAccount)
+	})
+
+	t.Run("marshal and unmarshal with locked amounts", func(t *testing.T) {
+		addr := [common.AddressLength]byte{}
+		copy(addr[:], []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20})
+
+		original := StakingAccount{
+			StakedBalance:      2000000,
+			StakingRewards:     100000,
+			LockedAmount:       []int64{500000, 300000},
+			ReleasePerBlock:    []int64{1000, 500},
+			LockedInitBlock:    []int64{100, 200},
+			DelegatedAccount:   addr,
+			Address:            addr,
+			OperationalAccount: false,
+			StakingDetails:     make(map[int64][]StakingDetail),
+		}
+
+		data := original.Marshal()
+		var restored StakingAccount
+		err := restored.Unmarshal(data)
+		assert.NoError(t, err)
+		assert.Equal(t, len(original.LockedAmount), len(restored.LockedAmount))
+		assert.Equal(t, original.LockedAmount[0], restored.LockedAmount[0])
+	})
+
+	t.Run("marshal and unmarshal with staking details", func(t *testing.T) {
+		addr := [common.AddressLength]byte{}
+		original := StakingAccount{
+			StakedBalance:      1000000,
+			StakingRewards:     0,
+			LockedAmount:       []int64{},
+			ReleasePerBlock:    []int64{},
+			LockedInitBlock:    []int64{},
+			DelegatedAccount:   addr,
+			Address:            addr,
+			OperationalAccount: true,
+			StakingDetails: map[int64][]StakingDetail{
+				100: {
+					{Amount: 500000, Reward: 0, LastUpdated: 1234567890},
+					{Amount: 500000, Reward: 1000, LastUpdated: 1234567900},
+				},
+			},
+		}
+
+		data := original.Marshal()
+		var restored StakingAccount
+		err := restored.Unmarshal(data)
+		assert.NoError(t, err)
+		assert.Equal(t, len(original.StakingDetails), len(restored.StakingDetails))
+	})
+
+	t.Run("unmarshal with insufficient data", func(t *testing.T) {
+		var sa StakingAccount
+		err := sa.Unmarshal([]byte{1, 2, 3})
+		assert.Error(t, err)
+	})
+}
+
+func TestStake(t *testing.T) {
+	logger.InitLogger()
+	defer logger.CloseLogger()
+	initTestStakingAccounts()
+
+	t.Run("stake with valid params", func(t *testing.T) {
+		addr := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+		err := Stake(addr, 1000000, 100, 1, true, 0, 0)
+		assert.NoError(t, err)
+
+		sa := GetStakingAccountByAddressBytes(addr, 1)
+		assert.Equal(t, int64(1000000), sa.StakedBalance)
+		assert.True(t, sa.OperationalAccount)
+	})
+
+	t.Run("stake with locked amount", func(t *testing.T) {
+		addr := []byte{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21}
+		err := Stake(addr, 1000000, 100, 2, false, 500000, 1000)
+		assert.NoError(t, err)
+
+		sa := GetStakingAccountByAddressBytes(addr, 2)
+		assert.Equal(t, int64(1000000), sa.StakedBalance)
+		assert.Equal(t, 1, len(sa.LockedAmount))
+		assert.Equal(t, int64(500000), sa.LockedAmount[0])
+	})
+
+	t.Run("stake with negative amount fails", func(t *testing.T) {
+		addr := []byte{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22}
+		err := Stake(addr, -100, 100, 1, false, 0, 0)
+		assert.Error(t, err)
+	})
+
+	t.Run("stake with locked amount greater than amount fails", func(t *testing.T) {
+		addr := []byte{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
+		err := Stake(addr, 1000, 100, 1, false, 2000, 100)
+		assert.Error(t, err)
+	})
+
+	t.Run("stake with release greater than locked fails", func(t *testing.T) {
+		addr := []byte{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24}
+		err := Stake(addr, 1000, 100, 1, false, 500, 600)
+		assert.Error(t, err)
+	})
+
+	t.Run("stake with wrong address length fails", func(t *testing.T) {
+		addr := []byte{1, 2, 3} // Too short
+		err := Stake(addr, 1000, 100, 1, false, 0, 0)
+		assert.Error(t, err)
+	})
+}
+
+func TestUnstake(t *testing.T) {
+	logger.InitLogger()
+	defer logger.CloseLogger()
+	initTestStakingAccounts()
+
+	t.Run("unstake with valid params", func(t *testing.T) {
+		addr := []byte{10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29}
+		// First stake
+		err := Stake(addr, 1000000, 100, 5, true, 0, 0)
+		assert.NoError(t, err)
+
+		// Then unstake (negative amount)
+		err = Unstake(addr, -500000, 150, 5)
+		assert.NoError(t, err)
+
+		sa := GetStakingAccountByAddressBytes(addr, 5)
+		assert.Equal(t, int64(500000), sa.StakedBalance)
+	})
+
+	t.Run("unstake with positive amount fails", func(t *testing.T) {
+		addr := []byte{11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30}
+		_ = Stake(addr, 1000000, 100, 6, true, 0, 0)
+
+		err := Unstake(addr, 500000, 150, 6)
+		assert.Error(t, err)
+	})
+
+	t.Run("unstake more than balance fails", func(t *testing.T) {
+		addr := []byte{12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31}
+		_ = Stake(addr, 1000000, 100, 7, true, 0, 0)
+
+		err := Unstake(addr, -2000000, 150, 7)
+		assert.Error(t, err)
+	})
+
+	t.Run("unstake clears operational status when balance is zero", func(t *testing.T) {
+		addr := []byte{13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}
+		_ = Stake(addr, 1000000, 100, 8, true, 0, 0)
+
+		err := Unstake(addr, -1000000, 150, 8)
+		assert.NoError(t, err)
+
+		sa := GetStakingAccountByAddressBytes(addr, 8)
+		assert.False(t, sa.OperationalAccount)
+	})
+}
+
+func TestReward(t *testing.T) {
+	logger.InitLogger()
+	defer logger.CloseLogger()
+	initTestStakingAccounts()
+
+	t.Run("reward with valid params", func(t *testing.T) {
+		addr := []byte{20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39}
+		_ = Stake(addr, 1000000, 100, 10, true, 0, 0)
+
+		err := Reward(addr, 50000, 150, 10)
+		assert.NoError(t, err)
+
+		sa := GetStakingAccountByAddressBytes(addr, 10)
+		assert.Equal(t, int64(50000), sa.StakingRewards)
+	})
+
+	t.Run("reward with negative amount fails", func(t *testing.T) {
+		addr := []byte{21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40}
+		_ = Stake(addr, 1000000, 100, 11, true, 0, 0)
+
+		err := Reward(addr, -1000, 150, 11)
+		assert.Error(t, err)
+	})
+}
+
+func TestWithdrawReward(t *testing.T) {
+	logger.InitLogger()
+	defer logger.CloseLogger()
+	initTestStakingAccounts()
+
+	t.Run("withdraw with valid params", func(t *testing.T) {
+		addr := []byte{30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49}
+		_ = Stake(addr, 1000000, 100, 15, true, 0, 0)
+		_ = Reward(addr, 100000, 150, 15)
+
+		err := WithdrawReward(addr, -50000, 200, 15)
+		assert.NoError(t, err)
+
+		sa := GetStakingAccountByAddressBytes(addr, 15)
+		assert.Equal(t, int64(50000), sa.StakingRewards)
+	})
+
+	t.Run("withdraw with positive amount fails", func(t *testing.T) {
+		addr := []byte{31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50}
+		_ = Stake(addr, 1000000, 100, 16, true, 0, 0)
+		_ = Reward(addr, 100000, 150, 16)
+
+		err := WithdrawReward(addr, 50000, 200, 16)
+		assert.Error(t, err)
+	})
+
+	t.Run("withdraw more than rewards fails", func(t *testing.T) {
+		addr := []byte{32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51}
+		_ = Stake(addr, 1000000, 100, 17, true, 0, 0)
+		_ = Reward(addr, 50000, 150, 17)
+
+		err := WithdrawReward(addr, -100000, 200, 17)
+		assert.Error(t, err)
+	})
+}
+
+func TestGetLockedAmount(t *testing.T) {
+	logger.InitLogger()
+	defer logger.CloseLogger()
+	initTestStakingAccounts()
+
+	t.Run("no locked amount", func(t *testing.T) {
+		addr := []byte{40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59}
+		_ = Stake(addr, 1000000, 100, 20, true, 0, 0)
+
+		locked, err := GetLockedAmount(addr, 150, 20)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(0), locked)
+	})
+
+	t.Run("with locked amount before release", func(t *testing.T) {
+		addr := []byte{41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60}
+		_ = Stake(addr, 1000000, 100, 21, true, 500000, 1000)
+
+		locked, err := GetLockedAmount(addr, 110, 21)
+		assert.NoError(t, err)
+		// After 10 blocks: 500000 - 10*1000 = 490000
+		assert.Equal(t, int64(490000), locked)
+	})
+
+	t.Run("wrong address length", func(t *testing.T) {
+		addr := []byte{1, 2, 3}
+		_, err := GetLockedAmount(addr, 100, 1)
+		assert.Error(t, err)
+	})
+}
+
+func TestGetStakedInDelegatedAccount(t *testing.T) {
+	logger.InitLogger()
+	defer logger.CloseLogger()
+	initTestStakingAccounts()
+
+	t.Run("empty delegated account", func(t *testing.T) {
+		accs, sum, opAcc := GetStakedInDelegatedAccount(50)
+		assert.Empty(t, accs)
+		assert.Equal(t, float64(0), sum)
+		assert.Equal(t, int64(0), opAcc.Balance)
+	})
+
+	t.Run("with staked accounts", func(t *testing.T) {
+		addr1 := []byte{50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69}
+		addr2 := []byte{51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70}
+
+		_ = Stake(addr1, 1000000, 100, 51, true, 0, 0)
+		_ = Stake(addr2, 2000000, 100, 51, false, 0, 0)
+
+		accs, sum, opAcc := GetStakedInDelegatedAccount(51)
+		assert.Equal(t, 2, len(accs))
+		assert.Equal(t, float64(3000000), sum)
+		assert.Equal(t, int64(1000000), opAcc.Balance) // Operational account has 1000000
+	})
+}
