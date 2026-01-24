@@ -303,9 +303,22 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tm
 	if len(pkb) == 0 {
 		pkp, err := pubkeys.LoadPubKeyWithPrimary(tx.GetSenderAddress(), primary)
 		if err != nil {
+			logger.GetLogger().Println("cannot load sender pubkey from DB:", err)
 			return false
 		}
 		pkb = pkp.GetBytes()
+	} else {
+		// If pubkey is included in transaction, verify it matches the sender address
+		senderAddr := tx.GetSenderAddress()
+		pkAddr, err := common.PubKeyToAddress(pkb, primary)
+		if err != nil {
+			logger.GetLogger().Println("cannot derive address from pubkey in transaction:", err)
+			return false
+		}
+		if !bytes.Equal(pkAddr.GetBytes(), senderAddr.GetBytes()) {
+			logger.GetLogger().Println("pubkey in transaction does not match sender address:", pkAddr.GetHex(), "!=", senderAddr.GetHex())
+			return false
+		}
 	}
 	//logger.GetLogger().Println(sigName, sigName2, isPausedTmp, isPaused2Tmp)
 	return wallet.Verify(b, signature.GetBytes(), pkb, sigName, sigName2, isPausedTmp, isPaused2Tmp)
