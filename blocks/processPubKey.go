@@ -181,7 +181,8 @@ func ProcessBlockPubKey(block Block) error {
 		logger.GetLogger().Println("  PubKey.Address:", pk.Address.GetHex())
 		logger.GetLogger().Println("  PubKey.MainAddress:", pk.MainAddress.GetHex())
 		logger.GetLogger().Println("  PubKey.Primary:", pk.Primary)
-		logger.GetLogger().Println("  Transaction sender:", t.GetSenderAddress().GetHex())
+		senderAddr := t.GetSenderAddress()
+		logger.GetLogger().Println("  Transaction sender:", senderAddr.GetHex())
 
 		zeroBytes := make([]byte, common.AddressLength)
 		// Derive address from pubkey bytes if not set
