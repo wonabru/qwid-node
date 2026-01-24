@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
@@ -506,9 +507,9 @@ func SendTransaction(w http.ResponseWriter, r *http.Request) {
 		ChainID:     int16(23),
 		Sender:      MainWallet.MainAddress,
 		SendingTime: common.GetCurrentTimeStampInSecond(),
-		Nonce:       int16(common.GetCurrentTimeStampInSecond() % 0xffff),
+		Nonce:       int16(rand.Intn(0xffff)),
 	}
-	if len(hashms.GetHex()) > 0 {
+	if req.MultiSigTxHash != "" {
 		par.MultiSignTx = hashms
 	}
 
@@ -518,7 +519,7 @@ func SendTransaction(w http.ResponseWriter, r *http.Request) {
 		Hash:      common.Hash{},
 		Signature: common.Signature{},
 		Height:    0,
-		GasPrice:  int64(common.GetCurrentTimeStampInSecond() % 0x0f),
+		GasPrice:  int64(rand.Intn(0x0000000f)),
 		GasUsage:  0,
 	}
 
@@ -708,7 +709,7 @@ func ExecuteStaking(w http.ResponseWriter, r *http.Request) {
 		ChainID:     int16(23),
 		Sender:      MainWallet.MainAddress,
 		SendingTime: common.GetCurrentTimeStampInSecond(),
-		Nonce:       int16(common.GetCurrentTimeStampInSecond() % 0xffff),
+		Nonce:       int16(rand.Intn(0xffff)),
 	}
 
 	tx := transactionsDefinition.Transaction{
@@ -717,7 +718,7 @@ func ExecuteStaking(w http.ResponseWriter, r *http.Request) {
 		Hash:      common.Hash{},
 		Signature: common.Signature{},
 		Height:    0,
-		GasPrice:  int64(common.GetCurrentTimeStampInSecond() % 0x0f),
+		GasPrice:  int64(rand.Intn(0x0000000f)),
 		GasUsage:  0,
 	}
 
@@ -1156,7 +1157,7 @@ func ModifyEscrow(w http.ResponseWriter, r *http.Request) {
 		ChainID:     int16(23),
 		Sender:      MainWallet.MainAddress,
 		SendingTime: common.GetCurrentTimeStampInSecond(),
-		Nonce:       int16(common.GetCurrentTimeStampInSecond() % 0xffff),
+		Nonce:       int16(rand.Intn(0xffff)),
 	}
 
 	tx := transactionsDefinition.Transaction{
@@ -1165,7 +1166,7 @@ func ModifyEscrow(w http.ResponseWriter, r *http.Request) {
 		Hash:      common.Hash{},
 		Signature: common.Signature{},
 		Height:    0,
-		GasPrice:  int64(common.GetCurrentTimeStampInSecond() % 0x0f),
+		GasPrice:  int64(rand.Intn(0x0000000f)),
 		GasUsage:  0,
 	}
 
@@ -1385,7 +1386,7 @@ func ExecuteDex(w http.ResponseWriter, r *http.Request) {
 		ChainID:     int16(23),
 		Sender:      sender,
 		SendingTime: common.GetCurrentTimeStampInSecond(),
-		Nonce:       int16(common.GetCurrentTimeStampInSecond() % 0xffff),
+		Nonce:       int16(rand.Intn(0xffff)),
 	}
 
 	tx := transactionsDefinition.Transaction{
@@ -1499,7 +1500,7 @@ func TradeDex(w http.ResponseWriter, r *http.Request) {
 		ChainID:     int16(23),
 		Sender:      sender,
 		SendingTime: common.GetCurrentTimeStampInSecond(),
-		Nonce:       int16(common.GetCurrentTimeStampInSecond() % 0xffff),
+		Nonce:       int16(rand.Intn(0xffff)),
 	}
 
 	tx := transactionsDefinition.Transaction{
