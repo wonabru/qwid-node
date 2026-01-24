@@ -301,10 +301,11 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tm
 	pk := tx.TxData.GetPubKey()
 	pkb := pk.GetBytes()
 	if len(pkb) == 0 {
-		pkp, err := pubkeys.LoadPubKeyWithPrimary(tx.GetSenderAddress(), primary)
+		senderAddr := tx.GetSenderAddress()
+		pkp, err := pubkeys.LoadPubKeyWithPrimary(senderAddr, primary)
 		if err != nil {
 			logger.GetLogger().Println("Verify: cannot load sender pubkey from DB:", err)
-			logger.GetLogger().Println("  Sender address:", tx.GetSenderAddress().GetHex())
+			logger.GetLogger().Println("  Sender address:", senderAddr.GetHex())
 			logger.GetLogger().Println("  Primary flag:", primary)
 			return false
 		}
