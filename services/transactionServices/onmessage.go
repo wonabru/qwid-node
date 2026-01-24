@@ -1,7 +1,11 @@
 package transactionServices
 
 import (
+	"bytes"
+	"encoding/json"
+
 	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/database"
 	"github.com/wonabru/qwid-node/logger"
 	"github.com/wonabru/qwid-node/message"
 	"github.com/wonabru/qwid-node/tcpip"
@@ -64,6 +68,12 @@ func OnMessage(addr [4]byte, m []byte) {
 						}
 						logger.GetLogger().Println(err)
 						continue
+					}
+					// Store pubkey immediately so it's available for nonce verification
+					pk := t.TxData.Pubkey
+					if len(pk.GetBytes()) > 0 {
+						logger.GetLogger().Println("Storing pubkey from transaction immediately")
+						storePubKeyFromTransaction(pk, t.GetSenderAddress())
 					}
 					// Always broadcast local transactions (from RPC/wallet with addr 0.0.0.0)
 					// For remote transactions, only broadcast if not syncing
@@ -160,4 +170,40 @@ func OnMessage(addr [4]byte, m []byte) {
 		}
 	default:
 	}
+}
+
+// storePubKeyFromTransaction stores the pubkey from a transaction immediately
+// so it's available for nonce verification before the block is processed
+func storePubKeyFromTransaction(pk common.PubKey, senderAddr common.Address) {
+	zeroBytes := make([]byte, common.AddressLength)
+	// Derive address from pubkey bytes if not set
+	if bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
+		derivedAddr, err := common.PubKeyToAddress(pk.GetBytes(), pk.Primary)
+		if err != nil {
+			logger.GetLogger().Println("storePubKeyFromTransaction: cannot derive address:", err)
+			return
+		}
+		pk.Address = derivedAddr
+	}
+	// Set MainAddress if not set
+	if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
+		pk.MainAddress = pk.Address
+	}
+	// Store in DB using the same method as blocks.StorePubKey
+	if !bytes.Equal(pk.Address.GetBytes(), senderAddr.GetBytes()) {
+		logger.GetLogger().Println("storePubKeyFromTransaction: pubkey address doesn't match sender, skipping")
+		return
+	}
+	// Store pubkey marshal
+	pkm, err := json.Marshal(pk)
+	if err != nil {
+		logger.GetLogger().Println("storePubKeyFromTransaction: marshal error:", err)
+		return
+	}
+	err = database.MainDB.Put(append(common.PubKeyMarshalDBPrefix[:], pk.Address.GetBytes()...), pkm)
+	if err != nil {
+		logger.GetLogger().Println("storePubKeyFromTransaction: DB put error:", err)
+		return
+	}
+	logger.GetLogger().Println("storePubKeyFromTransaction: stored pubkey for", pk.Address.GetHex())
 }
