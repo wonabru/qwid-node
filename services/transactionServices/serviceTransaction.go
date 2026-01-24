@@ -19,7 +19,7 @@ func InitTransactionService() {
 
 	services.SendMutexTx.Unlock()
 	startPublishingTransactionMsg()
-	//go broadcastTransactionsMsgInLoop(services.SendChanTx)
+	go broadcastTransactionsMsgInLoop(services.SendChanTx)
 }
 
 func GenerateTransactionMsg(txs []transactionsDefinition.Transaction, mesgHead []byte, topic [2]byte) (message.TransactionsMessage, error) {
@@ -60,10 +60,24 @@ func broadcastTransactionsMsgInLoop(chanRecv chan []byte) {
 Q:
 	for range time.Tick(time.Second) {
 
-		topic := [2]byte{'T', 'T'}
-
-		if SendTransactionMsg(tcpip.MyIP, topic) {
-			//logger.GetLogger().Println("broadcastTransactionsMsgInLoop: Sent transaction")
+		// Broadcast pending transactions to all connected peers
+		if !common.IsSyncing.Load() {
+			txs := transactionsPool.PoolsTx.PeekTransactions(int(common.MaxTransactionsPerBlock), 0)
+			if len(txs) > 0 {
+				topic := [2]byte{'T', 'T'}
+				n, err := GenerateTransactionMsg(txs, []byte("tx"), topic)
+				if err == nil {
+					// Send to all connected peers
+					peers := tcpip.GetPeersConnected(tcpip.TransactionTopic)
+					for topicip := range peers {
+						var ip [4]byte
+						copy(ip[:], topicip[2:])
+						if !bytes.Equal(ip[:], tcpip.MyIP[:]) {
+							Send(ip, n.GetBytes())
+						}
+					}
+				}
+			}
 		}
 
 		timeout := time.After(time.Second)
@@ -75,9 +89,6 @@ Q:
 				break Q
 			}
 		case <-timeout:
-			// Handle timeout
-			//logger.GetLogger().Println("broadcastTransactionsMsgInLoop: Timeout occurred")
-			// You can break the loop or return from the function here
 			break
 		}
 
