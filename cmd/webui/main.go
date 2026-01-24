@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,8 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/wonabru/qwid-node/cmd/webui/handlers"
@@ -62,14 +65,21 @@ func main() {
 	mux.HandleFunc("/api/wallet/mnemonic", corsMiddleware(handlers.GetMnemonic))
 	mux.HandleFunc("/api/account", corsMiddleware(handlers.GetAccount))
 	mux.HandleFunc("/api/send", corsMiddleware(handlers.SendTransaction))
+	mux.HandleFunc("/api/cancel", corsMiddleware(handlers.CancelTransaction))
 	mux.HandleFunc("/api/staking/stake", corsMiddleware(handlers.Stake))
 	mux.HandleFunc("/api/staking/unstake", corsMiddleware(handlers.Unstake))
 	mux.HandleFunc("/api/staking/claim", corsMiddleware(handlers.ClaimRewards))
+	mux.HandleFunc("/api/staking/execute", corsMiddleware(handlers.ExecuteStaking))
 	mux.HandleFunc("/api/history", corsMiddleware(handlers.GetHistory))
 	mux.HandleFunc("/api/details", corsMiddleware(handlers.GetDetails))
 	mux.HandleFunc("/api/dex/tokens", corsMiddleware(handlers.GetTokens))
 	mux.HandleFunc("/api/dex/pools", corsMiddleware(handlers.GetPools))
-	mux.HandleFunc("/api/dex/trade", corsMiddleware(handlers.Trade))
+	mux.HandleFunc("/api/dex/trade", corsMiddleware(handlers.TradeDex))
+	mux.HandleFunc("/api/dex/info", corsMiddleware(handlers.GetDexInfo))
+	mux.HandleFunc("/api/dex/execute", corsMiddleware(handlers.ExecuteDex))
+	mux.HandleFunc("/api/vote", corsMiddleware(handlers.Vote))
+	mux.HandleFunc("/api/escrow/modify", corsMiddleware(handlers.ModifyEscrow))
+	mux.HandleFunc("/api/smartcontract/call", corsMiddleware(handlers.CallSmartContract))
 
 	// Serve static files
 	staticFS, _ := fs.Sub(staticFiles, "static")
@@ -81,12 +91,35 @@ func main() {
 	fmt.Printf("  Node IP: %s\n", ipStr.String())
 	fmt.Printf("  Node Account: %d\n", handlers.DelegatedAccount)
 	fmt.Printf("  Web UI: http://localhost:%s\n", port)
+	fmt.Printf("  Press Ctrl+C to stop\n")
 	fmt.Printf("===========================================\n\n")
 
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		fmt.Println("Failed to start server:", err)
-		os.Exit(1)
+	server := &http.Server{
+		Addr:    ":" + port,
+		Handler: mux,
 	}
+
+	// Handle graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Println("Failed to start server:", err)
+			os.Exit(1)
+		}
+	}()
+
+	<-stop
+	fmt.Println("\nShutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		fmt.Println("Server shutdown error:", err)
+	}
+	fmt.Println("Server stopped")
 }
 
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {

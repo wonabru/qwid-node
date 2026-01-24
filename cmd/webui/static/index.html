@@ -260,6 +260,9 @@
         <button class="tab" data-tab="staking">Staking</button>
         <button class="tab" data-tab="history">History</button>
         <button class="tab" data-tab="details">Details</button>
+        <button class="tab" data-tab="escrow">Escrow</button>
+        <button class="tab" data-tab="smartcontract">Smart Contract</button>
+        <button class="tab" data-tab="vote">Vote</button>
         <button class="tab" data-tab="dex">DEX</button>
     </div>
 
@@ -357,6 +360,10 @@
                         <div class="stat-label">Price Oracle</div>
                         <div class="stat-value" id="priceOracle">-</div>
                     </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Rand Oracle</div>
+                        <div class="stat-value" id="randOracle">-</div>
+                    </div>
                 </div>
             </div>
 
@@ -373,32 +380,108 @@
             <div class="card">
                 <h3>Send QWD</h3>
                 <div class="form-group">
-                    <label>Recipient Address</label>
-                    <input type="text" id="recipientAddress" placeholder="Enter recipient address (hex)">
+                    <label>Recipient Address (hex or delegated account number 1-255)</label>
+                    <input type="text" id="recipientAddress" placeholder="Enter address or account number">
                 </div>
                 <div class="form-group">
                     <label>Amount (QWD)</label>
-                    <input type="number" id="sendAmount" placeholder="0.00000000" step="0.00000001">
+                    <input type="number" id="sendAmount" placeholder="0.00000000" step="0.00000001" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Locked Amount (QWD) - Optional</label>
+                    <input type="number" id="lockedAmount" placeholder="0" step="0.00000001" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Release Per Block - Optional</label>
+                    <input type="number" id="releasePerBlock" placeholder="0" step="0.00000001" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Delegated Account For Locking (1-255)</label>
+                    <input type="number" id="delegatedAccountForLocking" placeholder="1" min="1" max="255" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Multi-Sig Transaction Hash (optional)</label>
+                    <input type="text" id="multiSigTxHash" placeholder="Hash of transaction to confirm (64 hex chars)">
+                </div>
+                <div class="form-group">
+                    <label>Smart Contract Data (hex, optional)</label>
+                    <textarea id="smartContractData" rows="3" style="width:100%;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-family:monospace;" placeholder="Enter hex data for smart contract"></textarea>
+                </div>
+                <div class="form-group" style="display:flex;gap:20px;">
+                    <label style="display:flex;align-items:center;cursor:pointer;">
+                        <input type="checkbox" id="includePubKey" style="width:auto;margin-right:8px;">
+                        Include Public Key
+                    </label>
+                    <label style="display:flex;align-items:center;cursor:pointer;">
+                        <input type="checkbox" id="usePrimaryEncryption" checked style="width:auto;margin-right:8px;">
+                        Use Primary Encryption
+                    </label>
                 </div>
                 <button class="btn-primary" onclick="sendTransaction()">Send Transaction</button>
+            </div>
+
+            <div class="card">
+                <h3>Cancel Transaction</h3>
+                <div class="form-group">
+                    <label>Transaction Hash to Cancel</label>
+                    <input type="text" id="cancelTxHash" placeholder="Enter transaction hash (64 hex chars)">
+                </div>
+                <button class="btn-danger" onclick="cancelTransaction()">Cancel Transaction</button>
             </div>
         </div>
 
         <!-- Staking Panel -->
         <div class="panel" id="panel-staking">
             <div class="card">
-                <h3>Stake QWD</h3>
+                <h3>Staking Operations</h3>
+
                 <div class="form-group">
-                    <label>Amount to Stake</label>
-                    <input type="number" id="stakeAmount" placeholder="0.00000000" step="0.00000001">
+                    <label>Action</label>
+                    <div style="display:flex;gap:20px;margin-bottom:15px;">
+                        <label style="display:flex;align-items:center;cursor:pointer;">
+                            <input type="radio" name="stakingAction" value="stake" checked style="width:auto;margin-right:8px;">
+                            Stake
+                        </label>
+                        <label style="display:flex;align-items:center;cursor:pointer;">
+                            <input type="radio" name="stakingAction" value="unstake" style="width:auto;margin-right:8px;">
+                            Unstake
+                        </label>
+                        <label style="display:flex;align-items:center;cursor:pointer;">
+                            <input type="radio" name="stakingAction" value="withdraw" style="width:auto;margin-right:8px;">
+                            Withdraw Rewards
+                        </label>
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label>Delegated Account</label>
-                    <input type="number" id="delegatedAccount" placeholder="1" min="1" max="254" value="1">
+                    <label>Delegated Account (1-254 or hex address)</label>
+                    <input type="text" id="stakingDelegatedAccount" placeholder="1" value="1">
                 </div>
-                <button class="btn-primary" onclick="stake()">Stake</button>
-                <button class="btn-secondary" onclick="unstake()" style="margin-left:10px;">Unstake</button>
-                <button class="btn-secondary" onclick="claimRewards()" style="margin-left:10px;">Claim Rewards</button>
+
+                <div class="form-group">
+                    <label>Amount (QWD)</label>
+                    <input type="number" id="stakingAmount" placeholder="0.00000000" step="0.00000001" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;cursor:pointer;">
+                        <input type="checkbox" id="intendOperator" style="width:auto;margin-right:8px;">
+                        Intend to be an Operator
+                    </label>
+                </div>
+
+                <div class="form-group" style="display:flex;gap:20px;">
+                    <label style="display:flex;align-items:center;cursor:pointer;">
+                        <input type="checkbox" id="stakingIncludePubKey" style="width:auto;margin-right:8px;">
+                        Include Public Key
+                    </label>
+                    <label style="display:flex;align-items:center;cursor:pointer;">
+                        <input type="checkbox" id="stakingUsePrimaryEncryption" checked style="width:auto;margin-right:8px;">
+                        Use Primary Encryption
+                    </label>
+                </div>
+
+                <button class="btn-primary" onclick="executeStaking()">Execute</button>
             </div>
         </div>
 
@@ -406,8 +489,9 @@
         <div class="panel" id="panel-history">
             <div class="card">
                 <h3>Transaction History</h3>
+                <button class="btn-primary" onclick="refreshHistory()" style="margin-bottom:15px;">Refresh History</button>
                 <div id="historyList">
-                    <p style="color:#666;">No transactions found</p>
+                    <p style="color:#666;">Click Refresh to load transactions</p>
                 </div>
             </div>
         </div>
@@ -428,12 +512,190 @@
             </div>
         </div>
 
+        <!-- Escrow Panel -->
+        <div class="panel" id="panel-escrow">
+            <div class="card">
+                <h3>Account Security Settings</h3>
+                <p style="color:#888;margin-bottom:20px;">Configure escrow delay and multi-signature requirements for your account.</p>
+
+                <div class="form-group">
+                    <label>Escrow Transaction Delay (blocks)</label>
+                    <input type="number" id="escrowDelay" placeholder="0" min="0" value="0">
+                    <p style="color:#666;font-size:11px;margin-top:5px;">Number of blocks to delay transactions (0 = no delay)</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Multi-Signature Approvals Required</label>
+                    <input type="number" id="multiSigNumber" placeholder="0" min="0" max="255" value="0">
+                    <p style="color:#666;font-size:11px;margin-top:5px;">Number of approvals needed (0-255)</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Multi-Signature Addresses (comma separated)</label>
+                    <textarea id="multiSigAddresses" rows="3" style="width:100%;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-family:monospace;" placeholder="address1, address2, address3..."></textarea>
+                </div>
+
+                <div class="form-group" style="display:flex;gap:20px;">
+                    <label style="display:flex;align-items:center;cursor:pointer;">
+                        <input type="checkbox" id="escrowIncludePubKey" style="width:auto;margin-right:8px;">
+                        Include Public Key
+                    </label>
+                    <label style="display:flex;align-items:center;cursor:pointer;">
+                        <input type="checkbox" id="escrowUsePrimaryEncryption" checked style="width:auto;margin-right:8px;">
+                        Use Primary Encryption
+                    </label>
+                </div>
+
+                <button class="btn-primary" onclick="modifyAccount()">Modify Account</button>
+            </div>
+        </div>
+
+        <!-- Smart Contract Panel -->
+        <div class="panel" id="panel-smartcontract">
+            <div class="card">
+                <h3>Call Smart Contract</h3>
+
+                <div class="form-group">
+                    <label>Smart Contract Address</label>
+                    <input type="text" id="scAddress" placeholder="Enter contract address (hex)">
+                </div>
+
+                <div class="form-group">
+                    <label>Input Data (hex)</label>
+                    <textarea id="scInputData" rows="3" style="width:100%;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-family:monospace;" placeholder="Function selector + encoded parameters"></textarea>
+                </div>
+
+                <button class="btn-primary" onclick="callSmartContract()">Call Contract (View)</button>
+
+                <div class="form-group" style="margin-top:15px;">
+                    <label>Output</label>
+                    <textarea id="scOutput" rows="3" readonly style="width:100%;padding:12px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#0f0;font-family:monospace;"></textarea>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Deploy Smart Contract</h3>
+                <p style="color:#888;margin-bottom:15px;">To deploy a contract, go to Send tab, set recipient to "0", and paste compiled bytecode in Smart Contract Data field.</p>
+            </div>
+        </div>
+
+        <!-- Vote Panel -->
+        <div class="panel" id="panel-vote">
+            <div class="card">
+                <h3>Vote on Encryption Changes</h3>
+                <p style="color:#888;margin-bottom:20px;">Vote to pause, unpause, or replace the blockchain's cryptographic algorithms. These votes affect the entire network.</p>
+
+                <div class="form-group">
+                    <label>Primary Encryption Actions</label>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
+                        <button class="btn-secondary" onclick="vote('pausePrimary')">Pause Primary</button>
+                        <button class="btn-secondary" onclick="vote('unpausePrimary')">Unpause Primary</button>
+                        <button class="btn-danger" onclick="vote('replacePrimary')">Replace Primary</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>New Primary Encryption Name (for Replace action)</label>
+                    <input type="text" id="newPrimaryEncryption" placeholder="e.g., Falcon-512, MAYO-5">
+                </div>
+
+                <div style="border-top:1px solid rgba(255,255,255,0.1);margin:20px 0;"></div>
+
+                <div class="form-group">
+                    <label>Secondary Encryption Actions</label>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
+                        <button class="btn-secondary" onclick="vote('pauseSecondary')">Pause Secondary</button>
+                        <button class="btn-secondary" onclick="vote('unpauseSecondary')">Unpause Secondary</button>
+                        <button class="btn-danger" onclick="vote('replaceSecondary')">Replace Secondary</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>New Secondary Encryption Name (for Replace action)</label>
+                    <input type="text" id="newSecondaryEncryption" placeholder="e.g., Falcon-512, MAYO-5">
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Current Encryption Status</h3>
+                <div id="encryptionStatus" style="font-family:monospace;">
+                    <p>Primary: <span id="currentPrimary">Loading...</span></p>
+                    <p>Secondary: <span id="currentSecondary">Loading...</span></p>
+                </div>
+            </div>
+        </div>
+
         <!-- DEX Panel -->
         <div class="panel" id="panel-dex">
             <div class="card">
                 <h3>Decentralized Exchange</h3>
-                <p style="color:#666;">DEX functionality coming soon...</p>
-                <div id="tokenList" style="margin-top:15px;"></div>
+
+                <div class="form-group">
+                    <label>Select Token</label>
+                    <select id="dexTokenSelect" onchange="updateDexToken()">
+                        <option value="">-- Select Token --</option>
+                    </select>
+                    <button class="btn-secondary" onclick="refreshTokens()" style="margin-left:10px;">Refresh Tokens</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Operation</label>
+                    <div style="display:flex;gap:15px;flex-wrap:wrap;margin-bottom:15px;">
+                        <label style="display:flex;align-items:center;cursor:pointer;">
+                            <input type="radio" name="dexOperation" value="addLiquidity" checked style="width:auto;margin-right:8px;">
+                            Add Liquidity
+                        </label>
+                        <label style="display:flex;align-items:center;cursor:pointer;">
+                            <input type="radio" name="dexOperation" value="withdrawToken" style="width:auto;margin-right:8px;">
+                            Withdraw Token
+                        </label>
+                        <label style="display:flex;align-items:center;cursor:pointer;">
+                            <input type="radio" name="dexOperation" value="withdrawQWD" style="width:auto;margin-right:8px;">
+                            Withdraw QWD
+                        </label>
+                        <label style="display:flex;align-items:center;cursor:pointer;">
+                            <input type="radio" name="dexOperation" value="trade" style="width:auto;margin-right:8px;">
+                            Trade
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Token Amount</label>
+                    <input type="number" id="dexTokenAmount" placeholder="0.00000000" step="0.00000001" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label>QWD Amount</label>
+                    <input type="number" id="dexQwdAmount" placeholder="0.00000000" step="0.00000001" min="0">
+                </div>
+
+                <div class="form-group" style="display:flex;gap:20px;">
+                    <label style="display:flex;align-items:center;cursor:pointer;">
+                        <input type="checkbox" id="dexUsePrimaryEncryption" checked style="width:auto;margin-right:8px;">
+                        Use Primary Encryption
+                    </label>
+                </div>
+
+                <div style="display:flex;gap:10px;">
+                    <button class="btn-primary" onclick="executeDexOperation()">Execute</button>
+                    <button style="background:green;color:white;" class="btn" onclick="buyToken()">Buy Token</button>
+                    <button style="background:red;color:white;" class="btn" onclick="sellToken()">Sell Token</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>My Holdings</h3>
+                <div id="dexHoldings" style="font-family:monospace;font-size:12px;">
+                    <p style="color:#666;">Select a token to view holdings</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Pool Information</h3>
+                <div id="dexPoolInfo" style="font-family:monospace;font-size:12px;">
+                    <p style="color:#666;">Select a token to view pool info</p>
+                </div>
             </div>
         </div>
     </div>
@@ -488,6 +750,7 @@
                         res.warnings.forEach(w => showMessage(w, 'warning'));
                     }
                     updateAccount();
+                    checkWallet(); // Update encryption status
                 }
             } catch (e) {
                 showMessage('Failed to load wallet: ' + e.message, 'error');
@@ -549,6 +812,7 @@
                     document.getElementById('difficulty').textContent = res.difficulty;
                     document.getElementById('tps').textContent = res.tps.toFixed(2);
                     document.getElementById('priceOracle').textContent = res.priceOracle.toFixed(2) + ' QWD/USD';
+                    document.getElementById('randOracle').textContent = res.randOracle;
 
                     const syncIndicator = document.getElementById('syncIndicator');
                     if (res.syncing) {
@@ -594,36 +858,168 @@
         // Send transaction
         async function sendTransaction() {
             const recipient = document.getElementById('recipientAddress').value;
-            const amount = parseFloat(document.getElementById('sendAmount').value);
+            const amount = parseFloat(document.getElementById('sendAmount').value) || 0;
+            const lockedAmount = parseFloat(document.getElementById('lockedAmount').value) || 0;
+            const releasePerBlock = parseFloat(document.getElementById('releasePerBlock').value) || 0;
+            const delegatedAccountForLocking = document.getElementById('delegatedAccountForLocking').value || '1';
+            const multiSigTxHash = document.getElementById('multiSigTxHash').value || '';
+            const smartContractData = document.getElementById('smartContractData').value || '';
+            const includePubKey = document.getElementById('includePubKey').checked;
+            const usePrimaryEncryption = document.getElementById('usePrimaryEncryption').checked;
 
-            if (!recipient || !amount) {
-                showMessage('Please fill all fields', 'error');
+            if (!recipient || amount <= 0) {
+                showMessage('Please enter recipient and amount', 'error');
                 return;
             }
 
             try {
-                const res = await api('/api/send', 'POST', { recipient, amount });
+                const res = await api('/api/send', 'POST', {
+                    recipient,
+                    amount,
+                    lockedAmount,
+                    releasePerBlock,
+                    delegatedAccountForLocking,
+                    multiSigTxHash,
+                    smartContractData,
+                    includePubKey,
+                    usePrimaryEncryption
+                });
                 if (res.error) {
                     showMessage(res.error, 'error');
                 } else {
-                    showMessage(res.message);
+                    showMessage('Transaction sent! Hash: ' + res.txHash);
+                    // Clear form
+                    document.getElementById('recipientAddress').value = '';
+                    document.getElementById('sendAmount').value = '';
+                    document.getElementById('multiSigTxHash').value = '';
+                    document.getElementById('smartContractData').value = '';
                 }
             } catch (e) {
                 showMessage('Failed to send transaction: ' + e.message, 'error');
             }
         }
 
+        // Cancel transaction
+        async function cancelTransaction() {
+            const txHash = document.getElementById('cancelTxHash').value;
+
+            if (!txHash) {
+                showMessage('Please enter transaction hash', 'error');
+                return;
+            }
+
+            try {
+                const res = await api('/api/cancel', 'POST', { txHash });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    showMessage(res.message || 'Cancel request sent');
+                    document.getElementById('cancelTxHash').value = '';
+                }
+            } catch (e) {
+                showMessage('Failed to cancel transaction: ' + e.message, 'error');
+            }
+        }
+
         // Staking functions
-        async function stake() {
-            showMessage('Staking functionality coming soon', 'warning');
+        async function executeStaking() {
+            const action = document.querySelector('input[name="stakingAction"]:checked').value;
+            const delegatedAccount = document.getElementById('stakingDelegatedAccount').value || '1';
+            const amount = parseFloat(document.getElementById('stakingAmount').value) || 0;
+            const intendOperator = document.getElementById('intendOperator').checked;
+            const includePubKey = document.getElementById('stakingIncludePubKey').checked;
+            const usePrimaryEncryption = document.getElementById('stakingUsePrimaryEncryption').checked;
+
+            if (amount <= 0) {
+                showMessage('Please enter a valid amount', 'error');
+                return;
+            }
+
+            try {
+                const res = await api('/api/staking/execute', 'POST', {
+                    action,
+                    delegatedAccount,
+                    amount,
+                    intendOperator,
+                    includePubKey,
+                    usePrimaryEncryption
+                });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    showMessage(res.message || 'Staking transaction sent! Hash: ' + res.txHash);
+                    document.getElementById('stakingAmount').value = '';
+                }
+            } catch (e) {
+                showMessage('Staking failed: ' + e.message, 'error');
+            }
         }
 
-        async function unstake() {
-            showMessage('Unstaking functionality coming soon', 'warning');
+        // Vote
+        async function vote(action) {
+            let encryptionName = '';
+            if (action.includes('Primary')) {
+                encryptionName = document.getElementById('newPrimaryEncryption').value;
+            } else {
+                encryptionName = document.getElementById('newSecondaryEncryption').value;
+            }
+
+            try {
+                const res = await api('/api/vote', 'POST', { action, encryptionName });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    showMessage(res.message || 'Vote submitted successfully');
+                }
+            } catch (e) {
+                showMessage('Vote failed: ' + e.message, 'error');
+            }
         }
 
-        async function claimRewards() {
-            showMessage('Claim rewards functionality coming soon', 'warning');
+        // History
+        async function refreshHistory() {
+            try {
+                const res = await api('/api/history');
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                    return;
+                }
+
+                const historyList = document.getElementById('historyList');
+                if (!res.transactions || res.transactions.length === 0) {
+                    historyList.innerHTML = '<p style="color:#666;">No transactions found</p>';
+                    return;
+                }
+
+                let html = '<div style="overflow-x:auto;">';
+                html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+                html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.1);">';
+                html += '<th style="padding:8px;text-align:left;">Type</th>';
+                html += '<th style="padding:8px;text-align:left;">Amount</th>';
+                html += '<th style="padding:8px;text-align:left;">Address</th>';
+                html += '<th style="padding:8px;text-align:left;">Height</th>';
+                html += '<th style="padding:8px;text-align:left;">Hash</th>';
+                html += '</tr>';
+
+                for (const tx of res.transactions) {
+                    const typeColor = tx.type === 'sent' ? '#ff4757' : '#00ff64';
+                    const typeSign = tx.type === 'sent' ? '-' : '+';
+                    const addr = tx.type === 'sent' ? tx.recipient : tx.sender;
+                    html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">';
+                    html += '<td style="padding:8px;color:' + typeColor + ';">' + tx.type.toUpperCase() + '</td>';
+                    html += '<td style="padding:8px;color:' + typeColor + ';">' + typeSign + tx.amount.toFixed(8) + ' QWD</td>';
+                    html += '<td style="padding:8px;font-family:monospace;font-size:10px;">' + (addr ? addr.substring(0, 16) + '...' : '-') + '</td>';
+                    html += '<td style="padding:8px;">' + tx.height + '</td>';
+                    html += '<td style="padding:8px;font-family:monospace;font-size:10px;">' + tx.hash.substring(0, 16) + '...</td>';
+                    html += '</tr>';
+                }
+
+                html += '</table></div>';
+                historyList.innerHTML = html;
+                showMessage('History refreshed');
+            } catch (e) {
+                showMessage('Failed to load history: ' + e.message, 'error');
+            }
         }
 
         // Search details
@@ -641,8 +1037,32 @@
                     document.getElementById('detailsResult').style.display = 'none';
                 } else {
                     document.getElementById('detailsResult').style.display = 'block';
-                    document.getElementById('detailsContent').textContent =
-                        'Type: ' + res.type + '\n\n' + (res.data || JSON.stringify(res, null, 2));
+
+                    let content = 'Type: ' + res.type + '\n\n';
+
+                    if (res.type === 'account') {
+                        content += 'Address: ' + res.address + '\n';
+                        content += 'Balance: ' + res.balance.toFixed(8) + ' QWD\n';
+                        content += 'Transaction Delay: ' + res.transactionDelay + ' blocks\n';
+                        content += 'Multi-Sig Required: ' + res.multiSignNumber + '\n';
+                        content += 'Total Sent: ' + res.sentCount + ' transactions\n';
+                        content += 'Total Received: ' + res.receivedCount + ' transactions\n';
+
+                        if (res.transactions && res.transactions.length > 0) {
+                            content += '\n--- Recent Transactions ---\n';
+                            for (const tx of res.transactions) {
+                                const sign = tx.type === 'sent' ? '-' : '+';
+                                const addr = tx.type === 'sent' ? tx.recipient : tx.sender;
+                                content += '\n[' + tx.type.toUpperCase() + '] ' + sign + tx.amount.toFixed(8) + ' QWD\n';
+                                content += '  ' + (tx.type === 'sent' ? 'To: ' : 'From: ') + addr + '\n';
+                                content += '  Height: ' + tx.height + ' | Hash: ' + tx.hash.substring(0, 32) + '...\n';
+                            }
+                        }
+                    } else {
+                        content += res.data || JSON.stringify(res, null, 2);
+                    }
+
+                    document.getElementById('detailsContent').textContent = content;
                 }
             } catch (e) {
                 showMessage('Search failed: ' + e.message, 'error');
@@ -659,9 +1079,185 @@
                     document.getElementById('walletDetails').innerHTML =
                         '<p class="wallet-info">Address: ' + res.address + '</p>' +
                         '<p class="wallet-info">Encryption: ' + res.sigName + ' / ' + res.sigName2 + '</p>';
+                    // Update encryption status in vote panel
+                    document.getElementById('currentPrimary').textContent = res.sigName || 'Unknown';
+                    document.getElementById('currentSecondary').textContent = res.sigName2 || 'Unknown';
                 }
             } catch (e) {
                 console.error('Failed to check wallet:', e);
+            }
+        }
+
+        // Escrow functions
+        async function modifyAccount() {
+            const escrowDelay = parseInt(document.getElementById('escrowDelay').value) || 0;
+            const multiSigNumber = parseInt(document.getElementById('multiSigNumber').value) || 0;
+            const multiSigAddresses = document.getElementById('multiSigAddresses').value;
+            const includePubKey = document.getElementById('escrowIncludePubKey').checked;
+            const usePrimaryEncryption = document.getElementById('escrowUsePrimaryEncryption').checked;
+
+            try {
+                const res = await api('/api/escrow/modify', 'POST', {
+                    escrowDelay,
+                    multiSigNumber,
+                    multiSigAddresses,
+                    includePubKey,
+                    usePrimaryEncryption
+                });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    showMessage(res.message || 'Account modified successfully! Hash: ' + res.txHash);
+                }
+            } catch (e) {
+                showMessage('Modify account failed: ' + e.message, 'error');
+            }
+        }
+
+        // Smart Contract functions
+        async function callSmartContract() {
+            const address = document.getElementById('scAddress').value;
+            const inputData = document.getElementById('scInputData').value;
+
+            if (!address) {
+                showMessage('Please enter contract address', 'error');
+                return;
+            }
+
+            try {
+                const res = await api('/api/smartcontract/call', 'POST', { address, inputData });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                    document.getElementById('scOutput').value = 'Error: ' + res.error;
+                } else {
+                    document.getElementById('scOutput').value = res.output || res.result || '';
+                    showMessage('Contract called successfully');
+                }
+            } catch (e) {
+                showMessage('Contract call failed: ' + e.message, 'error');
+            }
+        }
+
+        // DEX functions
+        async function refreshTokens() {
+            try {
+                const res = await api('/api/dex/tokens');
+                const select = document.getElementById('dexTokenSelect');
+                select.innerHTML = '<option value="">-- Select Token --</option>';
+                if (res.tokens) {
+                    for (const [addr, info] of Object.entries(res.tokens)) {
+                        const opt = document.createElement('option');
+                        opt.value = addr;
+                        opt.textContent = addr.substring(0, 16) + '... : ' + (info.Name || info.Symbols || 'Unknown');
+                        select.appendChild(opt);
+                    }
+                }
+                showMessage('Tokens refreshed');
+            } catch (e) {
+                showMessage('Failed to refresh tokens: ' + e.message, 'error');
+            }
+        }
+
+        async function updateDexToken() {
+            const tokenAddr = document.getElementById('dexTokenSelect').value;
+            if (!tokenAddr) return;
+
+            try {
+                const res = await api('/api/dex/info?token=' + encodeURIComponent(tokenAddr));
+                if (res.holdings) {
+                    document.getElementById('dexHoldings').innerHTML = '<pre>' + JSON.stringify(res.holdings, null, 2) + '</pre>';
+                }
+                if (res.pool) {
+                    document.getElementById('dexPoolInfo').innerHTML = '<pre>' + JSON.stringify(res.pool, null, 2) + '</pre>';
+                }
+            } catch (e) {
+                console.error('Failed to get DEX info:', e);
+            }
+        }
+
+        async function executeDexOperation() {
+            const tokenAddr = document.getElementById('dexTokenSelect').value;
+            const operation = document.querySelector('input[name="dexOperation"]:checked').value;
+            const tokenAmount = parseFloat(document.getElementById('dexTokenAmount').value) || 0;
+            const qwdAmount = parseFloat(document.getElementById('dexQwdAmount').value) || 0;
+            const usePrimaryEncryption = document.getElementById('dexUsePrimaryEncryption').checked;
+
+            if (!tokenAddr) {
+                showMessage('Please select a token', 'error');
+                return;
+            }
+
+            try {
+                const res = await api('/api/dex/execute', 'POST', {
+                    tokenAddress: tokenAddr,
+                    operation,
+                    tokenAmount,
+                    qwdAmount,
+                    usePrimaryEncryption
+                });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    showMessage(res.message || 'DEX operation completed! Hash: ' + res.txHash);
+                }
+            } catch (e) {
+                showMessage('DEX operation failed: ' + e.message, 'error');
+            }
+        }
+
+        async function buyToken() {
+            document.querySelector('input[name="dexOperation"][value="trade"]').checked = true;
+            const tokenAddr = document.getElementById('dexTokenSelect').value;
+            const tokenAmount = parseFloat(document.getElementById('dexTokenAmount').value) || 0;
+            const usePrimaryEncryption = document.getElementById('dexUsePrimaryEncryption').checked;
+
+            if (!tokenAddr || tokenAmount <= 0) {
+                showMessage('Select token and enter amount', 'error');
+                return;
+            }
+
+            try {
+                const res = await api('/api/dex/trade', 'POST', {
+                    tokenAddress: tokenAddr,
+                    action: 'buy',
+                    amount: tokenAmount,
+                    usePrimaryEncryption
+                });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    showMessage('Buy order sent! Hash: ' + res.txHash);
+                }
+            } catch (e) {
+                showMessage('Buy failed: ' + e.message, 'error');
+            }
+        }
+
+        async function sellToken() {
+            document.querySelector('input[name="dexOperation"][value="trade"]').checked = true;
+            const tokenAddr = document.getElementById('dexTokenSelect').value;
+            const tokenAmount = parseFloat(document.getElementById('dexTokenAmount').value) || 0;
+            const usePrimaryEncryption = document.getElementById('dexUsePrimaryEncryption').checked;
+
+            if (!tokenAddr || tokenAmount <= 0) {
+                showMessage('Select token and enter amount', 'error');
+                return;
+            }
+
+            try {
+                const res = await api('/api/dex/trade', 'POST', {
+                    tokenAddress: tokenAddr,
+                    action: 'sell',
+                    amount: tokenAmount,
+                    usePrimaryEncryption
+                });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    showMessage('Sell order sent! Hash: ' + res.txHash);
+                }
+            } catch (e) {
+                showMessage('Sell failed: ' + e.message, 'error');
             }
         }
 

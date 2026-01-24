@@ -137,7 +137,33 @@ Run Node:
 
     go run cmd/mining/main.go 46.205.244.17
  
-Run GUI:
+Run GUI (requires Qt5):
 
     go run cmd/gui/main.go
-    
+
+Run Web UI (alternative to Qt GUI):
+
+    go run cmd/webui/main.go [node_ip] [port]
+
+Examples:
+
+    go run cmd/webui/main.go                    # connects to 127.0.0.1, serves on port 8080
+    go run cmd/webui/main.go 192.168.1.100      # connects to specific node IP
+    go run cmd/webui/main.go 192.168.1.100 3000 # custom node IP and port
+
+Then open http://localhost:8080 (or your custom port) in a web browser.
+
+Web UI Features:
+- **Wallet**: Load wallet, change password, view mnemonic
+- **Account**: View balances, staking details, network stats
+- **Send**: Send QWD with locked amounts, multi-sig, smart contract data
+- **Staking**: Stake, unstake, withdraw rewards
+- **History**: View sent and received transactions
+- **Details**: Search by transaction hash, address, or block height
+- **Escrow**: Configure transaction delay and multi-signature settings
+- **Smart Contract**: Call smart contract view functions
+- **Vote**: Vote on encryption algorithm changes
+- **DEX**: Trade tokens, add/remove liquidity
+
+Press Ctrl+C to stop the web server.
+
