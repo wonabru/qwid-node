@@ -626,6 +626,7 @@ func ExecuteStaking(w http.ResponseWriter, r *http.Request) {
 		IntendOperator       bool    `json:"intendOperator"`
 		IncludePubKey        bool    `json:"includePubKey"`
 		UsePrimaryEncryption bool    `json:"usePrimaryEncryption"`
+		TargetOperator       string  `json:"targetOperator"` // Address to stake FOR (optional)
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		jsonError(w, "Invalid request body", http.StatusBadRequest)
@@ -695,14 +696,40 @@ func ExecuteStaking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build transaction
+	var recipient common.Address
+	var lockedAmount int64 = 0
+	var releasePerBlock int64 = 0
+	var delegatedAccountForLocking common.Address
+
+	if req.TargetOperator != "" && req.Action == "stake" {
+		// Staking FOR another node - use locked staking path
+		targetBytes, err := hex.DecodeString(req.TargetOperator)
+		if err != nil || len(targetBytes) != common.AddressLength {
+			jsonError(w, "Invalid target operator address", http.StatusBadRequest)
+			return
+		}
+		recipient = common.Address{}
+		if err := recipient.Init(append([]byte{1}, targetBytes...)); err != nil {
+			jsonError(w, "Failed to init target operator address", http.StatusBadRequest)
+			return
+		}
+		// Use locked staking with immediate release (all released in 1 block)
+		lockedAmount = am
+		releasePerBlock = am
+		delegatedAccountForLocking = ar // The delegated account
+	} else {
+		recipient = ar
+		delegatedAccountForLocking = common.GetDelegatedAccountAddress(1)
+	}
+
 	txd := transactionsDefinition.TxData{
-		Recipient:                  ar,
+		Recipient:                  recipient,
 		Amount:                     am,
 		OptData:                    optData,
 		Pubkey:                     pk,
-		LockedAmount:               0,
-		ReleasePerBlock:            0,
-		DelegatedAccountForLocking: common.GetDelegatedAccountAddress(1),
+		LockedAmount:               lockedAmount,
+		ReleasePerBlock:            releasePerBlock,
+		DelegatedAccountForLocking: delegatedAccountForLocking,
 	}
 
 	par := transactionsDefinition.TxParam{
