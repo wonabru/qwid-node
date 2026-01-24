@@ -2,13 +2,14 @@ package transactionsDefinition
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"github.com/wonabru/qwid-node/logger"
 	"strconv"
 
 	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/database"
+	"github.com/wonabru/qwid-node/logger"
 	"github.com/wonabru/qwid-node/pubkeys"
 	"github.com/wonabru/qwid-node/wallet"
 )
@@ -335,6 +336,8 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tm
 			return false
 		}
 		logger.GetLogger().Println("  Address verification OK")
+		// Store pubkey immediately so it's available for nonce verification
+		storePubKeyImmediately(pk, senderAddr)
 	}
 	//logger.GetLogger().Println(sigName, sigName2, isPausedTmp, isPaused2Tmp)
 	return wallet.Verify(b, signature.GetBytes(), pkb, sigName, sigName2, isPausedTmp, isPaused2Tmp)
@@ -375,4 +378,35 @@ func EmptyTransaction() Transaction {
 	}
 	tx.Signature = common.EmptySignature()
 	return tx
+}
+
+// storePubKeyImmediately stores the pubkey to DB right away during verification
+// so it's available for nonce verification from other nodes
+func storePubKeyImmediately(pk common.PubKey, senderAddr common.Address) {
+	zeroBytes := make([]byte, common.AddressLength)
+	// Ensure address is set
+	if bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
+		pk.Address = senderAddr
+	}
+	// Ensure MainAddress is set
+	if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
+		pk.MainAddress = pk.Address
+	}
+	// Verify the pubkey matches the sender
+	if !bytes.Equal(pk.Address.GetBytes(), senderAddr.GetBytes()) {
+		logger.GetLogger().Println("storePubKeyImmediately: address mismatch, skipping")
+		return
+	}
+	// Store pubkey marshal to DB
+	pkm, err := json.Marshal(pk)
+	if err != nil {
+		logger.GetLogger().Println("storePubKeyImmediately: marshal error:", err)
+		return
+	}
+	err = database.MainDB.Put(append(common.PubKeyMarshalDBPrefix[:], pk.Address.GetBytes()...), pkm)
+	if err != nil {
+		logger.GetLogger().Println("storePubKeyImmediately: DB put error:", err)
+		return
+	}
+	logger.GetLogger().Println("storePubKeyImmediately: stored pubkey for", pk.Address.GetHex())
 }
