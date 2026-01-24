@@ -81,6 +81,8 @@ func main() {
 	mux.HandleFunc("/api/vote", corsMiddleware(handlers.Vote))
 	mux.HandleFunc("/api/escrow/modify", corsMiddleware(handlers.ModifyEscrow))
 	mux.HandleFunc("/api/smartcontract/call", corsMiddleware(handlers.CallSmartContract))
+	mux.HandleFunc("/api/logs", corsMiddleware(handlers.GetLogs))
+	mux.HandleFunc("/api/logs/files", corsMiddleware(handlers.GetLogFiles))
 
 	// Serve static files
 	staticFS, _ := fs.Sub(staticFiles, "static")

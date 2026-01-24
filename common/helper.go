@@ -15,6 +15,10 @@ func GetCurrentTimeStampInSecond() int64 {
 	return time.Now().UTC().Unix()
 }
 
+func GetCurrentDate() string {
+	return time.Now().Format("2006-01-02")
+}
+
 func GetDelegatedAccountAddress(id int16) Address {
 	a := Address{}
 	b := make([]byte, 2)

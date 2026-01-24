@@ -120,3 +120,128 @@ func rotateLogFile(logsDir string) {
 	}
 	mw.writers[1] = logFile
 }
+
+// GetHomePath returns the user's home directory
+func GetHomePath() string {
+	homePath, err := os.UserHomeDir()
+	if err != nil {
+		return "/root"
+	}
+	return homePath
+}
+
+// GetLogFiles returns list of log files in the directory
+func GetLogFiles(dir string) ([]string, error) {
+	files, err := filepath.Glob(filepath.Join(dir, "mining-*.log"))
+	if err != nil {
+		return nil, err
+	}
+	// Extract just filenames and sort by date (newest first)
+	result := make([]string, 0, len(files))
+	for i := len(files) - 1; i >= 0; i-- {
+		result = append(result, filepath.Base(files[i]))
+	}
+	return result, nil
+}
+
+// ReadLogFile reads a log file with optional filtering
+func ReadLogFile(path, filter string, offset, limit int) ([]string, int, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer file.Close()
+
+	var lines []string
+	var allLines []string
+	scanner := newScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		// Apply filter if specified
+		if filter == "" || containsFilter(line, filter) {
+			allLines = append(allLines, line)
+		}
+	}
+
+	totalLines := len(allLines)
+
+	// Apply offset and limit (from end for most recent logs)
+	if offset >= totalLines {
+		return []string{}, totalLines, nil
+	}
+
+	// Get lines from the end (most recent first)
+	start := totalLines - offset - limit
+	if start < 0 {
+		start = 0
+	}
+	end := totalLines - offset
+
+	for i := end - 1; i >= start; i-- {
+		lines = append(lines, allLines[i])
+	}
+
+	return lines, totalLines, scanner.Err()
+}
+
+func newScanner(file *os.File) *lineScanner {
+	return &lineScanner{file: file, buf: make([]byte, 0, 64*1024)}
+}
+
+type lineScanner struct {
+	file *os.File
+	buf  []byte
+	line string
+	err  error
+	pos  int64
+}
+
+func (s *lineScanner) Scan() bool {
+	s.buf = s.buf[:0]
+	for {
+		b := make([]byte, 1)
+		n, err := s.file.Read(b)
+		if n == 0 || err != nil {
+			if len(s.buf) > 0 {
+				s.line = string(s.buf)
+				return true
+			}
+			s.err = err
+			if err == io.EOF {
+				s.err = nil
+			}
+			return false
+		}
+		if b[0] == '\n' {
+			s.line = string(s.buf)
+			return true
+		}
+		s.buf = append(s.buf, b[0])
+	}
+}
+
+func (s *lineScanner) Text() string {
+	return s.line
+}
+
+func (s *lineScanner) Err() error {
+	return s.err
+}
+
+func containsFilter(line, filter string) bool {
+	return stringContains(line, filter)
+}
+
+func stringContains(s, substr string) bool {
+	return indexOf(s, substr) >= 0
+}
+
+func indexOf(s, substr string) int {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return i
+		}
+	}
+	return -1
+}

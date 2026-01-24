@@ -264,6 +264,7 @@
         <button class="tab" data-tab="smartcontract">Smart Contract</button>
         <button class="tab" data-tab="vote">Vote</button>
         <button class="tab" data-tab="dex">DEX</button>
+        <button class="tab" data-tab="logs">Logs</button>
     </div>
 
     <div class="container">
@@ -703,6 +704,45 @@
                 <h3>Pool Information</h3>
                 <div id="dexPoolInfo" style="font-family:monospace;font-size:12px;">
                     <p style="color:#666;">Select a token to view pool info</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs Panel -->
+        <div class="panel" id="panel-logs">
+            <div class="card">
+                <h3>Node Logs</h3>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
+                    <div class="form-group" style="flex:1;min-width:200px;">
+                        <label>Log File</label>
+                        <select id="logFileSelect" onchange="loadLogs()">
+                            <option value="">Today's Log</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:2;min-width:300px;">
+                        <label>Filter (contains)</label>
+                        <input type="text" id="logFilter" placeholder="e.g., pubkey, transaction, error" onkeyup="if(event.key==='Enter')loadLogs()">
+                    </div>
+                    <div class="form-group" style="flex:0;">
+                        <label>&nbsp;</label>
+                        <button class="btn-primary" onclick="loadLogs()">Search</button>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;margin-bottom:15px;">
+                    <button class="btn-secondary" onclick="loadLogs()">Refresh</button>
+                    <button class="btn-secondary" onclick="loadLogFiles()">Refresh Files</button>
+                    <button class="btn-secondary" onclick="clearLogFilter()">Clear Filter</button>
+                    <span id="logInfo" style="margin-left:auto;color:#888;font-size:12px;"></span>
+                </div>
+                <div style="display:flex;gap:10px;margin-bottom:15px;">
+                    <button class="btn-secondary" onclick="logsNewerPage()">&larr; Newer</button>
+                    <span id="logPageInfo" style="color:#888;font-size:12px;align-self:center;"></span>
+                    <button class="btn-secondary" onclick="logsOlderPage()">Older &rarr;</button>
+                </div>
+            </div>
+            <div class="card">
+                <div id="logContent" style="font-family:monospace;font-size:11px;max-height:600px;overflow-y:auto;background:rgba(0,0,0,0.4);padding:10px;border-radius:4px;white-space:pre-wrap;word-break:break-all;">
+                    Click Refresh to load logs...
                 </div>
             </div>
         </div>
@@ -1314,9 +1354,110 @@
             }
         }
 
+        // Logs functionality
+        let logOffset = 0;
+        const logLimit = 200;
+        let logTotalLines = 0;
+
+        async function loadLogFiles() {
+            try {
+                const res = await api('/api/logs/files');
+                const select = document.getElementById('logFileSelect');
+                select.innerHTML = '<option value="">Today\'s Log</option>';
+                if (res.files) {
+                    for (const file of res.files) {
+                        const opt = document.createElement('option');
+                        opt.value = file;
+                        opt.textContent = file;
+                        select.appendChild(opt);
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load log files:', e);
+            }
+        }
+
+        async function loadLogs() {
+            const file = document.getElementById('logFileSelect').value;
+            const filter = document.getElementById('logFilter').value;
+
+            try {
+                let url = '/api/logs?offset=' + logOffset + '&limit=' + logLimit;
+                if (file) url += '&file=' + encodeURIComponent(file);
+                if (filter) url += '&filter=' + encodeURIComponent(filter);
+
+                const res = await api(url);
+                if (res.error) {
+                    document.getElementById('logContent').innerHTML = '<span style="color:#ff4757;">Error: ' + res.error + '</span>';
+                    return;
+                }
+
+                logTotalLines = res.totalLines || 0;
+                const lines = res.lines || [];
+
+                document.getElementById('logInfo').textContent =
+                    'File: ' + (res.file || 'unknown') + ' | Total: ' + logTotalLines + ' lines' +
+                    (res.filter ? ' | Filter: "' + res.filter + '"' : '');
+
+                const startLine = Math.max(0, logTotalLines - logOffset - lines.length);
+                const endLine = logTotalLines - logOffset;
+                document.getElementById('logPageInfo').textContent =
+                    'Showing lines ' + (startLine + 1) + '-' + endLine + ' of ' + logTotalLines;
+
+                if (lines.length === 0) {
+                    document.getElementById('logContent').innerHTML = '<span style="color:#666;">No logs found' +
+                        (filter ? ' matching "' + filter + '"' : '') + '</span>';
+                    return;
+                }
+
+                // Color code log lines
+                let html = '';
+                for (const line of lines) {
+                    let color = '#e0e0e0';
+                    if (line.includes('ERROR') || line.includes('error') || line.includes('fails') || line.includes('cannot')) {
+                        color = '#ff4757';
+                    } else if (line.includes('WARNING') || line.includes('warning') || line.includes('WARN')) {
+                        color = '#ffc800';
+                    } else if (line.includes('success') || line.includes('SUCCESS') || line.includes('OK')) {
+                        color = '#00ff64';
+                    } else if (line.includes('pubkey') || line.includes('PubKey') || line.includes('Pubkey')) {
+                        color = '#00d4ff';
+                    } else if (line.includes('transaction') || line.includes('Transaction')) {
+                        color = '#b388ff';
+                    }
+                    // Escape HTML and add color
+                    const escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    html += '<div style="color:' + color + ';border-bottom:1px solid rgba(255,255,255,0.05);padding:2px 0;">' + escaped + '</div>';
+                }
+                document.getElementById('logContent').innerHTML = html;
+
+            } catch (e) {
+                document.getElementById('logContent').innerHTML = '<span style="color:#ff4757;">Failed to load logs: ' + e.message + '</span>';
+            }
+        }
+
+        function logsNewerPage() {
+            logOffset = Math.max(0, logOffset - logLimit);
+            loadLogs();
+        }
+
+        function logsOlderPage() {
+            if (logOffset + logLimit < logTotalLines) {
+                logOffset += logLimit;
+                loadLogs();
+            }
+        }
+
+        function clearLogFilter() {
+            document.getElementById('logFilter').value = '';
+            logOffset = 0;
+            loadLogs();
+        }
+
         // Initialize
         updateStats();
         checkWallet();
+        loadLogFiles();
         setInterval(updateStats, 5000);
         setInterval(() => { if (walletLoaded) updateAccount(); }, 5000);
     </script>
