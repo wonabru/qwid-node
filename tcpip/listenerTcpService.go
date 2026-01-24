@@ -218,7 +218,7 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 					tcpConn.Close()
 					tcpConn, err = net.DialTCP("tcp", nil, tcpAddr)
 					if err != nil {
-						logger.GetLogger().Printf("Connection attempt %d to %s failed: %v", ipport, err.Error())
+						logger.GetLogger().Printf("Connection attempt to %s failed: %v", ipport, err.Error())
 					}
 					reconnectionTries = 0
 					continue

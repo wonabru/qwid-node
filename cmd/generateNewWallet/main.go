@@ -29,7 +29,7 @@ func main() {
 	}
 	walletNumber, err := strconv.Atoi(input)
 	if (err != nil) || (0 > walletNumber) || (walletNumber > 255) {
-		logger.GetLogger().Fatalf("wallet number should be integer from 0 to 255. Not ", walletNumber)
+		logger.GetLogger().Fatalf("wallet number should be integer from 0 to 255. Not %d", walletNumber)
 	}
 	fmt.Print("Enter password: ")
 

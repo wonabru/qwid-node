@@ -1,4 +1,4 @@
-# Node go OKURA
+# Node go QWID
 
 Works for Ubuntu 24.04 (gcc 11) and go1.23.6
 Only one network interface should be with external public IP
@@ -88,23 +88,23 @@ Reload shell and dynamic libraries
 Clone project source code
 
     git clone https://github.com/wonabru/qwid-node.git
-    cd okura-node
+    cd qwid-node
 
 install go modules
 
     go get ./...
 
-    mkdir -p ~/.okura/genesis/config
+    mkdir -p ~/.qwid/genesis/config
 
 Copy genesis config file ex.:
 
-    cp genesis/config/genesis_internal_tests.json ~/.okura/genesis/config/genesis.json
+    cp genesis/config/genesis_internal_tests.json ~/.qwid/genesis/config/genesis.json
 
 Copy env file and change accordingly.
 
-    cp .okura/.env ~/.okura/.env
+    cp .qwid/.env ~/.qwid/.env
 
-Edit ~/.okura/.env
+Edit ~/.qwid/.env
 
     DELEGATED_ACCOUNT= any larger rather than 5 but less than 255
     REWARD_PERCENTAGE= any value 0 <= x <= 500    500 ==> means 50% reward to operator

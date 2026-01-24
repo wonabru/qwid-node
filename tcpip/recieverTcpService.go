@@ -100,13 +100,13 @@ func init() {
 		// Parse the IP address
 		ip = net.ParseIP(ipStr)
 		if ip == nil {
-			logger.GetLogger().Println("Warning: Failed to parse WHITELIST_IP '%s' as an IP address", ipStr)
+			logger.GetLogger().Printf("Warning: Failed to parse WHITELIST_IP '%s' as an IP address\n", ipStr)
 			return
 		}
 
 		ip4 = ip.To4()
 		if ip4 == nil {
-			logger.GetLogger().Println("Warning: failed to parse WHITELIST_IP '%s' as 4 byte format", ipStr)
+			logger.GetLogger().Printf("Warning: failed to parse WHITELIST_IP '%s' as 4 byte format\n", ipStr)
 			return
 		}
 		AddWhiteListIPs([4]byte(ip4))
