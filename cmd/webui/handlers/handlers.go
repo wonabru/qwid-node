@@ -762,6 +762,39 @@ func ExecuteStaking(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func GetPendingTransactions(w http.ResponseWriter, r *http.Request) {
+	// Get pending transactions from pool
+	clientrpc.InRPC <- SignMessage([]byte("PEND"))
+	reply := <-clientrpc.OutRPC
+	if bytes.Equal(reply, []byte("Timeout")) {
+		jsonError(w, "Timeout", http.StatusGatewayTimeout)
+		return
+	}
+
+	// Parse the response - it contains transaction data
+	transactions := []map[string]interface{}{}
+
+	if len(reply) > 0 {
+		// Try to parse as JSON first
+		var txList []map[string]interface{}
+		if err := json.Unmarshal(reply, &txList); err == nil {
+			transactions = txList
+		} else {
+			// Return raw data if not JSON
+			jsonResponse(w, map[string]interface{}{
+				"raw":   hex.EncodeToString(reply),
+				"count": 0,
+			})
+			return
+		}
+	}
+
+	jsonResponse(w, map[string]interface{}{
+		"transactions": transactions,
+		"count":        len(transactions),
+	})
+}
+
 func GetHistory(w http.ResponseWriter, r *http.Request) {
 	if MainWallet == nil || !MainWallet.Check() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)

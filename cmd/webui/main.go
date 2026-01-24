@@ -71,6 +71,7 @@ func main() {
 	mux.HandleFunc("/api/staking/claim", corsMiddleware(handlers.ClaimRewards))
 	mux.HandleFunc("/api/staking/execute", corsMiddleware(handlers.ExecuteStaking))
 	mux.HandleFunc("/api/history", corsMiddleware(handlers.GetHistory))
+	mux.HandleFunc("/api/pending", corsMiddleware(handlers.GetPendingTransactions))
 	mux.HandleFunc("/api/details", corsMiddleware(handlers.GetDetails))
 	mux.HandleFunc("/api/dex/tokens", corsMiddleware(handlers.GetTokens))
 	mux.HandleFunc("/api/dex/pools", corsMiddleware(handlers.GetPools))

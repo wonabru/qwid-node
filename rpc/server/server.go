@@ -129,6 +129,8 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 		handleESCR(byt, reply)
 	case "MULT":
 		handleMULT(byt, reply)
+	case "PEND":
+		handlePEND(byt, reply)
 	default:
 		*reply = []byte("Invalid operation")
 	}
@@ -454,4 +456,64 @@ func handleSTAT(byt []byte, reply *[]byte) {
 		return
 	}
 	*reply = msb
+}
+
+func handlePEND(byt []byte, reply *[]byte) {
+	// Get pending transactions from all pools
+	type PendingTx struct {
+		Hash      string  `json:"hash"`
+		Sender    string  `json:"sender"`
+		Recipient string  `json:"recipient"`
+		Amount    float64 `json:"amount"`
+		Height    int64   `json:"height"`
+		Pool      string  `json:"pool"`
+	}
+
+	pendingTxs := []PendingTx{}
+
+	// Get from main pool
+	txs := transactionsPool.PoolsTx.PeekTransactions(100, 0)
+	for _, tx := range txs {
+		pendingTxs = append(pendingTxs, PendingTx{
+			Hash:      tx.Hash.GetHex(),
+			Sender:    tx.TxParam.Sender.GetHex(),
+			Recipient: tx.TxData.Recipient.GetHex(),
+			Amount:    float64(tx.TxData.Amount) / 1e8,
+			Height:    tx.Height,
+			Pool:      "main",
+		})
+	}
+
+	// Get from escrow pool
+	escrowTxs := transactionsPool.PoolTxEscrow.PeekTransactions(100, 0)
+	for _, tx := range escrowTxs {
+		pendingTxs = append(pendingTxs, PendingTx{
+			Hash:      tx.Hash.GetHex(),
+			Sender:    tx.TxParam.Sender.GetHex(),
+			Recipient: tx.TxData.Recipient.GetHex(),
+			Amount:    float64(tx.TxData.Amount) / 1e8,
+			Height:    tx.Height,
+			Pool:      "escrow",
+		})
+	}
+
+	// Get from multi-sig pool
+	multiTxs := transactionsPool.PoolTxMultiSign.PeekTransactions(100, 0)
+	for _, tx := range multiTxs {
+		pendingTxs = append(pendingTxs, PendingTx{
+			Hash:      tx.Hash.GetHex(),
+			Sender:    tx.TxParam.Sender.GetHex(),
+			Recipient: tx.TxData.Recipient.GetHex(),
+			Amount:    float64(tx.TxData.Amount) / 1e8,
+			Height:    tx.Height,
+			Pool:      "multisig",
+		})
+	}
+
+	result, err := json.Marshal(pendingTxs)
+	if err != nil {
+		*reply = []byte("[]")
+		return
+	}
+	*reply = result
 }
