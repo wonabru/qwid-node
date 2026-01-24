@@ -9,6 +9,10 @@ Okura-Node is a quantum-resistant blockchain node written in Go 1.23.6. It featu
 ## Build & Run Commands
 
 ```bash
+# Set CGO flags (required for RocksDB)
+export CGO_CFLAGS="-isystem $HOME/local/include"
+export CGO_LDFLAGS="-L$HOME/local/lib -L/usr/local/intelpython3/lib -lrocksdb -lstdc++ -lm -lz -lsnappy -llz4 -lzstd -lbz2 -lpthread -ldl"
+
 # Install dependencies
 go get ./...
 
@@ -29,10 +33,11 @@ go test -v ./wallet       # verbose output
 
 ## Required System Dependencies
 
-- RocksDB v10.2.1 (librocksdb-dev)
+- RocksDB v10.4.2 (build from source with `DISABLE_WARNING_AS_ERROR=1`, install to ~/local)
 - liboqs (commit 8ee6039) for post-quantum cryptography
 - Qt5 for GUI (qtbase5-dev)
 - ZMQ (libzmq3-dev)
+- Compression libs: libsnappy, liblz4, libzstd, libbz2
 
 ## Architecture
 
