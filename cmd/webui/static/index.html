@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QWID Wallet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        .header {
+            background: rgba(0,0,0,0.3);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 {
+            color: #00d4ff;
+            font-size: 24px;
+        }
+        .header-info {
+            font-size: 14px;
+            color: #888;
+        }
+        .tabs {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: #888;
+            font-size: 14px;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        .tab:hover {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+        .tab.active {
+            background: rgba(0,212,255,0.1);
+            color: #00d4ff;
+            border-bottom: 2px solid #00d4ff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .panel {
+            display: none;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .panel.active {
+            display: block;
+        }
+        .card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .card h3 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .stat-item {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .stat-value.highlight {
+            color: #00d4ff;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+        input::placeholder {
+            color: #666;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #000;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,212,255,0.3);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4757 0%, #cc0000 100%);
+            color: #fff;
+        }
+        .alert {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        .alert-success {
+            background: rgba(0,255,100,0.1);
+            border: 1px solid rgba(0,255,100,0.3);
+            color: #00ff64;
+        }
+        .alert-error {
+            background: rgba(255,0,0,0.1);
+            border: 1px solid rgba(255,0,0,0.3);
+            color: #ff4757;
+        }
+        .alert-warning {
+            background: rgba(255,200,0,0.1);
+            border: 1px solid rgba(255,200,0,0.3);
+            color: #ffc800;
+        }
+        .wallet-info {
+            font-family: monospace;
+            word-break: break-all;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .balance-display {
+            text-align: center;
+            padding: 30px;
+        }
+        .balance-amount {
+            font-size: 48px;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        .balance-label {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #888;
+            font-size: 12px;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .syncing-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ffc800;
+            animation: pulse 1s infinite;
+            margin-right: 5px;
+        }
+        .syncing-indicator.synced {
+            background: #00ff64;
+            animation: none;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .staking-details {
+            margin-top: 15px;
+        }
+        .staking-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+        #message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>QWID Wallet</h1>
+        <div class="header-info">
+            <span id="nodeInfo">Connecting...</span>
+            <span class="syncing-indicator" id="syncIndicator"></span>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="wallet">Wallet</button>
+        <button class="tab" data-tab="account">Account</button>
+        <button class="tab" data-tab="send">Send</button>
+        <button class="tab" data-tab="staking">Staking</button>
+        <button class="tab" data-tab="history">History</button>
+        <button class="tab" data-tab="details">Details</button>
+        <button class="tab" data-tab="dex">DEX</button>
+    </div>
+
+    <div class="container">
+        <div id="message"></div>
+
+        <!-- Wallet Panel -->
+        <div class="panel active" id="panel-wallet">
+            <div class="card">
+                <h3>Load Wallet</h3>
+                <div class="form-group">
+                    <label>Wallet Number (0-255)</label>
+                    <input type="number" id="walletNumber" placeholder="0" min="0" max="255" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="walletPassword" placeholder="Enter password">
+                </div>
+                <button class="btn-primary" onclick="loadWallet()">Load Wallet</button>
+            </div>
+
+            <div class="card" id="walletInfoCard" style="display:none;">
+                <h3>Wallet Information</h3>
+                <div id="walletDetails"></div>
+            </div>
+
+            <div class="card">
+                <h3>Change Password</h3>
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="currentPassword" placeholder="Current password">
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="newPassword" placeholder="New password">
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm new password">
+                </div>
+                <button class="btn-secondary" onclick="changePassword()">Change Password</button>
+            </div>
+
+            <div class="card">
+                <h3>Mnemonic Words</h3>
+                <button class="btn-secondary" onclick="showMnemonic()">Show Mnemonic Words</button>
+                <div id="mnemonicDisplay" style="margin-top:15px;"></div>
+            </div>
+        </div>
+
+        <!-- Account Panel -->
+        <div class="panel" id="panel-account">
+            <div class="card">
+                <div class="balance-display">
+                    <div class="balance-amount" id="totalBalance">0.00000000</div>
+                    <div class="balance-label">Total Holdings (QWD)</div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Available Balance</div>
+                    <div class="stat-value" id="availableBalance">0.00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Staked Amount</div>
+                    <div class="stat-value" id="stakedAmount">0.00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Locked Amount</div>
+                    <div class="stat-value" id="lockedAmount">0.00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Rewards</div>
+                    <div class="stat-value highlight" id="rewardsAmount">0.00</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Network Stats</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Block Height</div>
+                        <div class="stat-value" id="blockHeight">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Difficulty</div>
+                        <div class="stat-value" id="difficulty">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">TPS</div>
+                        <div class="stat-value" id="tps">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Price Oracle</div>
+                        <div class="stat-value" id="priceOracle">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Staking Details</h3>
+                <div id="stakingDetails" class="staking-details">
+                    <p style="color:#666;">No staking information available</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Send Panel -->
+        <div class="panel" id="panel-send">
+            <div class="card">
+                <h3>Send QWD</h3>
+                <div class="form-group">
+                    <label>Recipient Address</label>
+                    <input type="text" id="recipientAddress" placeholder="Enter recipient address (hex)">
+                </div>
+                <div class="form-group">
+                    <label>Amount (QWD)</label>
+                    <input type="number" id="sendAmount" placeholder="0.00000000" step="0.00000001">
+                </div>
+                <button class="btn-primary" onclick="sendTransaction()">Send Transaction</button>
+            </div>
+        </div>
+
+        <!-- Staking Panel -->
+        <div class="panel" id="panel-staking">
+            <div class="card">
+                <h3>Stake QWD</h3>
+                <div class="form-group">
+                    <label>Amount to Stake</label>
+                    <input type="number" id="stakeAmount" placeholder="0.00000000" step="0.00000001">
+                </div>
+                <div class="form-group">
+                    <label>Delegated Account</label>
+                    <input type="number" id="delegatedAccount" placeholder="1" min="1" max="254" value="1">
+                </div>
+                <button class="btn-primary" onclick="stake()">Stake</button>
+                <button class="btn-secondary" onclick="unstake()" style="margin-left:10px;">Unstake</button>
+                <button class="btn-secondary" onclick="claimRewards()" style="margin-left:10px;">Claim Rewards</button>
+            </div>
+        </div>
+
+        <!-- History Panel -->
+        <div class="panel" id="panel-history">
+            <div class="card">
+                <h3>Transaction History</h3>
+                <div id="historyList">
+                    <p style="color:#666;">No transactions found</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Panel -->
+        <div class="panel" id="panel-details">
+            <div class="card">
+                <h3>Search</h3>
+                <div class="form-group">
+                    <label>Transaction Hash / Address / Block Height</label>
+                    <input type="text" id="searchQuery" placeholder="Enter hash, address, or block height">
+                </div>
+                <button class="btn-primary" onclick="searchDetails()">Search</button>
+            </div>
+            <div class="card" id="detailsResult" style="display:none;">
+                <h3>Result</h3>
+                <pre id="detailsContent" style="white-space:pre-wrap;word-break:break-all;font-size:12px;"></pre>
+            </div>
+        </div>
+
+        <!-- DEX Panel -->
+        <div class="panel" id="panel-dex">
+            <div class="card">
+                <h3>Decentralized Exchange</h3>
+                <p style="color:#666;">DEX functionality coming soon...</p>
+                <div id="tokenList" style="margin-top:15px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let walletLoaded = false;
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Show message
+        function showMessage(text, type = 'success') {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'alert alert-' + type;
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 5000);
+        }
+
+        // API calls
+        async function api(endpoint, method = 'GET', body = null) {
+            const options = { method, headers: { 'Content-Type': 'application/json' } };
+            if (body) options.body = JSON.stringify(body);
+            const res = await fetch(API_BASE + endpoint, options);
+            return res.json();
+        }
+
+        // Load wallet
+        async function loadWallet() {
+            const walletNumber = parseInt(document.getElementById('walletNumber').value) || 0;
+            const password = document.getElementById('walletPassword').value;
+
+            try {
+                const res = await api('/api/wallet/load', 'POST', { walletNumber, password });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    showMessage('Wallet loaded successfully!');
+                    walletLoaded = true;
+                    document.getElementById('walletInfoCard').style.display = 'block';
+                    document.getElementById('walletDetails').innerHTML =
+                        '<p class="wallet-info">Address: ' + res.address + '</p>';
+                    if (res.warnings && res.warnings.length > 0) {
+                        res.warnings.forEach(w => showMessage(w, 'warning'));
+                    }
+                    updateAccount();
+                }
+            } catch (e) {
+                showMessage('Failed to load wallet: ' + e.message, 'error');
+            }
+        }
+
+        // Change password
+        async function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                showMessage('Passwords do not match', 'error');
+                return;
+            }
+
+            try {
+                const res = await api('/api/wallet/change-password', 'POST', { currentPassword, newPassword });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    showMessage('Password changed successfully!');
+                }
+            } catch (e) {
+                showMessage('Failed to change password: ' + e.message, 'error');
+            }
+        }
+
+        // Show mnemonic
+        async function showMnemonic() {
+            try {
+                const res = await api('/api/wallet/mnemonic');
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    let html = '';
+                    if (res.primaryMnemonic) {
+                        html += '<div class="alert alert-warning"><strong>Primary:</strong><br>' + res.primaryMnemonic + '</div>';
+                    }
+                    if (res.secondaryMnemonic) {
+                        html += '<div class="alert alert-warning"><strong>Secondary:</strong><br>' + res.secondaryMnemonic + '</div>';
+                    }
+                    document.getElementById('mnemonicDisplay').innerHTML = html;
+                }
+            } catch (e) {
+                showMessage('Failed to get mnemonic: ' + e.message, 'error');
+            }
+        }
+
+        // Update stats
+        async function updateStats() {
+            try {
+                const res = await api('/api/stats');
+                if (!res.error) {
+                    document.getElementById('nodeInfo').textContent =
+                        'Node: ' + res.nodeIP + ' | Account: ' + res.delegatedAccount;
+                    document.getElementById('blockHeight').textContent = res.height + ' / ' + res.heightMax;
+                    document.getElementById('difficulty').textContent = res.difficulty;
+                    document.getElementById('tps').textContent = res.tps.toFixed(2);
+                    document.getElementById('priceOracle').textContent = res.priceOracle.toFixed(2) + ' QWD/USD';
+
+                    const syncIndicator = document.getElementById('syncIndicator');
+                    if (res.syncing) {
+                        syncIndicator.classList.remove('synced');
+                    } else {
+                        syncIndicator.classList.add('synced');
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to update stats:', e);
+            }
+        }
+
+        // Update account
+        async function updateAccount() {
+            if (!walletLoaded) return;
+
+            try {
+                const res = await api('/api/account');
+                if (!res.error) {
+                    document.getElementById('totalBalance').textContent = res.totalHoldings.toFixed(8);
+                    document.getElementById('availableBalance').textContent = res.balance.toFixed(8) + ' QWD';
+                    document.getElementById('stakedAmount').textContent = res.stakedAmount.toFixed(8) + ' QWD';
+                    document.getElementById('lockedAmount').textContent = res.lockedAmount.toFixed(8) + ' QWD';
+                    document.getElementById('rewardsAmount').textContent = res.rewardsAmount.toFixed(8) + ' QWD';
+
+                    if (res.stakingDetails && res.stakingDetails.length > 0) {
+                        let html = '';
+                        res.stakingDetails.forEach(s => {
+                            html += '<div class="staking-row">';
+                            html += '<span>Delegated: ' + s.delegatedAddress.substring(0, 16) + '...</span>';
+                            html += '<span>Staked: ' + s.staked.toFixed(4) + ' | Rewards: ' + s.rewards.toFixed(4) + '</span>';
+                            html += '</div>';
+                        });
+                        document.getElementById('stakingDetails').innerHTML = html;
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to update account:', e);
+            }
+        }
+
+        // Send transaction
+        async function sendTransaction() {
+            const recipient = document.getElementById('recipientAddress').value;
+            const amount = parseFloat(document.getElementById('sendAmount').value);
+
+            if (!recipient || !amount) {
+                showMessage('Please fill all fields', 'error');
+                return;
+            }
+
+            try {
+                const res = await api('/api/send', 'POST', { recipient, amount });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    showMessage(res.message);
+                }
+            } catch (e) {
+                showMessage('Failed to send transaction: ' + e.message, 'error');
+            }
+        }
+
+        // Staking functions
+        async function stake() {
+            showMessage('Staking functionality coming soon', 'warning');
+        }
+
+        async function unstake() {
+            showMessage('Unstaking functionality coming soon', 'warning');
+        }
+
+        async function claimRewards() {
+            showMessage('Claim rewards functionality coming soon', 'warning');
+        }
+
+        // Search details
+        async function searchDetails() {
+            const query = document.getElementById('searchQuery').value;
+            if (!query) {
+                showMessage('Please enter a search query', 'error');
+                return;
+            }
+
+            try {
+                const res = await api('/api/details?hash=' + encodeURIComponent(query));
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                    document.getElementById('detailsResult').style.display = 'none';
+                } else {
+                    document.getElementById('detailsResult').style.display = 'block';
+                    document.getElementById('detailsContent').textContent =
+                        'Type: ' + res.type + '\n\n' + (res.data || JSON.stringify(res, null, 2));
+                }
+            } catch (e) {
+                showMessage('Search failed: ' + e.message, 'error');
+            }
+        }
+
+        // Check wallet info on load
+        async function checkWallet() {
+            try {
+                const res = await api('/api/wallet/info');
+                if (res.loaded) {
+                    walletLoaded = true;
+                    document.getElementById('walletInfoCard').style.display = 'block';
+                    document.getElementById('walletDetails').innerHTML =
+                        '<p class="wallet-info">Address: ' + res.address + '</p>' +
+                        '<p class="wallet-info">Encryption: ' + res.sigName + ' / ' + res.sigName2 + '</p>';
+                }
+            } catch (e) {
+                console.error('Failed to check wallet:', e);
+            }
+        }
+
+        // Initialize
+        updateStats();
+        checkWallet();
+        setInterval(updateStats, 5000);
+        setInterval(() => { if (walletLoaded) updateAccount(); }, 5000);
+    </script>
+</body>
+</html>
