@@ -322,6 +322,7 @@ type PubKey struct {
 }
 
 func (pk *PubKey) Init(b []byte, mainAddress Address) error {
+	logger.GetLogger().Println("PubKey.Init: len(b)=", len(b), "PubKeyLength=", PubKeyLength(false), "PubKeyLength2=", PubKeyLength2(false))
 	if len(b) != PubKeyLength(false) && len(b) != PubKeyLength2(false) && encryptionConfigInstance.isPaused == 0 && encryptionConfigInstance.isPaused2 == 0 {
 		return fmt.Errorf("error Pubkey initialization with wrong length, should be %v, %v, got %v", PubKeyLength(false), PubKeyLength2(false), len(b))
 	}
@@ -330,13 +331,16 @@ func (pk *PubKey) Init(b []byte, mainAddress Address) error {
 	} else {
 		pk.Primary = false
 	}
+	logger.GetLogger().Println("PubKey.Init: Primary=", pk.Primary)
 	pk.ByteValue = b[:]
 	addr, err := PubKeyToAddress(b[:], pk.Primary)
 	if err != nil {
+		logger.GetLogger().Println("PubKey.Init: PubKeyToAddress error:", err)
 		return err
 	}
 	pk.Address = addr
 	pk.MainAddress = mainAddress
+	logger.GetLogger().Println("PubKey.Init: Address=", pk.Address.GetHex(), "MainAddress=", pk.MainAddress.GetHex())
 	return nil
 }
 

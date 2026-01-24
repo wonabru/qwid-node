@@ -303,22 +303,37 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tm
 	if len(pkb) == 0 {
 		pkp, err := pubkeys.LoadPubKeyWithPrimary(tx.GetSenderAddress(), primary)
 		if err != nil {
-			logger.GetLogger().Println("cannot load sender pubkey from DB:", err)
+			logger.GetLogger().Println("Verify: cannot load sender pubkey from DB:", err)
+			logger.GetLogger().Println("  Sender address:", tx.GetSenderAddress().GetHex())
+			logger.GetLogger().Println("  Primary flag:", primary)
 			return false
 		}
 		pkb = pkp.GetBytes()
 	} else {
 		// If pubkey is included in transaction, verify it matches the sender address
 		senderAddr := tx.GetSenderAddress()
-		pkAddr, err := common.PubKeyToAddress(pkb, primary)
+		logger.GetLogger().Println("Verify: pubkey included in transaction")
+		logger.GetLogger().Println("  PubKey bytes length:", len(pkb))
+		logger.GetLogger().Println("  Sender address:", senderAddr.GetHex())
+		logger.GetLogger().Println("  Signature primary flag:", primary)
+		logger.GetLogger().Println("  PubKey.Primary field:", pk.Primary)
+
+		// Use the pubkey's own Primary flag for address derivation
+		pkPrimary := pk.Primary
+		pkAddr, err := common.PubKeyToAddress(pkb, pkPrimary)
 		if err != nil {
-			logger.GetLogger().Println("cannot derive address from pubkey in transaction:", err)
+			logger.GetLogger().Println("  ERROR: cannot derive address from pubkey:", err)
 			return false
 		}
+		logger.GetLogger().Println("  Derived address:", pkAddr.GetHex())
+
 		if !bytes.Equal(pkAddr.GetBytes(), senderAddr.GetBytes()) {
-			logger.GetLogger().Println("pubkey in transaction does not match sender address:", pkAddr.GetHex(), "!=", senderAddr.GetHex())
+			logger.GetLogger().Println("  ERROR: pubkey address mismatch!")
+			logger.GetLogger().Println("  Derived:", pkAddr.GetHex())
+			logger.GetLogger().Println("  Expected:", senderAddr.GetHex())
 			return false
 		}
+		logger.GetLogger().Println("  Address verification OK")
 	}
 	//logger.GetLogger().Println(sigName, sigName2, isPausedTmp, isPaused2Tmp)
 	return wallet.Verify(b, signature.GetBytes(), pkb, sigName, sigName2, isPausedTmp, isPaused2Tmp)
