@@ -363,7 +363,7 @@ func InitGenesis(processTransactions bool) {
 	if err != nil {
 		logger.GetLogger().Fatal(err)
 	}
-	genesis, err := Load(pathhome + "/.okura/genesis/config/genesis.json")
+	genesis, err := Load(pathhome + "/.qwid/genesis/config/genesis.json")
 	if err != nil {
 		logger.GetLogger().Fatal(err)
 	}

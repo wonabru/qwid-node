@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var DefaultLogsHomePath = "/.okura/logs/"
+var DefaultLogsHomePath = "/.qwid/logs/"
 
 var (
 	logFile *os.File

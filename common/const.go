@@ -41,8 +41,8 @@ var (
 	BannedTimeSeconds              int64   = 10                  // 1 minute
 	MessageInitialization                  = [4]byte{2, 0, 2, 9} // will be overwrite in init() by MaxMessageSizeBytes
 	MaxMessageSizeBytes            int32   = 151126018           // should be adjusted to maximal message sent
-	DefaultWalletHomePath                  = "/.okura/wallet/"
-	DefaultBlockchainHomePath              = "/.okura/db/blockchain/"
+	DefaultWalletHomePath                  = "/.qwid/wallet/"
+	DefaultBlockchainHomePath              = "/.qwid/db/blockchain/"
 	ConnectionsWithoutVerification         = [][]byte{[]byte("TRAN"), []byte("STAT"), []byte("ENCR"), []byte("DETS"), []byte("STAK"), []byte("ADEX")}
 	CurrentHeightOfNetwork         int64   = 23
 )
@@ -154,7 +154,7 @@ func init() {
 	if err != nil {
 		logger.GetLogger().Fatal(err)
 	}
-	err = godotenv.Load(homePath + "/.okura/.env")
+	err = godotenv.Load(homePath + "/.qwid/.env")
 	if err != nil {
 		logger.GetLogger().Fatal("Error loading .env file", err)
 	}

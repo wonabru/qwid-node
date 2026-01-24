@@ -88,7 +88,7 @@ Open these TCP ports: 19023 (transactions), 18023 (nonce), 17023 (self-nonce), 1
 
 ## Configuration
 
-Runtime config in `~/.okura/.env`:
+Runtime config in `~/.qwid/.env`:
 ```
 DELEGATED_ACCOUNT=1          # Staking account (1-254)
 REWARD_PERCENTAGE=200        # Operator reward (0-500, where 500=50%)
@@ -96,7 +96,7 @@ NODE_IP=<your_external_ip>
 HEIGHT_OF_NETWORK=<current_height>
 ```
 
-Genesis config: `~/.okura/genesis/config/genesis.json` (copy from `genesis/config/genesis_internal_tests.json`)
+Genesis config: `~/.qwid/genesis/config/genesis.json` (copy from `genesis/config/genesis_internal_tests.json`)
 
 ## Network Constants
 
