@@ -173,28 +173,46 @@ func ProcessBlockPubKey(block Block) error {
 		pk := t.TxData.Pubkey
 		// Skip if pubkey bytes are empty (no pubkey included in transaction)
 		if len(pk.GetBytes()) == 0 {
+			logger.GetLogger().Println("ProcessBlockPubKey: no pubkey in transaction", txh.GetHex())
 			continue
 		}
+		logger.GetLogger().Println("ProcessBlockPubKey: pubkey found in transaction", txh.GetHex())
+		logger.GetLogger().Println("  PubKey bytes length:", len(pk.GetBytes()))
+		logger.GetLogger().Println("  PubKey.Address:", pk.Address.GetHex())
+		logger.GetLogger().Println("  PubKey.MainAddress:", pk.MainAddress.GetHex())
+		logger.GetLogger().Println("  PubKey.Primary:", pk.Primary)
+		logger.GetLogger().Println("  Transaction sender:", t.GetSenderAddress().GetHex())
+
 		zeroBytes := make([]byte, common.AddressLength)
-		if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
-			// If MainAddress not set in pubkey, use the pubkey's own address
-			// This is important for staking transactions that register a new node
-			// where the pubkey belongs to the new node, not the sender
-			if !bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
-				pk.MainAddress = pk.Address
-			} else {
-				// Fallback to sender address if pubkey address is also empty
-				pk.MainAddress = t.GetSenderAddress()
+		// Derive address from pubkey bytes if not set
+		if bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
+			logger.GetLogger().Println("  PubKey.Address is empty, deriving from pubkey bytes...")
+			derivedAddr, err := common.PubKeyToAddress(pk.GetBytes(), pk.Primary)
+			if err != nil {
+				logger.GetLogger().Println("  ERROR: cannot derive address from pubkey:", err)
+				continue
 			}
+			pk.Address = derivedAddr
+			logger.GetLogger().Println("  Derived address:", pk.Address.GetHex())
+		}
+		// Set MainAddress if not set
+		if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
+			logger.GetLogger().Println("  PubKey.MainAddress is empty, setting to pk.Address")
+			pk.MainAddress = pk.Address
+			logger.GetLogger().Println("  MainAddress set to:", pk.MainAddress.GetHex())
 		}
 		err = StorePubKey(pk)
 		if err != nil {
+			logger.GetLogger().Println("  ERROR: StorePubKey failed:", err)
 			return err
 		}
+		logger.GetLogger().Println("  StorePubKey success")
 		err = StorePubKeyInPatriciaTrie(pk)
 		if err != nil {
+			logger.GetLogger().Println("  ERROR: StorePubKeyInPatriciaTrie failed:", err)
 			return err
 		}
+		logger.GetLogger().Println("  StorePubKeyInPatriciaTrie success")
 	}
 	return nil
 }
