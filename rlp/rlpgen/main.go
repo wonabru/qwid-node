@@ -27,7 +27,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-const pathOfPackageRLP = "github.com/okuralabs/okura-node/rlp"
+const pathOfPackageRLP = "github.com/qwid-org/qwid-node/rlp"
 
 func main() {
 	var (

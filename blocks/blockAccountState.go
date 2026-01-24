@@ -2,8 +2,8 @@ package blocks
 
 import (
 	"fmt"
-	"github.com/okuralabs/okura-node/account"
-	"github.com/okuralabs/okura-node/common"
+	"github.com/qwid-org/qwid-node/account"
+	"github.com/qwid-org/qwid-node/common"
 )
 
 func AddBalance(address [common.AddressLength]byte, addedAmount int64) error {

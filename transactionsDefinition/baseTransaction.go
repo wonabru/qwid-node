@@ -3,7 +3,7 @@ package transactionsDefinition
 import (
 	"bytes"
 	"fmt"
-	"github.com/okuralabs/okura-node/common"
+	"github.com/qwid-org/qwid-node/common"
 	"strconv"
 	"time"
 )

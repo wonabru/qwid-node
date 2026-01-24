@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/crypto"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/crypto"
 )
 
 type Error struct {

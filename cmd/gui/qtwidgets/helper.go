@@ -3,11 +3,11 @@ package qtwidgets
 import (
 	"bytes"
 	"fmt"
-	"github.com/okuralabs/okura-node/blocks"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/logger"
-	clientrpc "github.com/okuralabs/okura-node/rpc/client"
-	"github.com/okuralabs/okura-node/wallet"
+	"github.com/qwid-org/qwid-node/blocks"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/logger"
+	clientrpc "github.com/qwid-org/qwid-node/rpc/client"
+	"github.com/qwid-org/qwid-node/wallet"
 	"os"
 )
 

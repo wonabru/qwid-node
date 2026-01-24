@@ -22,13 +22,13 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/common/math"
-	"github.com/okuralabs/okura-node/crypto"
-	"github.com/okuralabs/okura-node/crypto/blake2b"
-	"github.com/okuralabs/okura-node/crypto/bls12381"
-	"github.com/okuralabs/okura-node/crypto/bn256"
-	"github.com/okuralabs/okura-node/params"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/common/math"
+	"github.com/qwid-org/qwid-node/crypto"
+	"github.com/qwid-org/qwid-node/crypto/blake2b"
+	"github.com/qwid-org/qwid-node/crypto/bls12381"
+	"github.com/qwid-org/qwid-node/crypto/bn256"
+	"github.com/qwid-org/qwid-node/params"
 	"golang.org/x/crypto/ripemd160"
 )
 

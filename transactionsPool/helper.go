@@ -2,9 +2,9 @@ package transactionsPool
 
 import (
 	"fmt"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/logger"
-	"github.com/okuralabs/okura-node/transactionsDefinition"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/logger"
+	"github.com/qwid-org/qwid-node/transactionsDefinition"
 )
 
 func RemoveBadTransactionByHash(hash []byte, height int64, tree *MerkleTree) error {

@@ -20,7 +20,7 @@ import (
 	"math/big"
 
 	"github.com/holiman/uint256"
-	"github.com/okuralabs/okura-node/common"
+	"github.com/qwid-org/qwid-node/common"
 )
 
 // ContractRef is a reference to the contract's backing object

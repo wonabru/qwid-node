@@ -2,9 +2,9 @@ package transactionsPool
 
 import (
 	"container/heap"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/logger"
-	"github.com/okuralabs/okura-node/transactionsDefinition"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/logger"
+	"github.com/qwid-org/qwid-node/transactionsDefinition"
 	"sync"
 )
 

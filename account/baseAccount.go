@@ -3,9 +3,9 @@ package account
 import (
 	"bytes"
 	"fmt"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/common/hexutil"
-	"github.com/okuralabs/okura-node/logger"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/common/hexutil"
+	"github.com/qwid-org/qwid-node/logger"
 	"math"
 	"strconv"
 )

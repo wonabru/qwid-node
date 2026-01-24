@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/okuralabs/okura-node/cmd/gui/qtwidgets"
-	"github.com/okuralabs/okura-node/common"
-	clientrpc "github.com/okuralabs/okura-node/rpc/client"
-	"github.com/okuralabs/okura-node/statistics"
-	"github.com/okuralabs/okura-node/tcpip"
-	"github.com/okuralabs/okura-node/wallet"
+	"github.com/qwid-org/qwid-node/cmd/gui/qtwidgets"
+	"github.com/qwid-org/qwid-node/common"
+	clientrpc "github.com/qwid-org/qwid-node/rpc/client"
+	"github.com/qwid-org/qwid-node/statistics"
+	"github.com/qwid-org/qwid-node/tcpip"
+	"github.com/qwid-org/qwid-node/wallet"
 	"github.com/therecipe/qt/widgets"
 )
 

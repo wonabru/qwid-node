@@ -3,7 +3,7 @@ package account
 import (
 	"bytes"
 	"fmt"
-	"github.com/okuralabs/okura-node/common"
+	"github.com/qwid-org/qwid-node/common"
 	"time"
 )
 

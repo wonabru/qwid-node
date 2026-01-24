@@ -23,7 +23,7 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/okuralabs/okura-node/rlp/internal/rlpstruct"
+	"github.com/qwid-org/qwid-node/rlp/internal/rlpstruct"
 )
 
 var (

@@ -3,10 +3,10 @@ package services
 import (
 	"bufio"
 	"fmt"
-	"github.com/okuralabs/okura-node/blocks"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/logger"
-	"github.com/okuralabs/okura-node/wallet"
+	"github.com/qwid-org/qwid-node/blocks"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/logger"
+	"github.com/qwid-org/qwid-node/wallet"
 	"os"
 )
 

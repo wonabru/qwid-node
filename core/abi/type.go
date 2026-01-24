@@ -26,7 +26,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/okuralabs/okura-node/common"
+	"github.com/qwid-org/qwid-node/common"
 )
 
 // Type enumerator

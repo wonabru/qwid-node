@@ -3,9 +3,9 @@ package transactionServices
 import (
 	"testing"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/logger"
-	"github.com/okuralabs/okura-node/message"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/logger"
+	"github.com/qwid-org/qwid-node/message"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/okuralabs/okura-node/rlp"
+	"github.com/qwid-org/qwid-node/rlp"
 )
 
 type MyCoolType struct {

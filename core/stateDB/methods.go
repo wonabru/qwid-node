@@ -1,10 +1,10 @@
 package stateDB
 
 import (
-	"github.com/okuralabs/okura-node/account"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/core/types"
-	"github.com/okuralabs/okura-node/crypto"
+	"github.com/qwid-org/qwid-node/account"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/core/types"
+	"github.com/qwid-org/qwid-node/crypto"
 	"math/big"
 )
 

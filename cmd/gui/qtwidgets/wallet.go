@@ -2,9 +2,9 @@ package qtwidgets
 
 import (
 	"fmt"
-	"github.com/okuralabs/okura-node/common"
-	clientrpc "github.com/okuralabs/okura-node/rpc/client"
-	"github.com/okuralabs/okura-node/wallet"
+	"github.com/qwid-org/qwid-node/common"
+	clientrpc "github.com/qwid-org/qwid-node/rpc/client"
+	"github.com/qwid-org/qwid-node/wallet"
 	"github.com/therecipe/qt/widgets"
 	"strconv"
 )

@@ -2,14 +2,14 @@ package statistics
 
 import (
 	"encoding/json"
-	"github.com/okuralabs/okura-node/logger"
+	"github.com/qwid-org/qwid-node/logger"
 	"sync"
 
-	"github.com/okuralabs/okura-node/blocks"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/database"
-	"github.com/okuralabs/okura-node/transactionsDefinition"
-	"github.com/okuralabs/okura-node/transactionsPool"
+	"github.com/qwid-org/qwid-node/blocks"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/database"
+	"github.com/qwid-org/qwid-node/transactionsDefinition"
+	"github.com/qwid-org/qwid-node/transactionsPool"
 )
 
 // Stats represents the main statistics structure

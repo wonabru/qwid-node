@@ -3,11 +3,11 @@ package blocks
 import (
 	"bytes"
 	"fmt"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/crypto/oqs"
-	"github.com/okuralabs/okura-node/logger"
-	"github.com/okuralabs/okura-node/pubkeys"
-	"github.com/okuralabs/okura-node/wallet"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/crypto/oqs"
+	"github.com/qwid-org/qwid-node/logger"
+	"github.com/qwid-org/qwid-node/pubkeys"
+	"github.com/qwid-org/qwid-node/wallet"
 )
 
 type BaseHeader struct {

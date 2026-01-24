@@ -3,14 +3,14 @@ package transactionsDefinition
 import (
 	"bytes"
 	"fmt"
-	"github.com/okuralabs/okura-node/logger"
+	"github.com/qwid-org/qwid-node/logger"
 	"strconv"
 
-	"github.com/okuralabs/okura-node/account"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/database"
-	"github.com/okuralabs/okura-node/pubkeys"
-	"github.com/okuralabs/okura-node/wallet"
+	"github.com/qwid-org/qwid-node/account"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/database"
+	"github.com/qwid-org/qwid-node/pubkeys"
+	"github.com/qwid-org/qwid-node/wallet"
 )
 
 type Transaction struct {

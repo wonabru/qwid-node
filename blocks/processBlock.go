@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/okuralabs/okura-node/account"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/crypto/oqs"
-	"github.com/okuralabs/okura-node/database"
-	"github.com/okuralabs/okura-node/logger"
-	"github.com/okuralabs/okura-node/oracles"
-	"github.com/okuralabs/okura-node/transactionsDefinition"
-	"github.com/okuralabs/okura-node/transactionsPool"
-	"github.com/okuralabs/okura-node/voting"
+	"github.com/qwid-org/qwid-node/account"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/crypto/oqs"
+	"github.com/qwid-org/qwid-node/database"
+	"github.com/qwid-org/qwid-node/logger"
+	"github.com/qwid-org/qwid-node/oracles"
+	"github.com/qwid-org/qwid-node/transactionsDefinition"
+	"github.com/qwid-org/qwid-node/transactionsPool"
+	"github.com/qwid-org/qwid-node/voting"
 )
 
 func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*transactionsPool.MerkleTree, error) {

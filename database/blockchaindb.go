@@ -1,11 +1,11 @@
 package database
 
 import (
-	"github.com/okuralabs/okura-node/logger"
+	"github.com/qwid-org/qwid-node/logger"
 	"os"
 	"path/filepath"
 
-	"github.com/okuralabs/okura-node/common"
+	"github.com/qwid-org/qwid-node/common"
 )
 
 var (

@@ -1,4 +1,4 @@
-module github.com/okuralabs/okura-node
+module github.com/qwid-org/qwid-node
 
 go 1.23.6
 

@@ -1,6 +1,6 @@
 package stateDB
 
-import "github.com/okuralabs/okura-node/common"
+import "github.com/qwid-org/qwid-node/common"
 
 type Code []byte
 

@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"hash"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/common/math"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/common/math"
 )
 
 // Config are the configuration options for the Interpreter

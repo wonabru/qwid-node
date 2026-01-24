@@ -2,10 +2,10 @@ package message
 
 import (
 	"fmt"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/logger"
-	"github.com/okuralabs/okura-node/tcpip"
-	"github.com/okuralabs/okura-node/transactionsDefinition"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/logger"
+	"github.com/qwid-org/qwid-node/tcpip"
+	"github.com/qwid-org/qwid-node/transactionsDefinition"
 )
 
 var validTopics = [][2]byte{{'N', 'N'}, {'S', 'S'}, {'T', 'T'}, {'B', 'B'}}

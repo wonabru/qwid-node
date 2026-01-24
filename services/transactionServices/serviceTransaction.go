@@ -2,16 +2,16 @@ package transactionServices
 
 import (
 	"bytes"
-	"github.com/okuralabs/okura-node/logger"
+	"github.com/qwid-org/qwid-node/logger"
 	"math/rand"
 	"time"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/message"
-	"github.com/okuralabs/okura-node/services"
-	"github.com/okuralabs/okura-node/tcpip"
-	"github.com/okuralabs/okura-node/transactionsDefinition"
-	"github.com/okuralabs/okura-node/transactionsPool"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/message"
+	"github.com/qwid-org/qwid-node/services"
+	"github.com/qwid-org/qwid-node/tcpip"
+	"github.com/qwid-org/qwid-node/transactionsDefinition"
+	"github.com/qwid-org/qwid-node/transactionsPool"
 )
 
 func InitTransactionService() {

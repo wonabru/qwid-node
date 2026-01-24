@@ -20,7 +20,7 @@ import (
 	"math/bits"
 	"testing"
 
-	"github.com/okuralabs/okura-node/crypto"
+	"github.com/qwid-org/qwid-node/crypto"
 )
 
 func TestJumpDestAnalysis(t *testing.T) {

@@ -22,8 +22,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/okuralabs/okura-node/common/math"
-	"github.com/okuralabs/okura-node/core/evm"
+	"github.com/qwid-org/qwid-node/common/math"
+	"github.com/qwid-org/qwid-node/core/evm"
 )
 
 // Compiler contains information about the parsed source

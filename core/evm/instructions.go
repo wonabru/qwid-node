@@ -20,9 +20,9 @@ import (
 	"sync/atomic"
 
 	"github.com/holiman/uint256"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/core/types"
-	"github.com/okuralabs/okura-node/params"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/core/types"
+	"github.com/qwid-org/qwid-node/params"
 	"golang.org/x/crypto/sha3"
 )
 

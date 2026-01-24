@@ -17,8 +17,8 @@
 package crypto
 
 import (
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/rlp"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/rlp"
 	"golang.org/x/crypto/sha3"
 	"hash"
 )

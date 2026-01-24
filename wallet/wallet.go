@@ -7,7 +7,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"github.com/okuralabs/okura-node/logger"
+	"github.com/qwid-org/qwid-node/logger"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -16,8 +16,8 @@ import (
 	"io"
 	"sync"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/crypto/oqs"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/crypto/oqs"
 	"golang.org/x/crypto/sha3"
 )
 

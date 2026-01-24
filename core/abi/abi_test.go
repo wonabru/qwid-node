@@ -26,9 +26,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/common/math"
-	"github.com/okuralabs/okura-node/crypto"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/common/math"
+	"github.com/qwid-org/qwid-node/crypto"
 )
 
 const jsondata = `

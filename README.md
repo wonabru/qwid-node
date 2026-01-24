@@ -87,7 +87,7 @@ Reload shell and dynamic libraries
 
 Clone project source code
 
-    git clone https://github.com/okuralabs/okura-node.git
+    git clone https://github.com/qwid-org/qwid-node.git
     cd okura-node
 
 install go modules

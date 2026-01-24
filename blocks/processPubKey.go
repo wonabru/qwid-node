@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/database"
-	"github.com/okuralabs/okura-node/logger"
-	"github.com/okuralabs/okura-node/pubkeys"
-	"github.com/okuralabs/okura-node/transactionsDefinition"
-	"github.com/okuralabs/okura-node/wallet"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/database"
+	"github.com/qwid-org/qwid-node/logger"
+	"github.com/qwid-org/qwid-node/pubkeys"
+	"github.com/qwid-org/qwid-node/transactionsDefinition"
+	"github.com/qwid-org/qwid-node/wallet"
 )
 
 func StoreAddress(mainAddress common.Address, pk common.PubKey) error {

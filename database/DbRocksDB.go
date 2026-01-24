@@ -3,14 +3,14 @@ package database
 import (
 	"errors"
 	"fmt"
-	"github.com/okuralabs/okura-node/logger"
+	"github.com/qwid-org/qwid-node/logger"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
 	gorocksdb "github.com/linxGnu/grocksdb"
-	commoneth "github.com/okuralabs/okura-node/common"
+	commoneth "github.com/qwid-org/qwid-node/common"
 )
 
 type BlockchainDB struct {

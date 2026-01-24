@@ -17,7 +17,7 @@
 package vm
 
 import (
-	"github.com/okuralabs/okura-node/params"
+	"github.com/qwid-org/qwid-node/params"
 )
 
 func minSwapStack(n int) int {

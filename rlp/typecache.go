@@ -22,7 +22,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/okuralabs/okura-node/rlp/internal/rlpstruct"
+	"github.com/qwid-org/qwid-node/rlp/internal/rlpstruct"
 )
 
 // typeinfo is an entry in the type cache.

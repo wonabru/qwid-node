@@ -23,7 +23,7 @@ import (
 	"go/types"
 	"sort"
 
-	"github.com/okuralabs/okura-node/rlp/internal/rlpstruct"
+	"github.com/qwid-org/qwid-node/rlp/internal/rlpstruct"
 )
 
 // buildContext keeps the data needed for make*Op.

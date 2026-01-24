@@ -20,7 +20,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/okuralabs/okura-node/common"
+	"github.com/qwid-org/qwid-node/common"
 )
 
 func bigFromHex(hex string) *big.Int {

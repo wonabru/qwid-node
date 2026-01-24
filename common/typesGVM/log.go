@@ -19,9 +19,9 @@ package types
 import (
 	"io"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/common/hexutil"
-	"github.com/okuralabs/okura-node/rlp"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/common/hexutil"
+	"github.com/qwid-org/qwid-node/rlp"
 )
 
 //go:generate go run github.com/fjl/gencodec -type Log -field-override logMarshaling -out gen_log_json.go

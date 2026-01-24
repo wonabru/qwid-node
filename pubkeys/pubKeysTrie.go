@@ -3,9 +3,9 @@ package pubkeys
 import (
 	"bytes"
 	"fmt"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/database"
-	"github.com/okuralabs/okura-node/logger"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/database"
+	"github.com/qwid-org/qwid-node/logger"
 )
 
 type MerkleTree struct {

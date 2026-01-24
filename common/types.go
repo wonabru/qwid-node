@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"github.com/okuralabs/okura-node/crypto/blake2b"
-	"github.com/okuralabs/okura-node/logger"
+	"github.com/qwid-org/qwid-node/crypto/blake2b"
+	"github.com/qwid-org/qwid-node/logger"
 	"sync"
 	"sync/atomic"
 )

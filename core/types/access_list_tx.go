@@ -17,7 +17,7 @@
 package types
 
 import (
-	"github.com/okuralabs/okura-node/common"
+	"github.com/qwid-org/qwid-node/common"
 )
 
 // Transaction types.

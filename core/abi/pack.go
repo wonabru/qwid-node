@@ -22,8 +22,8 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/common/math"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/common/math"
 )
 
 // packBytesSlice packs the given bytes as [L, V] as the canonical representation

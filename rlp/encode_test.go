@@ -26,7 +26,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/okuralabs/okura-node/common/math"
+	"github.com/qwid-org/qwid-node/common/math"
 )
 
 type testEncoder struct {

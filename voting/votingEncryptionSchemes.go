@@ -3,9 +3,9 @@ package voting
 import (
 	"errors"
 	"fmt"
-	"github.com/okuralabs/okura-node/account"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/logger"
+	"github.com/qwid-org/qwid-node/account"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/logger"
 	"sync"
 )
 

@@ -19,9 +19,9 @@ package vm
 import (
 	"errors"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/common/math"
-	"github.com/okuralabs/okura-node/params"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/common/math"
+	"github.com/qwid-org/qwid-node/params"
 )
 
 // memoryGasCost calculates the quadratic gas for memory expansion. It does so

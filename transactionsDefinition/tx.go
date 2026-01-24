@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/okuralabs/okura-node/account"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/common/hexutil"
+	"github.com/qwid-org/qwid-node/account"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/common/hexutil"
 	"strconv"
 )
 

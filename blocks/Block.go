@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/database"
-	"github.com/okuralabs/okura-node/transactionsPool"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/database"
+	"github.com/qwid-org/qwid-node/transactionsPool"
 )
 
 type Block struct {

@@ -1,11 +1,11 @@
 package services
 
 import (
-	"github.com/okuralabs/okura-node/account"
-	"github.com/okuralabs/okura-node/blocks"
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/logger"
-	"github.com/okuralabs/okura-node/transactionsPool"
+	"github.com/qwid-org/qwid-node/account"
+	"github.com/qwid-org/qwid-node/blocks"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/logger"
+	"github.com/qwid-org/qwid-node/transactionsPool"
 	"sync/atomic"
 )
 

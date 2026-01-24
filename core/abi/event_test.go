@@ -25,8 +25,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/crypto"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

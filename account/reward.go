@@ -1,7 +1,7 @@
 package account
 
 import (
-	"github.com/okuralabs/okura-node/common"
+	"github.com/qwid-org/qwid-node/common"
 	"math"
 )
 

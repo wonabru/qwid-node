@@ -19,8 +19,8 @@ package vm
 import (
 	"math/big"
 
-	"github.com/okuralabs/okura-node/common"
-	"github.com/okuralabs/okura-node/core/types"
+	"github.com/qwid-org/qwid-node/common"
+	"github.com/qwid-org/qwid-node/core/types"
 )
 
 // StateDB is an EVM database for full state querying.
