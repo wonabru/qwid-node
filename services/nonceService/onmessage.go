@@ -166,7 +166,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			if err == nil {
 				services.BroadcastBlock(newBlock)
 			} else {
-				logger.GetLogger().Println("new block is not valid. Bad transactions included")
+				logger.GetLogger().Println("new block is not valid. Bad transactions included:", err)
 			}
 		} else {
 			//logger.GetLogger().Println("new block is not valid")
