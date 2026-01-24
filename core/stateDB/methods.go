@@ -1,10 +1,10 @@
 package stateDB
 
 import (
-	"github.com/qwid-org/qwid-node/account"
-	"github.com/qwid-org/qwid-node/common"
-	"github.com/qwid-org/qwid-node/core/types"
-	"github.com/qwid-org/qwid-node/crypto"
+	"github.com/wonabru/qwid-node/account"
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/core/types"
+	"github.com/wonabru/qwid-node/crypto"
 	"math/big"
 )
 

@@ -17,8 +17,8 @@
 package crypto
 
 import (
-	"github.com/qwid-org/qwid-node/common"
-	"github.com/qwid-org/qwid-node/rlp"
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/rlp"
 	"golang.org/x/crypto/sha3"
 	"hash"
 )

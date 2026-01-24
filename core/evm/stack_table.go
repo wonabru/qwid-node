@@ -17,7 +17,7 @@
 package vm
 
 import (
-	"github.com/qwid-org/qwid-node/params"
+	"github.com/wonabru/qwid-node/params"
 )
 
 func minSwapStack(n int) int {

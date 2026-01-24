@@ -3,11 +3,11 @@ package blocks
 import (
 	"bytes"
 	"fmt"
-	"github.com/qwid-org/qwid-node/common"
-	"github.com/qwid-org/qwid-node/crypto/oqs"
-	"github.com/qwid-org/qwid-node/logger"
-	"github.com/qwid-org/qwid-node/pubkeys"
-	"github.com/qwid-org/qwid-node/wallet"
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/crypto/oqs"
+	"github.com/wonabru/qwid-node/logger"
+	"github.com/wonabru/qwid-node/pubkeys"
+	"github.com/wonabru/qwid-node/wallet"
 )
 
 type BaseHeader struct {

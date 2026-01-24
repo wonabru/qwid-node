@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/qwid-org/qwid-node/common"
-	"github.com/qwid-org/qwid-node/logger"
-	"github.com/qwid-org/qwid-node/wallet"
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/logger"
+	"github.com/wonabru/qwid-node/wallet"
 	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"os/user"

@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/qwid-org/qwid-node/crypto"
+	"github.com/wonabru/qwid-node/crypto"
 )
 
 // FunctionType represents different types of functions a contract might have.

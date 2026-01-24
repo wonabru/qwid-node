@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/qwid-org/qwid-node/account"
-	"github.com/qwid-org/qwid-node/common"
-	"github.com/qwid-org/qwid-node/crypto/oqs"
-	"github.com/qwid-org/qwid-node/database"
-	"github.com/qwid-org/qwid-node/logger"
-	"github.com/qwid-org/qwid-node/oracles"
-	"github.com/qwid-org/qwid-node/transactionsDefinition"
-	"github.com/qwid-org/qwid-node/transactionsPool"
-	"github.com/qwid-org/qwid-node/voting"
+	"github.com/wonabru/qwid-node/account"
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/crypto/oqs"
+	"github.com/wonabru/qwid-node/database"
+	"github.com/wonabru/qwid-node/logger"
+	"github.com/wonabru/qwid-node/oracles"
+	"github.com/wonabru/qwid-node/transactionsDefinition"
+	"github.com/wonabru/qwid-node/transactionsPool"
+	"github.com/wonabru/qwid-node/voting"
 )
 
 func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*transactionsPool.MerkleTree, error) {

@@ -26,7 +26,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/qwid-org/qwid-node/common"
+	"github.com/wonabru/qwid-node/common"
 )
 
 // Type enumerator

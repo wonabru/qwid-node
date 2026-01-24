@@ -21,7 +21,7 @@ import (
 	"sort"
 
 	"github.com/holiman/uint256"
-	"github.com/qwid-org/qwid-node/params"
+	"github.com/wonabru/qwid-node/params"
 )
 
 var activators = map[int]func(*JumpTable){

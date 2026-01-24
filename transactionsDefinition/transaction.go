@@ -3,14 +3,14 @@ package transactionsDefinition
 import (
 	"bytes"
 	"fmt"
-	"github.com/qwid-org/qwid-node/logger"
+	"github.com/wonabru/qwid-node/logger"
 	"strconv"
 
-	"github.com/qwid-org/qwid-node/account"
-	"github.com/qwid-org/qwid-node/common"
-	"github.com/qwid-org/qwid-node/database"
-	"github.com/qwid-org/qwid-node/pubkeys"
-	"github.com/qwid-org/qwid-node/wallet"
+	"github.com/wonabru/qwid-node/account"
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/database"
+	"github.com/wonabru/qwid-node/pubkeys"
+	"github.com/wonabru/qwid-node/wallet"
 )
 
 type Transaction struct {

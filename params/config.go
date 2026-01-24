@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/qwid-org/qwid-node/common"
+	"github.com/wonabru/qwid-node/common"
 	"golang.org/x/crypto/sha3"
 )
 

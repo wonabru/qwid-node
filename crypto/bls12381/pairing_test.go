@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/qwid-org/qwid-node/common"
+	"github.com/wonabru/qwid-node/common"
 )
 
 func TestPairingExpected(t *testing.T) {

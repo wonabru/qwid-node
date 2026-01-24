@@ -18,7 +18,7 @@ package abi
 
 import (
 	"fmt"
-	"github.com/qwid-org/qwid-node/logger"
+	"github.com/wonabru/qwid-node/logger"
 	"reflect"
 	"testing"
 )

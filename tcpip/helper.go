@@ -3,8 +3,8 @@ package tcpip
 import (
 	"bytes"
 	"context"
-	"github.com/qwid-org/qwid-node/common"
-	"github.com/qwid-org/qwid-node/logger"
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/logger"
 	"sync"
 	"time"
 )

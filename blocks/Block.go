@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/qwid-org/qwid-node/common"
-	"github.com/qwid-org/qwid-node/database"
-	"github.com/qwid-org/qwid-node/transactionsPool"
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/database"
+	"github.com/wonabru/qwid-node/transactionsPool"
 )
 
 type Block struct {

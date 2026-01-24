@@ -20,7 +20,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/qwid-org/qwid-node/rlp"
+	"github.com/wonabru/qwid-node/rlp"
 )
 
 func ExampleEncoderBuffer() {

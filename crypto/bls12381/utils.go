@@ -20,7 +20,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/qwid-org/qwid-node/common"
+	"github.com/wonabru/qwid-node/common"
 )
 
 func bigFromHex(hex string) *big.Int {

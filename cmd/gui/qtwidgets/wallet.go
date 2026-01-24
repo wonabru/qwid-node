@@ -2,9 +2,9 @@ package qtwidgets
 
 import (
 	"fmt"
-	"github.com/qwid-org/qwid-node/common"
-	clientrpc "github.com/qwid-org/qwid-node/rpc/client"
-	"github.com/qwid-org/qwid-node/wallet"
+	"github.com/wonabru/qwid-node/common"
+	clientrpc "github.com/wonabru/qwid-node/rpc/client"
+	"github.com/wonabru/qwid-node/wallet"
 	"github.com/therecipe/qt/widgets"
 	"strconv"
 )

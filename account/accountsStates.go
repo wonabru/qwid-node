@@ -3,11 +3,11 @@ package account
 import (
 	"bytes"
 	"fmt"
-	"github.com/qwid-org/qwid-node/logger"
+	"github.com/wonabru/qwid-node/logger"
 	"sync"
 
-	"github.com/qwid-org/qwid-node/common"
-	"github.com/qwid-org/qwid-node/database"
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/database"
 )
 
 type AccountsType struct {

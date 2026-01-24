@@ -1,11 +1,11 @@
 package database
 
 import (
-	"github.com/qwid-org/qwid-node/logger"
+	"github.com/wonabru/qwid-node/logger"
 	"os"
 	"path/filepath"
 
-	"github.com/qwid-org/qwid-node/common"
+	"github.com/wonabru/qwid-node/common"
 )
 
 var (

@@ -2,7 +2,7 @@ package oqs
 
 //import (
 //	"fmt"
-//	"github.com/qwid-org/qwid-node/common"
+//	"github.com/wonabru/qwid-node/common"
 //)
 
 //func NewKeyPair() (Signature, []byte) {

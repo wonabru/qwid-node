@@ -1,4 +1,4 @@
-module github.com/qwid-org/qwid-node
+module github.com/wonabru/qwid-node
 
 go 1.23.6
 

@@ -3,10 +3,10 @@ package services
 import (
 	"bufio"
 	"fmt"
-	"github.com/qwid-org/qwid-node/blocks"
-	"github.com/qwid-org/qwid-node/common"
-	"github.com/qwid-org/qwid-node/logger"
-	"github.com/qwid-org/qwid-node/wallet"
+	"github.com/wonabru/qwid-node/blocks"
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/logger"
+	"github.com/wonabru/qwid-node/wallet"
 	"os"
 )
 

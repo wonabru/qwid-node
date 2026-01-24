@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"github.com/qwid-org/qwid-node/crypto/blake2b"
-	"github.com/qwid-org/qwid-node/logger"
+	"github.com/wonabru/qwid-node/crypto/blake2b"
+	"github.com/wonabru/qwid-node/logger"
 	"sync"
 	"sync/atomic"
 )
