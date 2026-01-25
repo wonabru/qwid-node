@@ -271,7 +271,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			}
 
 		}
-		//common.IsSyncing.Store(true)
+		common.IsSyncing.Store(true)
 		if incompleteTxn {
 			logger.GetLogger().Printf("Sync incomplete - requesting %d missing transactions from peer", len(hashesMissingAll))
 			transactionServices.SendGT(addr, hashesMissingAll, "bt")
