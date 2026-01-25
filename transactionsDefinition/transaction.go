@@ -329,9 +329,9 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tm
 		}
 		logger.GetLogger().Println("  Derived address:", pkAddr.GetHex())
 
-		if !bytes.Equal(pkAddr.GetBytes(), senderAddr.GetBytes()) {
+		if !bytes.Equal(pkAddr.MainAddress.GetBytes(), senderAddr.GetBytes()) {
 			logger.GetLogger().Println("  ERROR: pubkey address mismatch!")
-			logger.GetLogger().Println("  Derived:", pkAddr.GetHex())
+			logger.GetLogger().Println("  Derived:", pkAddr.MainAddress.GetHex())
 			logger.GetLogger().Println("  Expected:", senderAddr.GetHex())
 			return false
 		}
