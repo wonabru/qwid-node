@@ -47,7 +47,7 @@ func main() {
 	wallet.InitActiveWallet(0, string(password), sigName, sigName2)
 	MainWallet = wallet.GetActiveWallet()
 
-	for range 10 {
+	for range 100 {
 		go sendTransactions(MainWallet)
 		//time.Sleep(time.Millisecond * 1)
 	}
@@ -164,10 +164,10 @@ func SampleTransaction(w *wallet.Wallet) transactionsDefinition.Transaction {
 
 func sendTransactions(w *wallet.Wallet) {
 
-	batchSize := 10
+	batchSize := 1
 	count := int64(0)
 	start := common.GetCurrentTimeStampInSecond()
-	for range time.Tick(time.Millisecond * 1000) {
+	for range time.Tick(time.Millisecond * 10) {
 		var txs []transactionsDefinition.Transaction
 		for i := 0; i < batchSize; i++ {
 			tx := SampleTransaction(w)
