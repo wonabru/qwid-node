@@ -205,11 +205,23 @@ func storePubKeyFromTransaction(pk common.PubKey, senderAddr common.Address) {
 	}
 	// Set MainAddress if not set
 	if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
-		pk.MainAddress = pk.Address
+		pk.MainAddress = senderAddr
 	}
 	// Store in DB using the same method as blocks.StorePubKey
-	if !bytes.Equal(pk.Address.GetBytes(), senderAddr.GetBytes()) {
+	// For primary keys: pk.Address should match senderAddr
+	// For secondary keys: pk.MainAddress should match senderAddr
+	addressMatch := false
+	if pk.Primary {
+		addressMatch = bytes.Equal(pk.Address.GetBytes(), senderAddr.GetBytes())
+	} else {
+		addressMatch = bytes.Equal(pk.MainAddress.GetBytes(), senderAddr.GetBytes())
+	}
+	if !addressMatch {
 		logger.GetLogger().Println("storePubKeyFromTransaction: pubkey address doesn't match sender, skipping")
+		logger.GetLogger().Println("  pk.Primary:", pk.Primary)
+		logger.GetLogger().Println("  pk.Address:", pk.Address.GetHex())
+		logger.GetLogger().Println("  pk.MainAddress:", pk.MainAddress.GetHex())
+		logger.GetLogger().Println("  senderAddr:", senderAddr.GetHex())
 		return
 	}
 	// Store pubkey marshal
