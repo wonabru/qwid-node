@@ -6,7 +6,9 @@ import (
 	"github.com/wonabru/qwid-node/cmd/gui/qtwidgets"
 	"github.com/therecipe/qt/widgets"
 	rand2 "math/rand"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/logger"
@@ -47,8 +49,12 @@ func main() {
 		go sendTransactions(MainWallet)
 		//time.Sleep(time.Millisecond * 1)
 	}
-	chanPeer := make(chan []byte)
-	<-chanPeer
+
+	// Handle Ctrl+C gracefully
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+	fmt.Println("\nShutting down...")
 }
 
 func SignMessage(line []byte) []byte {
