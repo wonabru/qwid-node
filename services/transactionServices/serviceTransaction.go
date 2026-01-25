@@ -2,11 +2,10 @@ package transactionServices
 
 import (
 	"bytes"
-	"github.com/wonabru/qwid-node/logger"
-	"math/rand"
 	"time"
 
 	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/logger"
 	"github.com/wonabru/qwid-node/message"
 	"github.com/wonabru/qwid-node/services"
 	"github.com/wonabru/qwid-node/tcpip"
@@ -20,7 +19,7 @@ func InitTransactionService() {
 
 	services.SendMutexTx.Unlock()
 	startPublishingTransactionMsg()
-	//go broadcastTransactionsMsgInLoop(services.SendChanTx)
+	go broadcastTransactionsMsgInLoop(services.SendChanTx)
 }
 
 func GenerateTransactionMsg(txs []transactionsDefinition.Transaction, mesgHead []byte, topic [2]byte) (message.TransactionsMessage, error) {
@@ -61,10 +60,24 @@ func broadcastTransactionsMsgInLoop(chanRecv chan []byte) {
 Q:
 	for range time.Tick(time.Second) {
 
-		topic := [2]byte{'T', 'T'}
-
-		if SendTransactionMsg(tcpip.MyIP, topic) {
-			//logger.GetLogger().Println("broadcastTransactionsMsgInLoop: Sent transaction")
+		// Broadcast pending transactions to all connected peers
+		if !common.IsSyncing.Load() {
+			txs := transactionsPool.PoolsTx.PeekTransactions(int(common.MaxTransactionsPerBlock), 0)
+			if len(txs) > 0 {
+				topic := [2]byte{'T', 'T'}
+				n, err := GenerateTransactionMsg(txs, []byte("tx"), topic)
+				if err == nil {
+					// Send to all connected peers
+					peers := tcpip.GetPeersConnected(tcpip.TransactionTopic)
+					for topicip := range peers {
+						var ip [4]byte
+						copy(ip[:], topicip[2:])
+						if !bytes.Equal(ip[:], tcpip.MyIP[:]) {
+							Send(ip, n.GetBytes())
+						}
+					}
+				}
+			}
 		}
 
 		timeout := time.After(time.Second)
@@ -76,9 +89,6 @@ Q:
 				break Q
 			}
 		case <-timeout:
-			// Handle timeout
-			//logger.GetLogger().Println("broadcastTransactionsMsgInLoop: Timeout occurred")
-			// You can break the loop or return from the function here
 			break
 		}
 
@@ -129,11 +139,12 @@ func BroadcastTxn(ignoreAddr [4]byte, nb []byte) {
 	var ip [4]byte
 	var peers = tcpip.GetPeersConnected(tcpip.TransactionTopic)
 	num_peers := len(peers)
-	for topicip, _ := range peers {
-		// trying to send randomly to 1 other nodes
-		if rand.Intn(num_peers) >= 1 {
-			continue
-		}
+	if num_peers == 0 {
+		return
+	}
+	for topicip := range peers {
+		// Send to all peers to ensure transactions reach mining nodes
+		// Previously was randomly selecting ~1 peer which caused transactions to not propagate properly
 		copy(ip[:], topicip[2:])
 		if !bytes.Equal(ip[:], ignoreAddr[:]) && !bytes.Equal(ip[:], tcpip.MyIP[:]) {
 			//logger.GetLogger().Println("send transactions to ", int(ip[0]), int(ip[1]), int(ip[2]), int(ip[3]))

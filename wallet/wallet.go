@@ -527,6 +527,24 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 	w.Account1.PublicKey.Primary = true
 	w.Account2.PublicKey.Primary = false
 
+	// Ensure MainAddress equals Account1.Address (they should be the same)
+	// If MainAddress is empty or doesn't match, set it from Account1.Address
+	zeroAddr := make([]byte, common.AddressLength)
+	if bytes.Equal(w.MainAddress.GetBytes(), zeroAddr) {
+		w.MainAddress = w.Account1.Address
+		logger.GetLogger().Println("MainAddress was empty, set from Account1.Address:", w.MainAddress.GetHex())
+	} else if !bytes.Equal(w.MainAddress.GetBytes(), w.Account1.Address.GetBytes()) {
+		logger.GetLogger().Println("WARNING: MainAddress differs from Account1.Address!")
+		logger.GetLogger().Println("MainAddress:", w.MainAddress.GetHex())
+		logger.GetLogger().Println("Account1.Address:", w.Account1.Address.GetHex())
+		// Use Account1.Address as the canonical address
+		w.MainAddress = w.Account1.Address
+	}
+
+	// Ensure MainAddress is set on PublicKeys (may be empty from older wallet JSON)
+	w.Account1.PublicKey.MainAddress = w.MainAddress
+	w.Account2.PublicKey.MainAddress = w.MainAddress
+
 	w.Account1.secretKey.Address.Primary = true
 	w.Account2.secretKey.Address.Primary = false
 	w.Account1.secretKey.Primary = true

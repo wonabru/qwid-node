@@ -1,7 +1,11 @@
 package transactionServices
 
 import (
+	"bytes"
+	"encoding/json"
+
 	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/database"
 	"github.com/wonabru/qwid-node/logger"
 	"github.com/wonabru/qwid-node/message"
 	"github.com/wonabru/qwid-node/tcpip"
@@ -44,12 +48,27 @@ func OnMessage(addr [4]byte, m []byte) {
 		// need to check transactions
 		for _, v := range txn {
 			for _, t := range v {
+				logger.GetLogger().Println("Processing transaction:", t.Hash.GetHex())
+				pk := t.TxData.Pubkey
+				if len(pk.GetBytes()) > 0 {
+					logger.GetLogger().Println("  Transaction has pubkey, length:", len(pk.GetBytes()))
+				}
 				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
-					//logger.GetLogger().Println("transaction just exists in Pool")
+					logger.GetLogger().Println("  Transaction already exists in Pool, skipping")
+					// Even if already in pool, store the pubkey if present
+					if len(pk.GetBytes()) > 0 {
+						logger.GetLogger().Println("  Storing pubkey from existing transaction")
+						storePubKeyFromTransaction(pk, t.GetSenderAddress())
+					}
 					continue
 				}
 				if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], t.Hash.GetBytes()) {
-					logger.GetLogger().Println("transaction just exists in DB")
+					logger.GetLogger().Println("  Transaction already exists in DB, skipping")
+					// Even if already in DB, store the pubkey if present
+					if len(pk.GetBytes()) > 0 {
+						logger.GetLogger().Println("  Storing pubkey from existing transaction in DB")
+						storePubKeyFromTransaction(pk, t.GetSenderAddress())
+					}
 					continue
 				}
 
@@ -65,8 +84,16 @@ func OnMessage(addr [4]byte, m []byte) {
 						logger.GetLogger().Println(err)
 						continue
 					}
-					if !common.IsSyncing.Load() {
-						//maybe we should not broadcast automatically transactions. Third party should care about it
+					// Store pubkey immediately so it's available for nonce verification
+					pk := t.TxData.Pubkey
+					if len(pk.GetBytes()) > 0 {
+						logger.GetLogger().Println("Storing pubkey from transaction immediately")
+						storePubKeyFromTransaction(pk, t.GetSenderAddress())
+					}
+					// Always broadcast local transactions (from RPC/wallet with addr 0.0.0.0)
+					// For remote transactions, only broadcast if not syncing
+					isLocalTx := addr == [4]byte{0, 0, 0, 0}
+					if isLocalTx || !common.IsSyncing.Load() {
 						BroadcastTxn(addr, m)
 					}
 				}
@@ -108,12 +135,15 @@ func OnMessage(addr [4]byte, m []byte) {
 		for topic, v := range txn {
 			txs := []transactionsDefinition.Transaction{}
 			for _, hs := range v {
+				// First try to load from Pool
 				t, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hs)
 				if err != nil {
-					logger.GetLogger().Println("cannot load transaction from pool", err)
-
-					transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionPoolHashesDBPrefix[:], hs)
-					continue
+					// If not in Pool, try to load from confirmed DB
+					t, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hs)
+					if err != nil {
+						logger.GetLogger().Println("cannot load transaction from Pool or DB", err)
+						continue
+					}
 				}
 				if len(t.GetBytes()) > 0 {
 					txs = append(txs, t)
@@ -133,10 +163,15 @@ func OnMessage(addr [4]byte, m []byte) {
 		for topic, v := range txn {
 			txs := []transactionsDefinition.Transaction{}
 			for _, hs := range v {
+				// First try to load from confirmed DB
 				t, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hs)
 				if err != nil {
-					logger.GetLogger().Println("cannot load transaction from DB", err)
-					continue
+					// If not in DB, try to load from Pool
+					t, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hs)
+					if err != nil {
+						logger.GetLogger().Println("cannot load transaction from DB or Pool", err)
+						continue
+					}
 				}
 				if len(t.GetBytes()) > 0 {
 					txs = append(txs, t)
@@ -153,4 +188,40 @@ func OnMessage(addr [4]byte, m []byte) {
 		}
 	default:
 	}
+}
+
+// storePubKeyFromTransaction stores the pubkey from a transaction immediately
+// so it's available for nonce verification before the block is processed
+func storePubKeyFromTransaction(pk common.PubKey, senderAddr common.Address) {
+	zeroBytes := make([]byte, common.AddressLength)
+	// Derive address from pubkey bytes if not set
+	if bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
+		derivedAddr, err := common.PubKeyToAddress(pk.GetBytes(), pk.Primary)
+		if err != nil {
+			logger.GetLogger().Println("storePubKeyFromTransaction: cannot derive address:", err)
+			return
+		}
+		pk.Address = derivedAddr
+	}
+	// Set MainAddress if not set
+	if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
+		pk.MainAddress = pk.Address
+	}
+	// Store in DB using the same method as blocks.StorePubKey
+	if !bytes.Equal(pk.Address.GetBytes(), senderAddr.GetBytes()) {
+		logger.GetLogger().Println("storePubKeyFromTransaction: pubkey address doesn't match sender, skipping")
+		return
+	}
+	// Store pubkey marshal
+	pkm, err := json.Marshal(pk)
+	if err != nil {
+		logger.GetLogger().Println("storePubKeyFromTransaction: marshal error:", err)
+		return
+	}
+	err = database.MainDB.Put(append(common.PubKeyMarshalDBPrefix[:], pk.Address.GetBytes()...), pkm)
+	if err != nil {
+		logger.GetLogger().Println("storePubKeyFromTransaction: DB put error:", err)
+		return
+	}
+	logger.GetLogger().Println("storePubKeyFromTransaction: stored pubkey for", pk.Address.GetHex())
 }

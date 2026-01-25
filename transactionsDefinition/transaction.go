@@ -2,13 +2,14 @@ package transactionsDefinition
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"github.com/wonabru/qwid-node/logger"
 	"strconv"
 
 	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/database"
+	"github.com/wonabru/qwid-node/logger"
 	"github.com/wonabru/qwid-node/pubkeys"
 	"github.com/wonabru/qwid-node/wallet"
 )
@@ -301,11 +302,58 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tm
 	pk := tx.TxData.GetPubKey()
 	pkb := pk.GetBytes()
 	if len(pkb) == 0 {
-		pkp, err := pubkeys.LoadPubKeyWithPrimary(tx.GetSenderAddress(), primary)
+		senderAddr := tx.GetSenderAddress()
+		pkp, err := pubkeys.LoadPubKeyWithPrimary(senderAddr, primary)
 		if err != nil {
+			logger.GetLogger().Println("Verify: cannot load sender pubkey from DB:", err)
+			logger.GetLogger().Println("  Sender address:", senderAddr.GetHex())
+			logger.GetLogger().Println("  Primary flag:", primary)
 			return false
 		}
 		pkb = pkp.GetBytes()
+	} else {
+		// If pubkey is included in transaction, verify it matches the sender address
+		senderAddr := tx.GetSenderAddress()
+		logger.GetLogger().Println("Verify: pubkey included in transaction")
+		logger.GetLogger().Println("  PubKey bytes length:", len(pkb))
+		logger.GetLogger().Println("  Sender address:", senderAddr.GetHex())
+		logger.GetLogger().Println("  Signature primary flag:", primary)
+		logger.GetLogger().Println("  PubKey.Primary field:", pk.Primary)
+
+		// Use the pubkey's own Primary flag for address derivation
+		pkPrimary := pk.Primary
+		pkAddr, err := common.PubKeyToAddress(pkb, pkPrimary)
+		if err != nil {
+			logger.GetLogger().Println("  ERROR: cannot derive address from pubkey:", err)
+			return false
+		}
+		logger.GetLogger().Println("  Derived address:", pkAddr.GetHex())
+		logger.GetLogger().Println("  PubKey.MainAddress:", pk.MainAddress.GetHex())
+
+		// For primary pubkey: derived address should match sender address directly
+		// For secondary pubkey: MainAddress (which equals the wallet's main/primary address) should match sender
+		addressMatch := false
+		if pkPrimary {
+			// Primary pubkey: derived address should equal sender address
+			addressMatch = bytes.Equal(pkAddr.GetBytes(), senderAddr.GetBytes())
+		} else {
+			// Secondary pubkey: the pubkey's MainAddress should equal sender address
+			// (MainAddress is the wallet's primary address that both accounts share)
+			addressMatch = bytes.Equal(pk.MainAddress.GetBytes(), senderAddr.GetBytes())
+		}
+
+		if !addressMatch {
+			logger.GetLogger().Println("  ERROR: pubkey address mismatch!")
+			logger.GetLogger().Println("  Derived:", pkAddr.GetHex())
+			logger.GetLogger().Println("  Expected (sender):", senderAddr.GetHex())
+			if !pkPrimary {
+				logger.GetLogger().Println("  PubKey.MainAddress:", pk.MainAddress.GetHex())
+			}
+			return false
+		}
+		logger.GetLogger().Println("  Address verification OK")
+		// Store pubkey immediately so it's available for nonce verification
+		storePubKeyImmediately(pk, senderAddr)
 	}
 	//logger.GetLogger().Println(sigName, sigName2, isPausedTmp, isPaused2Tmp)
 	return wallet.Verify(b, signature.GetBytes(), pkb, sigName, sigName2, isPausedTmp, isPaused2Tmp)
@@ -346,4 +394,37 @@ func EmptyTransaction() Transaction {
 	}
 	tx.Signature = common.EmptySignature()
 	return tx
+}
+
+// storePubKeyImmediately stores the pubkey to DB right away during verification
+// so it's available for nonce verification from other nodes
+func storePubKeyImmediately(pk common.PubKey, senderAddr common.Address) {
+	zeroBytes := make([]byte, common.AddressLength)
+
+	if bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
+	    logger.GetLogger().Println("storePubKeyImmediately: Address has to be set")
+		return
+	}
+	// Ensure MainAddress is set
+	if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
+	    logger.GetLogger().Println("storePubKeyImmediately: MainAddress has to be set")
+		return
+	}
+	// Verify the pubkey matches the sender
+	if !bytes.Equal(pk.MainAddress.GetBytes(), senderAddr.GetBytes()) {
+		logger.GetLogger().Println("storePubKeyImmediately: main address mismatch, skipping")
+		return
+	}
+	// Store pubkey marshal to DB
+	pkm, err := json.Marshal(pk)
+	if err != nil {
+		logger.GetLogger().Println("storePubKeyImmediately: marshal error:", err)
+		return
+	}
+	err = database.MainDB.Put(append(common.PubKeyMarshalDBPrefix[:], pk.Address.GetBytes()...), pkm)
+	if err != nil {
+		logger.GetLogger().Println("storePubKeyImmediately: DB put error:", err)
+		return
+	}
+	logger.GetLogger().Println("storePubKeyImmediately: stored pubkey for", pk.Address.GetHex())
 }
