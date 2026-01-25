@@ -1,7 +1,6 @@
 package common
 
 import (
-	"math/rand"
 	"sync"
 	"sync/atomic"
 )
@@ -28,10 +27,6 @@ func SetHeight(h int64) {
 func GetHeightMax() int64 {
 	heightMutex.RLock()
 	defer heightMutex.RUnlock()
-	r := rand.Intn(4)
-	if r < 1 {
-		heightMax = 0
-	}
 	return heightMax
 }
 
