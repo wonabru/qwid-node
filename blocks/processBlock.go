@@ -145,8 +145,10 @@ func IsAllTransactions(block Block) [][]byte {
 	hashes := [][]byte{}
 	for _, tx := range txs {
 		hash := tx.GetBytes()
-		isKey := transactionsDefinition.CheckFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hash)
-		if isKey == false {
+		// Check both pool DB and confirmed DB
+		isInPool := transactionsDefinition.CheckFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hash)
+		isInConfirmed := transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], hash)
+		if !isInPool && !isInConfirmed {
 			hashes = append(hashes, hash)
 		}
 	}
