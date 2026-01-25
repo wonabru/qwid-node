@@ -107,7 +107,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			return
 		}
 		// when others have longer chain
-		common.IsSyncing.Store(true)
+		// common.IsSyncing.Store(true)
 		SendGetHeaders(addr, lastOtherHeight)
 		return
 	case "sh":
