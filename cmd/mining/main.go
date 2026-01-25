@@ -27,6 +27,8 @@ import (
 
 func main() {
 	var err error
+	// Disable logging (set to true to enable logs)
+	logger.LoggingEnabled = false
 	logger.InitLogger()
 	defer logger.CloseLogger()
 	database.InitDB()

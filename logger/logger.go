@@ -11,6 +11,9 @@ import (
 
 var DefaultLogsHomePath = "/.qwid/logs/"
 
+// LoggingEnabled controls whether logging is active (set to false to disable all logs)
+var LoggingEnabled = true
+
 var (
 	logFile *os.File
 	mw      *MultiWriter
@@ -38,6 +41,16 @@ func (t *MultiWriter) Write(p []byte) (n int, err error) {
 
 func InitLogger() {
 	once.Do(func() {
+		// If logging is disabled, use discard writer
+		if !LoggingEnabled {
+			mw = &MultiWriter{
+				writers: []io.Writer{io.Discard},
+			}
+			logger = log.New(io.Discard, "", 0)
+			log.SetOutput(io.Discard)
+			return
+		}
+
 		homePath, err := os.UserHomeDir()
 		if err != nil {
 			log.Fatal(err)
