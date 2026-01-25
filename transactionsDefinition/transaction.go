@@ -328,11 +328,27 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tm
 			return false
 		}
 		logger.GetLogger().Println("  Derived address:", pkAddr.GetHex())
+		logger.GetLogger().Println("  PubKey.MainAddress:", pk.MainAddress.GetHex())
 
-		if !bytes.Equal(pkAddr.MainAddress.GetBytes(), senderAddr.GetBytes()) {
+		// For primary pubkey: derived address should match sender address directly
+		// For secondary pubkey: MainAddress (which equals the wallet's main/primary address) should match sender
+		addressMatch := false
+		if pkPrimary {
+			// Primary pubkey: derived address should equal sender address
+			addressMatch = bytes.Equal(pkAddr.GetBytes(), senderAddr.GetBytes())
+		} else {
+			// Secondary pubkey: the pubkey's MainAddress should equal sender address
+			// (MainAddress is the wallet's primary address that both accounts share)
+			addressMatch = bytes.Equal(pk.MainAddress.GetBytes(), senderAddr.GetBytes())
+		}
+
+		if !addressMatch {
 			logger.GetLogger().Println("  ERROR: pubkey address mismatch!")
-			logger.GetLogger().Println("  Derived:", pkAddr.MainAddress.GetHex())
-			logger.GetLogger().Println("  Expected:", senderAddr.GetHex())
+			logger.GetLogger().Println("  Derived:", pkAddr.GetHex())
+			logger.GetLogger().Println("  Expected (sender):", senderAddr.GetHex())
+			if !pkPrimary {
+				logger.GetLogger().Println("  PubKey.MainAddress:", pk.MainAddress.GetHex())
+			}
 			return false
 		}
 		logger.GetLogger().Println("  Address verification OK")
