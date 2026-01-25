@@ -400,17 +400,19 @@ func EmptyTransaction() Transaction {
 // so it's available for nonce verification from other nodes
 func storePubKeyImmediately(pk common.PubKey, senderAddr common.Address) {
 	zeroBytes := make([]byte, common.AddressLength)
-	// Ensure address is set
+
 	if bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
-		pk.Address = senderAddr
+	    logger.GetLogger().Println("storePubKeyImmediately: Address has to be set")
+		return
 	}
 	// Ensure MainAddress is set
 	if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
-		pk.MainAddress = pk.Address
+	    logger.GetLogger().Println("storePubKeyImmediately: MainAddress has to be set")
+		return
 	}
 	// Verify the pubkey matches the sender
-	if !bytes.Equal(pk.Address.GetBytes(), senderAddr.GetBytes()) {
-		logger.GetLogger().Println("storePubKeyImmediately: address mismatch, skipping")
+	if !bytes.Equal(pk.MainAddress.GetBytes(), senderAddr.GetBytes()) {
+		logger.GetLogger().Println("storePubKeyImmediately: main address mismatch, skipping")
 		return
 	}
 	// Store pubkey marshal to DB
