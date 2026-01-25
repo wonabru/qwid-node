@@ -71,7 +71,7 @@ func main() {
 	window.Show()
 
 	go func() {
-		for range time.Tick(time.Second * 3) {
+		for range time.Tick(time.Second * 1) {
 			qtwidgets.UpdateAccountStats()
 		}
 	}()

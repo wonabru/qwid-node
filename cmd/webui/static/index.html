@@ -350,12 +350,20 @@
                         <div class="stat-value" id="blockHeight">-</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-label">Difficulty</div>
-                        <div class="stat-value" id="difficulty">-</div>
+                        <div class="stat-label">Transactions in Last Block</div>
+                        <div class="stat-value highlight" id="txInBlock">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Pending in Pool</div>
+                        <div class="stat-value highlight" id="txPending">-</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">TPS</div>
                         <div class="stat-value" id="tps">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Difficulty</div>
+                        <div class="stat-value" id="difficulty">-</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Price Oracle</div>
@@ -857,6 +865,8 @@
                     document.getElementById('nodeInfo').textContent =
                         'Node: ' + res.nodeIP + ' | Account: ' + res.delegatedAccount;
                     document.getElementById('blockHeight').textContent = res.height + ' / ' + res.heightMax;
+                    document.getElementById('txInBlock').textContent = res.transactions;
+                    document.getElementById('txPending').textContent = res.transactionsPending;
                     document.getElementById('difficulty').textContent = res.difficulty;
                     document.getElementById('tps').textContent = res.tps.toFixed(2);
                     document.getElementById('priceOracle').textContent = res.priceOracle.toFixed(2) + ' QWD/USD';
@@ -1458,8 +1468,8 @@
         updateStats();
         checkWallet();
         loadLogFiles();
-        setInterval(updateStats, 5000);
-        setInterval(() => { if (walletLoaded) updateAccount(); }, 5000);
+        setInterval(updateStats, 1000);
+        setInterval(() => { if (walletLoaded) updateAccount(); }, 3000);
     </script>
 </body>
 </html>

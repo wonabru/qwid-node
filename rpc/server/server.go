@@ -450,6 +450,13 @@ func handleCNCL(byt []byte, reply *[]byte) {
 
 func handleSTAT(byt []byte, reply *[]byte) {
 	sm := statistics.GetStatsManager()
+	// Update pending transactions count in real-time
+	sm.Mu.Lock()
+	sm.Stats.TransactionsPending = transactionsPool.PoolsTx.NumberOfTransactions()
+	sm.Stats.Height = common.GetHeight()
+	sm.Stats.HeightMax = common.GetHeightMax()
+	sm.Stats.Syncing = common.IsSyncing.Load()
+	sm.Mu.Unlock()
 	msb, err := common.Marshal(sm.Stats, common.StatDBPrefix)
 	if err != nil {
 		logger.GetLogger().Println(err)
