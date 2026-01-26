@@ -34,7 +34,7 @@ var (
 	peerHeightClaimsMutex sync.RWMutex
 	// MaxHeightJumpWithoutConsensus - if a peer claims height more than this ahead,
 	// require multiple peers to confirm before syncing
-	MaxHeightJumpWithoutConsensus int64 = 50
+	MaxHeightJumpWithoutConsensus int64 = 2
 	// MinPeersForLargeSync - minimum peers that must agree on height for large syncs
 	MinPeersForLargeSync = 2
 	// ClaimExpiryDuration - how long before a height claim expires
