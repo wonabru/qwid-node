@@ -3,6 +3,8 @@ package syncServices
 import (
 	"bytes"
 	"runtime/debug"
+	"sync"
+	"time"
 
 	"github.com/wonabru/qwid-node/logger"
 
@@ -19,6 +21,98 @@ import (
 )
 
 var err error
+
+// peerHeightClaim tracks a peer's claimed height with timestamp
+type peerHeightClaim struct {
+	height    int64
+	blockHash []byte
+	timestamp time.Time
+}
+
+var (
+	peerHeightClaims      = make(map[[4]byte]peerHeightClaim)
+	peerHeightClaimsMutex sync.RWMutex
+	// MaxHeightJumpWithoutConsensus - if a peer claims height more than this ahead,
+	// require multiple peers to confirm before syncing
+	MaxHeightJumpWithoutConsensus int64 = 50
+	// MinPeersForLargeSync - minimum peers that must agree on height for large syncs
+	MinPeersForLargeSync = 2
+	// ClaimExpiryDuration - how long before a height claim expires
+	ClaimExpiryDuration = 30 * time.Second
+)
+
+// recordPeerHeightClaim stores a peer's height claim
+func recordPeerHeightClaim(addr [4]byte, height int64, blockHash []byte) {
+	peerHeightClaimsMutex.Lock()
+	defer peerHeightClaimsMutex.Unlock()
+	peerHeightClaims[addr] = peerHeightClaim{
+		height:    height,
+		blockHash: blockHash,
+		timestamp: time.Now(),
+	}
+}
+
+// shouldSyncToHeight determines if we should sync based on peer claims
+// Returns true if sync should proceed, and the validated target height
+func shouldSyncToHeight(claimedHeight int64, localHeight int64) (bool, int64) {
+	peerHeightClaimsMutex.RLock()
+	defer peerHeightClaimsMutex.RUnlock()
+
+	heightDiff := claimedHeight - localHeight
+	if heightDiff <= 0 {
+		return false, localHeight
+	}
+
+	// For small height differences, trust single peer
+	if heightDiff <= MaxHeightJumpWithoutConsensus {
+		return true, claimedHeight
+	}
+
+	// For large height differences, require multiple peers to agree
+	now := time.Now()
+	peersAtOrAboveHeight := 0
+	maxConfirmedHeight := localHeight
+
+	for _, claim := range peerHeightClaims {
+		// Skip expired claims
+		if now.Sub(claim.timestamp) > ClaimExpiryDuration {
+			continue
+		}
+		if claim.height >= claimedHeight {
+			peersAtOrAboveHeight++
+		}
+		if claim.height > maxConfirmedHeight {
+			maxConfirmedHeight = claim.height
+		}
+	}
+
+	if peersAtOrAboveHeight >= MinPeersForLargeSync {
+		logger.GetLogger().Printf("Large sync approved: %d peers confirm height >= %d", peersAtOrAboveHeight, claimedHeight)
+		return true, claimedHeight
+	}
+
+	// Not enough peers confirm - only sync up to a safe limit
+	safeHeight := localHeight + MaxHeightJumpWithoutConsensus
+	if safeHeight < claimedHeight {
+		logger.GetLogger().Printf("Large height claim %d not confirmed by enough peers (%d/%d), limiting to %d",
+			claimedHeight, peersAtOrAboveHeight, MinPeersForLargeSync, safeHeight)
+		return true, safeHeight
+	}
+
+	return true, claimedHeight
+}
+
+// cleanupExpiredClaims removes old height claims
+func cleanupExpiredClaims() {
+	peerHeightClaimsMutex.Lock()
+	defer peerHeightClaimsMutex.Unlock()
+	now := time.Now()
+	for addr, claim := range peerHeightClaims {
+		if now.Sub(claim.timestamp) > ClaimExpiryDuration {
+			delete(peerHeightClaims, addr)
+		}
+	}
+}
 
 func OnMessage(addr [4]byte, m []byte) {
 
@@ -81,11 +175,16 @@ func OnMessage(addr [4]byte, m []byte) {
 			common.IsSyncing.Store(true)
 		}
 		lastOtherHeight := common.GetInt64FromByte(txn[[2]byte{'L', 'H'}][0])
-		hMax := common.GetHeightMax()
-		if lastOtherHeight > hMax {
-			common.SetHeightMax(lastOtherHeight)
-		}
 		lastOtherBlockHashBytes := txn[[2]byte{'L', 'B'}][0]
+
+		// Record this peer's height claim for consensus tracking
+		recordPeerHeightClaim(addr, lastOtherHeight, lastOtherBlockHashBytes)
+
+		// Periodically cleanup expired claims
+		go cleanupExpiredClaims()
+
+		hMax := common.GetHeightMax()
+
 		if lastOtherHeight == h {
 			services.AdjustShiftInPastInReset(lastOtherHeight)
 			lastBlockHashBytes, err := blocks.LoadHashOfBlock(h)
@@ -95,20 +194,32 @@ func OnMessage(addr [4]byte, m []byte) {
 			if !bytes.Equal(lastOtherBlockHashBytes, lastBlockHashBytes) {
 				SendGetHeaders(addr, lastOtherHeight)
 			}
-			if lastOtherHeight > hMax {
+			if h >= common.CurrentHeightOfNetwork {
 				common.IsSyncing.Store(false)
 			}
 			return
 		} else if lastOtherHeight < h {
 			services.AdjustShiftInPastInReset(lastOtherHeight)
-			if lastOtherHeight > hMax {
+			if h >= common.CurrentHeightOfNetwork {
 				common.IsSyncing.Store(false)
 			}
 			return
 		}
-		// when others have longer chain
+
+		// When others claim a longer chain - validate before syncing
+		shouldSync, validatedHeight := shouldSyncToHeight(lastOtherHeight, h)
+		if !shouldSync {
+			logger.GetLogger().Printf("Ignoring height claim %d from %v - not validated", lastOtherHeight, addr)
+			return
+		}
+
+		// Only update HeightMax to validated height (not blindly trust claims)
+		if validatedHeight > hMax {
+			common.SetHeightMax(validatedHeight)
+		}
+
 		common.IsSyncing.Store(true)
-		SendGetHeaders(addr, lastOtherHeight)
+		SendGetHeaders(addr, validatedHeight)
 		return
 	case "sh":
 
@@ -135,12 +246,29 @@ func OnMessage(addr [4]byte, m []byte) {
 			}
 		}
 		hmax := common.GetHeightMax()
-		if indices[len(indices)-1] <= h {
-			logger.GetLogger().Println("shorter other chain")
+		if len(indices) == 0 || len(blcks) == 0 {
+			logger.GetLogger().Println("empty blocks received from peer - possible fake height claim")
+			tcpip.ReduceAndCheckIfBanIP(addr)
+			// Exit sync if we have no progress
+			if h >= common.CurrentHeightOfNetwork {
+				common.IsSyncing.Store(false)
+			}
 			return
 		}
-		if indices[0] > h {
-			logger.GetLogger().Println("too far blocks of other")
+		if indices[len(indices)-1] <= h {
+			logger.GetLogger().Println("shorter other chain")
+			// Peer claimed higher but sent lower blocks - suspicious
+			if h >= common.CurrentHeightOfNetwork {
+				common.IsSyncing.Store(false)
+			}
+			return
+		}
+		if indices[0] > h+1 {
+			logger.GetLogger().Println("too far blocks from peer - gap in chain")
+			// Don't ban, but exit sync if this was the only claim
+			if h >= common.CurrentHeightOfNetwork {
+				common.IsSyncing.Store(false)
+			}
 			return
 		}
 		// check blocks

@@ -9,7 +9,7 @@ QWID-Node is a quantum-resistant blockchain node written in Go 1.23.6. It featur
 ## Build & Run Commands
 
 ```bash
-# Set CGO flags (required for RocksDB)
+# Set CGO flags (required for RocksDB on macOS - adjust paths for your system)
 export CGO_CFLAGS="-isystem $HOME/local/include"
 export CGO_LDFLAGS="-L$HOME/local/lib -L/usr/local/intelpython3/lib -lrocksdb -lstdc++ -lm -lz -lsnappy -llz4 -lzstd -lbz2 -lpthread -ldl"
 
@@ -22,8 +22,13 @@ go run cmd/generateNewWallet/main.go
 # Run mining node (requires peer IP)
 go run cmd/mining/main.go <peer_ip>
 
-# Run GUI wallet
+# Run GUI wallet (requires Qt5)
 go run cmd/gui/main.go
+
+# Run Web UI (alternative to Qt GUI)
+go run cmd/webui/main.go                    # localhost:8080
+go run cmd/webui/main.go <node_ip>          # custom node IP
+go run cmd/webui/main.go <node_ip> <port>   # custom node IP and port
 
 # Run tests
 go test ./...
@@ -33,9 +38,9 @@ go test -v ./wallet       # verbose output
 
 ## Required System Dependencies
 
-- RocksDB v10.4.2 (build from source with `DISABLE_WARNING_AS_ERROR=1`, install to ~/local)
+- RocksDB v10.2.1 (build from source, install with `make static_lib && sudo make install-static`)
 - liboqs (commit 8ee6039) for post-quantum cryptography
-- Qt5 for GUI (qtbase5-dev)
+- Qt5 for GUI (qtbase5-dev) - optional, only for GUI wallet
 - ZMQ (libzmq3-dev)
 - Compression libs: libsnappy, liblz4, libzstd, libbz2
 
@@ -47,8 +52,9 @@ go test -v ./wallet       # verbose output
 |---------|---------|
 | `cmd/mining/` | Mining node entry point |
 | `cmd/gui/` | Qt-based wallet GUI |
+| `cmd/webui/` | Web-based wallet UI (HTTP server) |
 | `account/` | Account, staking, and DEX state management |
-| `blocks/` | Block creation and processing |
+| `blocks/` | Block creation, processing, and proof-of-synergy consensus |
 | `core/evm/` | Ethereum Virtual Machine implementation |
 | `core/stateDB/` | Contract state persistence |
 | `crypto/oqs/` | Post-quantum crypto bindings (Falcon-512, MAYO-5) |
@@ -58,6 +64,9 @@ go test -v ./wallet       # verbose output
 | `tcpip/` | Custom P2P networking |
 | `transactionsPool/` | Memory pool with Merkle tree verification |
 | `wallet/` | Wallet creation, encryption, and key management |
+| `rpc/` | JSON-RPC interface for wallet-node communication |
+| `voting/` | Encryption scheme voting system |
+| `oracles/` | Price and randomness oracles |
 
 ### Key Data Types (in `common/`)
 
@@ -86,25 +95,35 @@ Transactions use two post-quantum signature schemes:
 
 Open these TCP ports: 19023 (transactions), 18023 (nonce), 17023 (self-nonce), 16023 (sync)
 
+Internal ports (localhost only): 19009 (wallet-node RPC), 8000 (Qt requirements)
+
 ## Configuration
 
 Runtime config in `~/.qwid/.env`:
 ```
-DELEGATED_ACCOUNT=1          # Staking account (1-254)
+DELEGATED_ACCOUNT=1          # Staking account (1-254, use 1 for genesis node)
 REWARD_PERCENTAGE=200        # Operator reward (0-500, where 500=50%)
 NODE_IP=<your_external_ip>
-HEIGHT_OF_NETWORK=<current_height>
+WHITELIST_IP=<optional_ip>   # IP to never ban
+HEIGHT_OF_NETWORK=<current_height>  # For faster initial sync
 ```
 
 Genesis config: `~/.qwid/genesis/config/genesis.json` (copy from `genesis/config/genesis_internal_tests.json`)
 
 ## Network Constants
 
+- Chain ID: 23
 - Block interval: 10 seconds
 - Max transactions per block: 5000
+- Max transaction pool: 10,000
+- Max gas per block: 13,700,000
 - Max peers: 6
 - Decimals: 8
-- Minimum staking for node: 1,000,000 (with 8 decimals)
+- Minimum staking for node: 100,000,000,000,000 (1,000,000 QWD with 8 decimals)
+- Minimum staking for user: 100,000,000,000 (1,000 QWD with 8 decimals)
+- Oracles update interval: every 6 blocks (~1 minute)
+- Voting window: every 60 blocks (~10 minutes)
+- Max transaction delay (escrow): 60,480 blocks (~1 week)
 
 ## Commit Convention
 
