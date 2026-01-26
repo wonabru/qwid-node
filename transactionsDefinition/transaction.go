@@ -402,12 +402,12 @@ func storePubKeyImmediately(pk common.PubKey, senderAddr common.Address) {
 	zeroBytes := make([]byte, common.AddressLength)
 
 	if bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
-	    logger.GetLogger().Println("storePubKeyImmediately: Address has to be set")
+		logger.GetLogger().Println("storePubKeyImmediately: Address has to be set")
 		return
 	}
 	// Ensure MainAddress is set
 	if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
-	    logger.GetLogger().Println("storePubKeyImmediately: MainAddress has to be set")
+		logger.GetLogger().Println("storePubKeyImmediately: MainAddress has to be set")
 		return
 	}
 	// Verify the pubkey matches the sender

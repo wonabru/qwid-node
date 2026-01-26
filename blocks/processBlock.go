@@ -166,23 +166,23 @@ func CheckBlockTransfers(block Block, lastBlock Block, tree *transactionsPool.Me
 		poolTx, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hash)
 		if err != nil {
 			transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionPoolHashesDBPrefix[:], hash)
-			if common.IsSyncing.Load() {
-				poolTx, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hash)
-				if err != nil {
-					return 0, 0, err
-				}
-				//TODO
-				//err = transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], hash)
-				//if err != nil {
-				//	return 0, 0, err
-				//}
-				err = poolTx.StoreToDBPoolTx(common.TransactionPoolHashesDBPrefix[:])
-				if err != nil {
-					return 0, 0, err
-				}
-			} else {
+			// if common.IsSyncing.Load() {
+			poolTx, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hash)
+			if err != nil {
 				return 0, 0, err
 			}
+			//TODO
+			//err = transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], hash)
+			//if err != nil {
+			//	return 0, 0, err
+			//}
+			err = poolTx.StoreToDBPoolTx(common.TransactionPoolHashesDBPrefix[:])
+			if err != nil {
+				return 0, 0, err
+			}
+			// } else {
+			// return 0, 0, err
+			// }
 		}
 		err = transactionsPool.CheckTransactionInDBAndInMarkleTrie(hash, tree)
 		if err != nil {
