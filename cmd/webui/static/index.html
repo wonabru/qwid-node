@@ -346,6 +346,13 @@
                 <h3>Network Stats</h3>
                 <div class="stats-grid">
                     <div class="stat-item">
+                        <div class="stat-label">Node Status</div>
+                        <div class="stat-value" id="nodeStatus">
+                            <span class="syncing-indicator" id="accountSyncIndicator"></span>
+                            <span id="syncStatusText">-</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
                         <div class="stat-label">Block Height</div>
                         <div class="stat-value" id="blockHeight">-</div>
                     </div>
@@ -873,10 +880,16 @@
                     document.getElementById('randOracle').textContent = res.randOracle;
 
                     const syncIndicator = document.getElementById('syncIndicator');
+                    const accountSyncIndicator = document.getElementById('accountSyncIndicator');
+                    const syncStatusText = document.getElementById('syncStatusText');
                     if (res.syncing) {
                         syncIndicator.classList.remove('synced');
+                        accountSyncIndicator.classList.remove('synced');
+                        syncStatusText.textContent = 'Syncing...';
                     } else {
                         syncIndicator.classList.add('synced');
+                        accountSyncIndicator.classList.add('synced');
+                        syncStatusText.textContent = 'Synced';
                     }
                 }
             } catch (e) {
