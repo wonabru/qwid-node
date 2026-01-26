@@ -1589,8 +1589,8 @@
         updateStats();
         checkWallet();
         loadLogFiles();
-        setInterval(updateStats, 1000);
-        setInterval(() => { if (walletLoaded) updateAccount(); }, 3000);
+        setInterval(updateStats, 10000);  // Every 10 seconds (was 1 second)
+        setInterval(() => { if (walletLoaded) updateAccount(); }, 30000);  // Every 30 seconds (was 3 seconds)
     </script>
 </body>
 </html>
