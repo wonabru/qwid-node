@@ -450,6 +450,7 @@ func OnMessage(addr [4]byte, m []byte) {
 				if len(hashesMissing) > 0 {
 					logger.GetLogger().Printf("Detected %d missing transactions during fund transfer", len(hashesMissing))
 					transactionServices.SendGT(addr, hashesMissing, "bt")
+					transactionServices.SendGT(addr, hashesMissing, "st")
 				}
 				services.ResetAccountsAndBlocksSync(oldBlock.GetHeader().Height)
 				return
