@@ -27,8 +27,14 @@ import (
 
 func main() {
 	var err error
-	// Disable logging (set to true to enable logs)
+	// Check for -log flag to enable logging
 	logger.LoggingEnabled = false
+	for _, arg := range os.Args[1:] {
+		if arg == "-log" || arg == "--log" {
+			logger.LoggingEnabled = true
+			break
+		}
+	}
 	logger.InitLogger()
 	defer logger.CloseLogger()
 	database.InitDB()
@@ -183,9 +189,18 @@ func main() {
 
 	time.Sleep(time.Second)
 
-	if len(os.Args) > 1 {
+	// Find peer IP argument (skip flags like -log)
+	var peerIPArg string
+	for _, arg := range os.Args[1:] {
+		if !strings.HasPrefix(arg, "-") {
+			peerIPArg = arg
+			break
+		}
+	}
+
+	if peerIPArg != "" {
 		logger.GetLogger().Println("Processing command line arguments...")
-		ips := strings.Split(os.Args[1], ".")
+		ips := strings.Split(peerIPArg, ".")
 		if len(ips) != 4 {
 			logger.GetLogger().Println("Invalid IP address format")
 			return

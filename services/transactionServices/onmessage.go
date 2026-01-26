@@ -48,25 +48,25 @@ func OnMessage(addr [4]byte, m []byte) {
 		// need to check transactions
 		for _, v := range txn {
 			for _, t := range v {
-				logger.GetLogger().Println("Processing transaction:", t.Hash.GetHex())
+				//logger.GetLogger().Println("Processing transaction:", t.Hash.GetHex())
 				pk := t.TxData.Pubkey
-				if len(pk.GetBytes()) > 0 {
-					logger.GetLogger().Println("  Transaction has pubkey, length:", len(pk.GetBytes()))
-				}
+				//if len(pk.GetBytes()) > 0 {
+				//	logger.GetLogger().Println("  Transaction has pubkey, length:", len(pk.GetBytes()))
+				//}
 				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
-					logger.GetLogger().Println("  Transaction already exists in Pool, skipping")
+					//logger.GetLogger().Println("  Transaction already exists in Pool, skipping")
 					// Even if already in pool, store the pubkey if present
 					if len(pk.GetBytes()) > 0 {
-						logger.GetLogger().Println("  Storing pubkey from existing transaction")
+						//logger.GetLogger().Println("  Storing pubkey from existing transaction")
 						storePubKeyFromTransaction(pk, t.GetSenderAddress())
 					}
 					continue
 				}
 				if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], t.Hash.GetBytes()) {
-					logger.GetLogger().Println("  Transaction already exists in DB, skipping")
+					//logger.GetLogger().Println("  Transaction already exists in DB, skipping")
 					// Even if already in DB, store the pubkey if present
 					if len(pk.GetBytes()) > 0 {
-						logger.GetLogger().Println("  Storing pubkey from existing transaction in DB")
+						//logger.GetLogger().Println("  Storing pubkey from existing transaction in DB")
 						storePubKeyFromTransaction(pk, t.GetSenderAddress())
 					}
 					continue
@@ -87,7 +87,7 @@ func OnMessage(addr [4]byte, m []byte) {
 					// Store pubkey immediately so it's available for nonce verification
 					pk := t.TxData.Pubkey
 					if len(pk.GetBytes()) > 0 {
-						logger.GetLogger().Println("Storing pubkey from transaction immediately")
+						//logger.GetLogger().Println("Storing pubkey from transaction immediately")
 						storePubKeyFromTransaction(pk, t.GetSenderAddress())
 					}
 					// Always broadcast local transactions (from RPC/wallet with addr 0.0.0.0)
@@ -107,7 +107,7 @@ func OnMessage(addr [4]byte, m []byte) {
 		for _, v := range rawTxn {
 			rawCount += len(v)
 		}
-		logger.GetLogger().Println("Received bx from", addr[:], "with", rawCount, "raw transactions")
+		//logger.GetLogger().Println("Received bx from", addr[:], "with", rawCount, "raw transactions")
 
 		txn, err := msg.GetTransactionsFromBytes(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2())
 		if err != nil {
