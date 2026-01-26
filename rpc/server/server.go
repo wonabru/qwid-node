@@ -131,6 +131,8 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 		handleMULT(byt, reply)
 	case "PEND":
 		handlePEND(byt, reply)
+	case "PEER":
+		handlePEER(byt, reply)
 	default:
 		*reply = []byte("Invalid operation")
 	}
@@ -520,6 +522,35 @@ func handlePEND(byt []byte, reply *[]byte) {
 	result, err := json.Marshal(pendingTxs)
 	if err != nil {
 		*reply = []byte("[]")
+		return
+	}
+	*reply = result
+}
+
+func handlePEER(byt []byte, reply *[]byte) {
+	type PeersResponse struct {
+		ConnectedPeers []map[string]interface{} `json:"connectedPeers"`
+		BannedPeers    []map[string]interface{} `json:"bannedPeers"`
+		WhitelistedIPs []string                 `json:"whitelistedIPs"`
+		PeerCount      int                      `json:"peerCount"`
+		BannedCount    int                      `json:"bannedCount"`
+	}
+
+	connectedPeers := tcpip.GetConnectedPeersInfo()
+	bannedPeers := tcpip.GetBannedPeersInfo()
+	whitelistedIPs := tcpip.GetWhitelistedIPs()
+
+	resp := PeersResponse{
+		ConnectedPeers: connectedPeers,
+		BannedPeers:    bannedPeers,
+		WhitelistedIPs: whitelistedIPs,
+		PeerCount:      len(connectedPeers),
+		BannedCount:    len(bannedPeers),
+	}
+
+	result, err := json.Marshal(resp)
+	if err != nil {
+		*reply = []byte("{\"error\":\"failed to marshal peer info\"}")
 		return
 	}
 	*reply = result

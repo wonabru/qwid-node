@@ -1614,6 +1614,24 @@ func TradeDex(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetPeers returns information about connected and banned peers
+func GetPeers(w http.ResponseWriter, r *http.Request) {
+	clientrpc.InRPC <- SignMessage([]byte("PEER"))
+	reply := <-clientrpc.OutRPC
+	if bytes.Equal(reply, []byte("Timeout")) {
+		jsonError(w, "Timeout", http.StatusGatewayTimeout)
+		return
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(reply, &resp); err != nil {
+		jsonError(w, "Failed to parse peer info", http.StatusInternalServerError)
+		return
+	}
+
+	jsonResponse(w, resp)
+}
+
 func jsonResponse(w http.ResponseWriter, data interface{}) {
 	json.NewEncoder(w).Encode(data)
 }

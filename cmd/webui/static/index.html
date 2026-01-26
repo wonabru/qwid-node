@@ -264,6 +264,7 @@
         <button class="tab" data-tab="smartcontract">Smart Contract</button>
         <button class="tab" data-tab="vote">Vote</button>
         <button class="tab" data-tab="dex">DEX</button>
+        <button class="tab" data-tab="peers">Peers</button>
         <button class="tab" data-tab="logs">Logs</button>
     </div>
 
@@ -723,6 +724,38 @@
             </div>
         </div>
 
+        <!-- Peers Panel -->
+        <div class="panel" id="panel-peers">
+            <div class="card">
+                <h3>Network Peers</h3>
+                <div style="display:flex;gap:10px;margin-bottom:15px;align-items:center;">
+                    <button class="btn-secondary" onclick="updatePeers()">Refresh</button>
+                    <span id="peerSummary" style="color:#888;font-size:12px;margin-left:auto;"></span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Connected Peers</h3>
+                <div id="connectedPeersContainer">
+                    <p style="color:#666;">Loading peer information...</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Banned Peers</h3>
+                <div id="bannedPeersContainer">
+                    <p style="color:#666;">No banned peers</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Whitelisted IPs</h3>
+                <div id="whitelistedIPsContainer">
+                    <p style="color:#666;">Loading...</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Logs Panel -->
         <div class="panel" id="panel-logs">
             <div class="card">
@@ -774,6 +807,10 @@
                 document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
                 tab.classList.add('active');
                 document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+                // Load data for specific tabs
+                if (tab.dataset.tab === 'peers') {
+                    updatePeers();
+                }
             });
         });
 
@@ -923,6 +960,77 @@
                 }
             } catch (e) {
                 console.error('Failed to update account:', e);
+            }
+        }
+
+        // Update peers
+        async function updatePeers() {
+            try {
+                const res = await api('/api/peers');
+                if (!res.error) {
+                    // Update summary
+                    document.getElementById('peerSummary').textContent =
+                        `Connected: ${res.peerCount} | Banned: ${res.bannedCount}`;
+
+                    // Connected peers
+                    if (res.connectedPeers && res.connectedPeers.length > 0) {
+                        let html = '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+                        html += '<tr style="background:#1a1a2e;"><th style="padding:8px;text-align:left;">IP Address</th>';
+                        html += '<th style="padding:8px;text-align:center;">Trust</th>';
+                        html += '<th style="padding:8px;text-align:center;">Node Peer</th>';
+                        html += '<th style="padding:8px;text-align:left;">Topics</th></tr>';
+                        res.connectedPeers.forEach((p, i) => {
+                            const bg = i % 2 === 0 ? '#16213e' : '#1a1a2e';
+                            html += `<tr style="background:${bg};">`;
+                            html += `<td style="padding:8px;font-family:monospace;">${p.ip}</td>`;
+                            html += `<td style="padding:8px;text-align:center;">${p.trustLevel}</td>`;
+                            html += `<td style="padding:8px;text-align:center;">${p.isNodePeer ? '<span style="color:#00ff64;">Yes</span>' : '<span style="color:#666;">No</span>'}</td>`;
+                            html += `<td style="padding:8px;">${p.topics ? p.topics.join(', ') : '-'}</td>`;
+                            html += '</tr>';
+                        });
+                        html += '</table>';
+                        document.getElementById('connectedPeersContainer').innerHTML = html;
+                    } else {
+                        document.getElementById('connectedPeersContainer').innerHTML =
+                            '<p style="color:#666;">No connected peers</p>';
+                    }
+
+                    // Banned peers
+                    if (res.bannedPeers && res.bannedPeers.length > 0) {
+                        let html = '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+                        html += '<tr style="background:#1a1a2e;"><th style="padding:8px;text-align:left;">IP Address</th>';
+                        html += '<th style="padding:8px;text-align:center;">Remaining Time</th></tr>';
+                        res.bannedPeers.forEach((p, i) => {
+                            const bg = i % 2 === 0 ? '#16213e' : '#1a1a2e';
+                            const mins = Math.floor(p.remainingTime / 60);
+                            const secs = p.remainingTime % 60;
+                            html += `<tr style="background:${bg};">`;
+                            html += `<td style="padding:8px;font-family:monospace;color:#ff6b6b;">${p.ip}</td>`;
+                            html += `<td style="padding:8px;text-align:center;">${mins}m ${secs}s</td>`;
+                            html += '</tr>';
+                        });
+                        html += '</table>';
+                        document.getElementById('bannedPeersContainer').innerHTML = html;
+                    } else {
+                        document.getElementById('bannedPeersContainer').innerHTML =
+                            '<p style="color:#666;">No banned peers</p>';
+                    }
+
+                    // Whitelisted IPs
+                    if (res.whitelistedIPs && res.whitelistedIPs.length > 0) {
+                        let html = '<div style="display:flex;flex-wrap:wrap;gap:10px;">';
+                        res.whitelistedIPs.forEach(ip => {
+                            html += `<span style="background:#1a1a2e;padding:5px 10px;border-radius:4px;font-family:monospace;font-size:12px;">${ip}</span>`;
+                        });
+                        html += '</div>';
+                        document.getElementById('whitelistedIPsContainer').innerHTML = html;
+                    } else {
+                        document.getElementById('whitelistedIPsContainer').innerHTML =
+                            '<p style="color:#666;">No whitelisted IPs</p>';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to update peers:', e);
             }
         }
 

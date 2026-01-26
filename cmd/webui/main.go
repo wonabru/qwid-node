@@ -83,6 +83,7 @@ func main() {
 	mux.HandleFunc("/api/smartcontract/call", corsMiddleware(handlers.CallSmartContract))
 	mux.HandleFunc("/api/logs", corsMiddleware(handlers.GetLogs))
 	mux.HandleFunc("/api/logs/files", corsMiddleware(handlers.GetLogFiles))
+	mux.HandleFunc("/api/peers", corsMiddleware(handlers.GetPeers))
 
 	// Serve static files
 	staticFS, _ := fs.Sub(staticFiles, "static")

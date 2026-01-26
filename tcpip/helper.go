@@ -3,10 +3,12 @@ package tcpip
 import (
 	"bytes"
 	"context"
-	"github.com/wonabru/qwid-node/common"
-	"github.com/wonabru/qwid-node/logger"
+	"fmt"
 	"sync"
 	"time"
+
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/logger"
 )
 
 var bannedIP map[[4]byte]int64
@@ -97,4 +99,89 @@ func ReduceAndCheckIfBanIP(ip [4]byte) {
 			BanIP(ip)
 		}
 	}
+}
+
+// GetConnectedPeersInfo returns info about all connected peers
+func GetConnectedPeersInfo() []map[string]interface{} {
+	PeersMutex.RLock()
+	defer PeersMutex.RUnlock()
+
+	peers := []map[string]interface{}{}
+	seen := map[[4]byte]bool{}
+
+	for ip, trust := range nodePeersConnected {
+		if bytes.Equal(ip[:], MyIP[:]) {
+			continue
+		}
+		if seen[ip] {
+			continue
+		}
+		seen[ip] = true
+
+		validTrust := 0
+		if t, ok := validPeersConnected[ip]; ok {
+			validTrust = t
+		}
+
+		// Check which topics this peer is connected on
+		topics := []string{}
+		for topic, conns := range tcpConnections {
+			if _, ok := conns[ip]; ok {
+				switch topic {
+				case TransactionTopic:
+					topics = append(topics, "transactions")
+				case NonceTopic:
+					topics = append(topics, "nonce")
+				case SelfNonceTopic:
+					topics = append(topics, "self-nonce")
+				case SyncTopic:
+					topics = append(topics, "sync")
+				}
+			}
+		}
+
+		peers = append(peers, map[string]interface{}{
+			"ip":         formatIP(ip),
+			"trustLevel": trust,
+			"validTrust": validTrust,
+			"isNodePeer": trust > 1,
+			"topics":     topics,
+		})
+	}
+
+	return peers
+}
+
+// GetBannedPeersInfo returns info about all banned peers
+func GetBannedPeersInfo() []map[string]interface{} {
+	bannedIPMutex.RLock()
+	defer bannedIPMutex.RUnlock()
+
+	now := common.GetCurrentTimeStampInSecond()
+	banned := []map[string]interface{}{}
+
+	for ip, expiration := range bannedIP {
+		if expiration > now {
+			banned = append(banned, map[string]interface{}{
+				"ip":            formatIP(ip),
+				"banExpiration": expiration,
+				"remainingTime": expiration - now,
+			})
+		}
+	}
+
+	return banned
+}
+
+// GetWhitelistedIPs returns list of whitelisted IPs
+func GetWhitelistedIPs() []string {
+	ips := []string{}
+	for ip := range whiteListIPs {
+		ips = append(ips, formatIP(ip))
+	}
+	return ips
+}
+
+func formatIP(ip [4]byte) string {
+	return fmt.Sprintf("%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3])
 }
