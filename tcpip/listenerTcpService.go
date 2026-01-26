@@ -132,6 +132,15 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 		ipport = fmt.Sprintf(":%d", Ports[topic])
 	}
 
+	// Check if connection already exists
+	PeersMutex.RLock()
+	if existingConn, ok := tcpConnections[topic][ip]; ok && existingConn != nil {
+		PeersMutex.RUnlock()
+		logger.GetLogger().Printf("Connection to %s for topic %v already exists, skipping", ipport, topic)
+		return
+	}
+	PeersMutex.RUnlock()
+
 	logger.GetLogger().Printf("Attempting to connect to %s for topic %v", ipport, topic)
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", ipport)

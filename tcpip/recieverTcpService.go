@@ -293,38 +293,28 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 	PeersMutex.Lock()
 	defer PeersMutex.Unlock()
 
-	// Check if we already have a connection for this peer
-	if existingConn, ok := tcpConnections[topic][ip]; ok {
-		logger.GetLogger().Println("connection just exists")
-		//return false
-		// Try to close the existing connection if it's still open
-		if existingConn != nil {
-			err := existingConn.SetKeepAlivePeriod(time.Duration(rand.Intn(10)) * time.Second)
-			if err != nil {
-				logger.GetLogger().Printf("Error setting keep-alive period. Closing for peer %v on topic %v", ip, topic)
-				return false
-			} else {
-				logger.GetLogger().Printf("active existing connection for peer %v on topic %v", ip, topic)
-				return true
-			}
-		}
-
-	} else {
-		validPeersConnected[ip] = common.ConnectionMaxTries
-	}
-
-	logger.GetLogger().Printf("Registering new connection from address %s on topic %v", ra[0], topic)
-
 	// Initialize the map for the topic if it doesn't exist
 	if _, ok := tcpConnections[topic]; !ok {
 		tcpConnections[topic] = make(map[[4]byte]*net.TCPConn)
 	}
 
+	// Check if we already have a connection for this peer
+	if existingConn, ok := tcpConnections[topic][ip]; ok {
+		// Close the old connection and replace with new one
+		if existingConn != nil {
+			existingConn.Close()
+		}
+		logger.GetLogger().Printf("Replacing existing connection for peer %v on topic %v", ip, topic)
+	}
+
 	// Register the new connection
 	tcpConnections[topic][ip] = tcpConn
 	peersConnected[topicipBytes] = topic
-	return true
+	validPeersConnected[ip] = common.ConnectionMaxTries
+	nodePeersConnected[ip] = common.ConnectionMaxTries
 
+	logger.GetLogger().Printf("Registered connection from %s on topic %v", ra[0], topic)
+	return true
 }
 
 func GetPeersConnected(topic [2]byte) map[[6]byte][2]byte {
