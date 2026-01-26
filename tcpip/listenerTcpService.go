@@ -167,9 +167,20 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 		return
 	}
 
-	if topic == TransactionTopic {
-		logger.GetLogger().Printf("Successfully connected for TRANSACTIONS TOPIC with %v", ip)
+	// Register the outbound connection so it can be used for sending
+	PeersMutex.Lock()
+	if _, ok := tcpConnections[topic]; !ok {
+		tcpConnections[topic] = make(map[[4]byte]*net.TCPConn)
 	}
+	tcpConnections[topic][ip] = tcpConn
+	var topicipBytes [6]byte
+	copy(topicipBytes[:], append(topic[:], ip[:]...))
+	peersConnected[topicipBytes] = topic
+	validPeersConnected[ip] = common.ConnectionMaxTries
+	nodePeersConnected[ip] = common.ConnectionMaxTries
+	PeersMutex.Unlock()
+
+	logger.GetLogger().Printf("Successfully connected and registered for topic %v with %v", topic, ip)
 
 	reconnectionTries := 0
 	resetNumber := 0
