@@ -36,7 +36,7 @@ var (
 	// require multiple peers to confirm before syncing
 	MaxHeightJumpWithoutConsensus int64 = 4
 	// MinPeersForLargeSync - minimum peers that must agree on height for large syncs
-	MinPeersForLargeSync = 1 // for purpose of production > 2
+	MinPeersForLargeSync = 0 // for purpose of production > 2
 	// ClaimExpiryDuration - how long before a height claim expires
 	ClaimExpiryDuration = 30 * time.Second
 )
