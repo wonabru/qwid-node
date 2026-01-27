@@ -93,7 +93,7 @@ func OnMessage(addr [4]byte, m []byte) {
 					// Always broadcast local transactions (from RPC/wallet with addr 0.0.0.0)
 					// For remote transactions, only broadcast if not syncing
 					isLocalTx := addr == [4]byte{0, 0, 0, 0}
-					if isLocalTx || !common.IsSyncing.Load() {
+					if isLocalTx { // || !common.IsSyncing.Load() {
 						BroadcastTxn(addr, m)
 					}
 				}

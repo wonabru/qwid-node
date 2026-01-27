@@ -34,7 +34,7 @@ func generateSyncMsgHeight() []byte {
 	n.TransactionsBytes[[2]byte{'L', 'H'}] = [][]byte{common.GetByteInt64(h)}
 	lastBlockHash, err := blocks.LoadHashOfBlock(h)
 	if err != nil {
-		logger.GetLogger().Println("Can not obtain root hashes from DB", err)
+		logger.GetLogger().Printf("generateSyncMsgHeight: Can not load hash for block %d: %v", h, err)
 		return []byte("")
 	}
 	n.TransactionsBytes[[2]byte{'L', 'B'}] = [][]byte{lastBlockHash}
@@ -109,7 +109,7 @@ func generateSyncMsgSendHeaders(bHeight int64, height int64) []byte {
 		indices = append(indices, common.GetByteInt64(i))
 		block, err := blocks.LoadBlock(i)
 		if err != nil {
-			logger.GetLogger().Println(err)
+			logger.GetLogger().Printf("generateSyncMsgSendHeaders: failed to load block %d: %v", i, err)
 			return []byte{}
 		}
 		blcks = append(blcks, block.GetBytes())
@@ -128,9 +128,16 @@ func SendHeaders(addr [4]byte, bHeight int64, height int64) {
 }
 
 func SendGetHeaders(addr [4]byte, height int64) {
+	logger.GetLogger().Printf("SendGetHeaders called for addr %v, height %d", addr, height)
 	n := generateSyncMsgGetHeaders(height)
+	if len(n) == 0 {
+		logger.GetLogger().Println("SendGetHeaders: generateSyncMsgGetHeaders returned empty")
+		return
+	}
 	if !Send(addr, n) {
-		logger.GetLogger().Println("could not send get headers")
+		logger.GetLogger().Println("could not send get headers - Send failed")
+	} else {
+		logger.GetLogger().Printf("SendGetHeaders: successfully sent to %v", addr)
 	}
 }
 

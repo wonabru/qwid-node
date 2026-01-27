@@ -175,8 +175,7 @@ func Accept(topic [2]byte, conn *net.TCPListener) (*net.TCPConn, error) {
 
 	if !RegisterPeer(topic, tcpConn) {
 		tcpConn.Close()
-		FullyDeleteConnection(tcpConn)
-		return nil, fmt.Errorf("error with registration of connection: %v", err.Error())
+		return nil, fmt.Errorf("registration failed for connection")
 	}
 	tcpConn.SetKeepAlive(true)
 	return tcpConn, nil
@@ -299,12 +298,9 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 	}
 
 	// Check if we already have a connection for this peer
-	if existingConn, ok := tcpConnections[topic][ip]; ok {
-		// Close the old connection and replace with new one
-		if existingConn != nil {
-			existingConn.Close()
-		}
-		logger.GetLogger().Printf("Replacing existing connection for peer %v on topic %v", ip, topic)
+	if _, ok := tcpConnections[topic][ip]; ok {
+		// Don't close old connection - let its goroutine handle cleanup
+		logger.GetLogger().Printf("Replacing connection for peer %v on topic %v", ip, topic)
 	}
 
 	// Register the new connection

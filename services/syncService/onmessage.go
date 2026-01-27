@@ -36,7 +36,7 @@ var (
 	// require multiple peers to confirm before syncing
 	MaxHeightJumpWithoutConsensus int64 = 4
 	// MinPeersForLargeSync - minimum peers that must agree on height for large syncs
-	MinPeersForLargeSync = 1 // for purpose of production > 2
+	MinPeersForLargeSync = 0 // for purpose of production > 2
 	// ClaimExpiryDuration - how long before a height claim expires
 	ClaimExpiryDuration = 30 * time.Second
 )
@@ -136,6 +136,7 @@ func OnMessage(addr [4]byte, m []byte) {
 		return
 	}
 	tcpip.ValidRegisterPeer(addr)
+	logger.GetLogger().Printf("Sync OnMessage received from %v, head: %s", addr, string(amsg.GetHead()))
 	switch string(amsg.GetHead()) {
 	case "hi": // getheader
 
@@ -219,7 +220,9 @@ func OnMessage(addr [4]byte, m []byte) {
 		}
 
 		common.IsSyncing.Store(true)
+		logger.GetLogger().Printf("About to call SendGetHeaders to %v for height %d (local height: %d)", addr, validatedHeight, h)
 		SendGetHeaders(addr, validatedHeight)
+		logger.GetLogger().Printf("SendGetHeaders returned for addr %v", addr)
 		return
 	case "sh":
 
