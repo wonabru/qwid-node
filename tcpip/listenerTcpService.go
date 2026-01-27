@@ -107,8 +107,7 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 							}
 						}
 					} else {
-						//fmt.Println("no connection to given ip", ipr, topic)
-						//BanIP(ipr, topic)
+						logger.GetLogger().Printf("LoopSend: no connection to %v for topic %v - message dropped", ipr, topic)
 					}
 
 				}
