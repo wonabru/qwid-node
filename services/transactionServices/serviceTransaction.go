@@ -61,23 +61,23 @@ Q:
 	for range time.Tick(time.Second) {
 
 		// Broadcast pending transactions to all connected peers
-		if !common.IsSyncing.Load() {
-			txs := transactionsPool.PoolsTx.PeekTransactions(int(common.MaxTransactionsPerBlock), 0)
-			if len(txs) > 0 {
-				topic := [2]byte{'T', 'T'}
-				n, err := GenerateTransactionMsg(txs, []byte("tx"), topic)
-				if err == nil {
-					// Send to all connected peers
-					peers := tcpip.GetPeersConnected(tcpip.TransactionTopic)
-					for topicip := range peers {
-						var ip [4]byte
-						copy(ip[:], topicip[2:])
-						if !bytes.Equal(ip[:], tcpip.MyIP[:]) {
-							Send(ip, n.GetBytes())
-						}
+		// if !common.IsSyncing.Load() {
+		txs := transactionsPool.PoolsTx.PeekTransactions(int(common.MaxTransactionsPerBlock), 0)
+		if len(txs) > 0 {
+			topic := [2]byte{'T', 'T'}
+			n, err := GenerateTransactionMsg(txs, []byte("tx"), topic)
+			if err == nil {
+				// Send to all connected peers
+				peers := tcpip.GetPeersConnected(tcpip.TransactionTopic)
+				for topicip := range peers {
+					var ip [4]byte
+					copy(ip[:], topicip[2:])
+					if !bytes.Equal(ip[:], tcpip.MyIP[:]) {
+						Send(ip, n.GetBytes())
 					}
 				}
 			}
+			// }
 		}
 
 		timeout := time.After(time.Second)

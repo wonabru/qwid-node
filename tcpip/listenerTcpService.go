@@ -315,29 +315,19 @@ func CloseAndRemoveConnection(tcpConn *net.TCPConn) [][]byte {
 	}
 
 	topicipBytes := [6]byte{}
-	// Method 2: Compare TCP addresses directly (more robust)
-	remoteAddr := tcpConn.RemoteAddr().(*net.TCPAddr)
-	localAddr := tcpConn.LocalAddr().(*net.TCPAddr)
 	deletedIP := [][]byte{}
-	// Find and remove the connection
+	// Find and remove the connection using pointer comparison
 	for topic, connections := range tcpConnections {
 		for peerIP, conn := range connections {
-			rTCPAddr, ok := conn.RemoteAddr().(*net.TCPAddr)
-			lTCPAddr, ok2 := conn.LocalAddr().(*net.TCPAddr)
-			// Using direct TCP address comparison for more robust matching
-			if ok && ok2 {
-				if (rTCPAddr.IP.Equal(remoteAddr.IP) || lTCPAddr.IP.Equal(remoteAddr.IP)) && (rTCPAddr.Port == localAddr.Port || lTCPAddr.Port == localAddr.Port || rTCPAddr.Port == remoteAddr.Port || lTCPAddr.Port == remoteAddr.Port) {
-					fmt.Printf("Closing connection for topic %v, peer %v (IP: %v, Port: %d)\n",
-						topic, peerIP, remoteAddr.IP, remoteAddr.Port)
-
-					deletedIP = append(deletedIP, append(topic[:], peerIP[:]...))
-					fmt.Println("Closing connection (send)", topic, peerIP)
-					tcpConnections[topic][peerIP].Close()
-					copy(topicipBytes[:], append(topic[:], peerIP[:]...))
-					delete(tcpConnections[topic], peerIP)
-					delete(peersConnected, topicipBytes)
-					delete(oldPeers, topicipBytes)
-				}
+			if conn == tcpConn {
+				logger.GetLogger().Printf("Closing connection for topic %v, peer %v", topic, peerIP)
+				deletedIP = append(deletedIP, append(topic[:], peerIP[:]...))
+				tcpConn.Close()
+				copy(topicipBytes[:], append(topic[:], peerIP[:]...))
+				delete(tcpConnections[topic], peerIP)
+				delete(peersConnected, topicipBytes)
+				delete(oldPeers, topicipBytes)
+				return deletedIP
 			}
 		}
 	}

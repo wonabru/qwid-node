@@ -34,7 +34,7 @@ func generateSyncMsgHeight() []byte {
 	n.TransactionsBytes[[2]byte{'L', 'H'}] = [][]byte{common.GetByteInt64(h)}
 	lastBlockHash, err := blocks.LoadHashOfBlock(h)
 	if err != nil {
-		logger.GetLogger().Println("Can not obtain root hashes from DB", err)
+		logger.GetLogger().Printf("generateSyncMsgHeight: Can not load hash for block %d: %v", h, err)
 		return []byte("")
 	}
 	n.TransactionsBytes[[2]byte{'L', 'B'}] = [][]byte{lastBlockHash}
@@ -109,7 +109,7 @@ func generateSyncMsgSendHeaders(bHeight int64, height int64) []byte {
 		indices = append(indices, common.GetByteInt64(i))
 		block, err := blocks.LoadBlock(i)
 		if err != nil {
-			logger.GetLogger().Println(err)
+			logger.GetLogger().Printf("generateSyncMsgSendHeaders: failed to load block %d: %v", i, err)
 			return []byte{}
 		}
 		blcks = append(blcks, block.GetBytes())
