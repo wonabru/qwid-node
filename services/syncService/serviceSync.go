@@ -128,9 +128,16 @@ func SendHeaders(addr [4]byte, bHeight int64, height int64) {
 }
 
 func SendGetHeaders(addr [4]byte, height int64) {
+	logger.GetLogger().Printf("SendGetHeaders called for addr %v, height %d", addr, height)
 	n := generateSyncMsgGetHeaders(height)
+	if len(n) == 0 {
+		logger.GetLogger().Println("SendGetHeaders: generateSyncMsgGetHeaders returned empty")
+		return
+	}
 	if !Send(addr, n) {
-		logger.GetLogger().Println("could not send get headers")
+		logger.GetLogger().Println("could not send get headers - Send failed")
+	} else {
+		logger.GetLogger().Printf("SendGetHeaders: successfully sent to %v", addr)
 	}
 }
 
