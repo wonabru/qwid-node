@@ -97,18 +97,19 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 						logger.GetLogger().Println("ignore when send to ", ipr)
 						//CloseAndRemoveConnection(tcpConn)
 					} else if ok {
-						//logger.GetLogger().Println("send to ip", ipr)
+						logger.GetLogger().Printf("LoopSend: sending to %v for topic %v", ipr, topic)
 						err := Send(tcpConn, s[4:])
 						if err != nil {
-							logger.GetLogger().Println("error in sending to ", ipr, err)
+							logger.GetLogger().Printf("LoopSend: error sending to %v: %v", ipr, err)
 							deletedIP := CloseAndRemoveConnection(tcpConn)
 							if len(deletedIP) >= 1 {
 								ChanPeer <- deletedIP[0]
 							}
+						} else {
+							logger.GetLogger().Printf("LoopSend: successfully sent to %v for topic %v", ipr, topic)
 						}
 					} else {
-						//fmt.Println("no connection to given ip", ipr, topic)
-						//BanIP(ipr, topic)
+						logger.GetLogger().Printf("LoopSend: no connection to %v for topic %v - message dropped. Available IPs for this topic: %d", ipr, topic, len(tcpConns))
 					}
 
 				}
