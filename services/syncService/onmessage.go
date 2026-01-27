@@ -485,11 +485,12 @@ func OnMessage(addr [4]byte, m []byte) {
 		}
 
 	case "gh":
-
+		logger.GetLogger().Printf("Received gh (get headers) request from %v", addr)
 		txn := amsg.(message.TransactionsMessage).GetTransactionsBytes()
 
 		bHeight := common.GetInt64FromByte(txn[[2]byte{'B', 'H'}][0])
 		eHeight := common.GetInt64FromByte(txn[[2]byte{'E', 'H'}][0])
+		logger.GetLogger().Printf("gh request: bHeight=%d, eHeight=%d, sending headers to %v", bHeight, eHeight, addr)
 		SendHeaders(addr, bHeight, eHeight)
 	default:
 	}
