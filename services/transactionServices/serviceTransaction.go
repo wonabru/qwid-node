@@ -169,7 +169,6 @@ func StartSubscribingTransactionMsg(ip [4]byte) {
 		select {
 		case s := <-recvChan:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
-				logger.GetLogger().Printf("Received EXIT signal for peer %v", ip)
 				quit = true
 				break
 			}
@@ -184,5 +183,4 @@ func StartSubscribingTransactionMsg(ip [4]byte) {
 			time.Sleep(time.Millisecond * 100) // Reduced sleep time
 		}
 	}
-	logger.GetLogger().Println("Exiting transaction message receiving loop for peer:", ip)
 }
