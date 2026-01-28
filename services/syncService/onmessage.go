@@ -136,7 +136,6 @@ func OnMessage(addr [4]byte, m []byte) {
 		return
 	}
 	tcpip.ValidRegisterPeer(addr)
-	logger.GetLogger().Printf("Sync OnMessage received from %v, head: %s", addr, string(amsg.GetHead()))
 	switch string(amsg.GetHead()) {
 	case "hi": // getheader
 
@@ -220,9 +219,7 @@ func OnMessage(addr [4]byte, m []byte) {
 		}
 
 		common.IsSyncing.Store(true)
-		logger.GetLogger().Printf("About to call SendGetHeaders to %v for height %d (local height: %d)", addr, validatedHeight, h)
 		SendGetHeaders(addr, validatedHeight)
-		logger.GetLogger().Printf("SendGetHeaders returned for addr %v", addr)
 		return
 	case "sh":
 
@@ -280,14 +277,11 @@ func OnMessage(addr [4]byte, m []byte) {
 		hashesMissingAll := [][]byte{}
 		lastGoodBlock := indices[0]
 		merkleTries := map[int64]*transactionsPool.MerkleTree{}
-		logger.GetLogger().Printf("Starting block verification for %d blocks", len(blcks))
 		for i := 0; i < len(blcks); i++ {
 			header := blcks[i].GetHeader()
 			index := indices[i]
-			logger.GetLogger().Printf("Processing block %d/%d - Height: %d, Index: %d", i+1, len(blcks), header.Height, index)
 
 			if index <= 0 {
-				logger.GetLogger().Printf("Skipping block with invalid index: %d", index)
 				continue
 			}
 			block := blcks[i]
@@ -295,7 +289,6 @@ func OnMessage(addr [4]byte, m []byte) {
 			if index <= h {
 				hashOfMyBlockBytes, err := blocks.LoadHashOfBlock(index)
 				if err != nil {
-					logger.GetLogger().Printf("ERROR: Failed to load block hash for index %d: %v", index, err)
 					defer services.AdjustShiftInPastInReset(hmax)
 					common.ShiftToPastMutex.RLock()
 					defer common.ShiftToPastMutex.RUnlock()
@@ -303,7 +296,6 @@ func OnMessage(addr [4]byte, m []byte) {
 					panic("cannot load block hash")
 				}
 				if bytes.Equal(block.BlockHash.GetBytes(), hashOfMyBlockBytes) {
-					logger.GetLogger().Printf("Block %d matches existing block, marking as lastGoodBlock", index)
 					lastGoodBlock = index
 					continue
 				}

@@ -302,7 +302,7 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 		// Close the old connection before replacing it, so the other node's
 		// outbound receive loop gets a clean EOF instead of lingering and
 		// triggering repeated reconnections.
-		logger.GetLogger().Printf("Replacing connection for peer %v on topic %v with accepted connection, closing old", ip, topic)
+		logger.GetLogger().Printf("Replacing connection for %v on topic %v", ip, topic)
 		oldConn.Close()
 	}
 
@@ -312,7 +312,6 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 	validPeersConnected[ip] = common.ConnectionMaxTries
 	nodePeersConnected[ip] = common.ConnectionMaxTries
 
-	logger.GetLogger().Printf("Registered connection from %s on topic %v", ra[0], topic)
 	return true
 }
 

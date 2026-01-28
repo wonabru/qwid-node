@@ -88,17 +88,12 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 					if _, ok2 := validPeersConnected[ipr]; !ok2 {
 						logger.GetLogger().Println("ignore when send to ", ipr)
 					} else if ok {
-						logger.GetLogger().Printf("LoopSend: sending to %v for topic %v", ipr, topic)
 						err := Send(tcpConn, s[4:])
 						if err != nil {
 							logger.GetLogger().Printf("LoopSend: error sending to %v: %v", ipr, err)
 							deleted := CloseAndRemoveConnection(tcpConn)
 							deletedIPs = append(deletedIPs, deleted...)
-						} else {
-							logger.GetLogger().Printf("LoopSend: successfully sent to %v for topic %v", ipr, topic)
 						}
-					} else {
-						logger.GetLogger().Printf("LoopSend: no connection to %v for topic %v - message dropped. Available IPs for this topic: %d", ipr, topic, len(tcpConns))
 					}
 
 				}
@@ -171,7 +166,7 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 	// only use this outbound connection for the receive loop.
 	outboundStoredInMap := false
 	if existingConn, exists := tcpConnections[topic][ip]; exists {
-		logger.GetLogger().Printf("Keeping existing accepted connection for sending to %v on topic %v, using new outbound for receiving", ip, topic)
+		logger.GetLogger().Printf("Keeping existing connection for %v on topic %v", ip, topic)
 		_ = existingConn // keep existing connection in tcpConnections for LoopSend
 	} else {
 		tcpConnections[topic][ip] = tcpConn
@@ -216,7 +211,6 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 		}
 	}()
 
-	logger.GetLogger().Printf("Starting message processing loop for connection to %v", ip)
 
 	rTopic := map[[2]byte][]byte{}
 

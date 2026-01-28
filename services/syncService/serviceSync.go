@@ -121,30 +121,22 @@ func generateSyncMsgSendHeaders(bHeight int64, height int64) []byte {
 }
 
 func SendHeaders(addr [4]byte, bHeight int64, height int64) {
-	logger.GetLogger().Printf("SendHeaders: generating headers from %d to %d for %v", bHeight, height, addr)
 	n := generateSyncMsgSendHeaders(bHeight, height)
 	if len(n) == 0 {
-		logger.GetLogger().Printf("SendHeaders: generateSyncMsgSendHeaders returned empty for %v", addr)
 		return
 	}
 	if !Send(addr, n) {
-		logger.GetLogger().Printf("SendHeaders: could not send headers to %v", addr)
-	} else {
-		logger.GetLogger().Printf("SendHeaders: successfully queued headers for %v", addr)
+		logger.GetLogger().Printf("SendHeaders: could not send to %v", addr)
 	}
 }
 
 func SendGetHeaders(addr [4]byte, height int64) {
-	logger.GetLogger().Printf("SendGetHeaders called for addr %v, height %d", addr, height)
 	n := generateSyncMsgGetHeaders(height)
 	if len(n) == 0 {
-		logger.GetLogger().Println("SendGetHeaders: generateSyncMsgGetHeaders returned empty")
 		return
 	}
 	if !Send(addr, n) {
-		logger.GetLogger().Println("could not send get headers - Send failed")
-	} else {
-		logger.GetLogger().Printf("SendGetHeaders: successfully sent to %v", addr)
+		logger.GetLogger().Println("could not send get headers")
 	}
 }
 
