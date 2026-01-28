@@ -364,6 +364,7 @@ func GetPeersCount() int {
 func LookUpForNewPeersToConnect(chanPeer chan []byte) {
 	for {
 		PeersMutex.Lock()
+		logger.GetLogger().Printf("LookUpForNewPeersToConnect: checking %d peers in peersConnected, %d in oldPeers", len(peersConnected), len(oldPeers))
 		for topicip, topic := range peersConnected {
 			_, ok := oldPeers[topicip]
 			if ok == false {
