@@ -171,7 +171,6 @@ func StartSubscribingSyncMsg(ip [4]byte) {
 	quit := false
 	var ipr [4]byte
 	go tcpip.StartNewConnection(ip, recvChan, tcpip.SyncTopic)
-	logger.GetLogger().Println("Enter connection receiving loop (sync msg)", ip)
 	for !services.QUIT.Load() && !quit {
 		select {
 		case s := <-recvChan:

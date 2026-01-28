@@ -242,7 +242,6 @@ func StartSubscribingNonceMsg(ip [4]byte) {
 	quit := false
 	var ipr [4]byte
 	go tcpip.StartNewConnection(ip, recvChan, tcpip.NonceTopic)
-	logger.GetLogger().Println("Enter connection receiving loop (nonce msg)", ip)
 	for !services.QUIT.Load() && !quit {
 		select {
 		case s := <-recvChan:
@@ -292,7 +291,6 @@ func StartSubscribingNonceMsgSelf() {
 	var ip [4]byte
 	go tcpip.StartNewConnection(tcpip.MyIP, recvChanSelf, tcpip.SelfNonceTopic)
 	go sendNonceMsgInLoopSelf(recvChanExit)
-	logger.GetLogger().Println("Enter connection receiving loop (nonce msg self)")
 	for !services.QUIT.Load() && !quit {
 		select {
 		case s := <-recvChanSelf:

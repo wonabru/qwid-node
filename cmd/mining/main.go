@@ -183,7 +183,6 @@ func main() {
 	go nonceService.StartSubscribingNonceMsgSelf()
 	go nonceService.StartSubscribingNonceMsg(tcpip.MyIP)
 
-	logger.GetLogger().Println("Starting transaction and sync message subscriptions...")
 	go transactionServices.StartSubscribingTransactionMsg(tcpip.MyIP)
 	go syncServices.StartSubscribingSyncMsg(tcpip.MyIP)
 
@@ -236,22 +235,16 @@ QF:
 		case topicip := <-tcpip.ChanPeer:
 			copy(topic[:], topicip[:2])
 			copy(ip[:], topicip[2:])
-			logger.GetLogger().Printf("Received peer message - Topic: %s, IP: %v", string(topic[:]), ip)
-
 			if topic[0] == 'T' {
-				logger.GetLogger().Println("Starting transaction subscription for peer:", ip)
 				go transactionServices.StartSubscribingTransactionMsg(ip)
 			}
 			if topic[0] == 'N' {
-				logger.GetLogger().Println("Starting nonce subscription for peer:", ip)
 				go nonceService.StartSubscribingNonceMsg(ip)
 			}
 			if topic[0] == 'S' {
-				logger.GetLogger().Println("Starting self nonce subscription")
 				go nonceService.StartSubscribingNonceMsgSelf()
 			}
 			if topic[0] == 'B' {
-				logger.GetLogger().Println("Starting sync subscription for peer:", ip)
 				go syncServices.StartSubscribingSyncMsg(ip)
 			}
 
