@@ -189,5 +189,4 @@ func StartSubscribingSyncMsg(ip [4]byte) {
 			time.Sleep(time.Millisecond)
 		}
 	}
-	logger.GetLogger().Println("Exit connection receiving loop (sync msg)", ip)
 }

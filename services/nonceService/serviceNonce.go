@@ -268,7 +268,6 @@ func StartSubscribingNonceMsg(ip [4]byte) {
 			time.Sleep(time.Millisecond)
 		}
 	}
-	logger.GetLogger().Println("Exit connection receiving loop (nonce msg)", ip)
 }
 
 func sendReply(addr [4]byte) {
@@ -311,5 +310,4 @@ func StartSubscribingNonceMsgSelf() {
 			time.Sleep(time.Millisecond)
 		}
 	}
-	logger.GetLogger().Println("Exit connection receiving loop (nonce msg self)")
 }
