@@ -54,6 +54,8 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 
+			var deletedIPs [][]byte
+
 			PeersMutex.Lock()
 			select {
 			case <-ctx.Done():
@@ -68,21 +70,14 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 
 					tmpConn := tcpConnections[topic]
 					for k, tcpConn0 := range tmpConn {
-						//if _, ok := validPeersConnected[k]; ok {
-						//	ReduceTrustRegisterPeer(k)
-						//}
 						if _, ok := validPeersConnected[k]; !ok {
 							logger.GetLogger().Println("when send to all, ignore connection", k)
-							//CloseAndRemoveConnection(tcpConn0)
 						} else if !bytes.Equal(k[:], MyIP[:]) {
-							//logger.GetLogger().Println("send to ipr", k)
 							err := Send(tcpConn0, s[4:])
 							if err != nil {
 								logger.GetLogger().Println("error in sending to all ", err)
-								deletedIP := CloseAndRemoveConnection(tcpConn0)
-								if len(deletedIP) >= 1 {
-									ChanPeer <- deletedIP[0]
-								}
+								deleted := CloseAndRemoveConnection(tcpConn0)
+								deletedIPs = append(deletedIPs, deleted...)
 							}
 						}
 					}
@@ -90,21 +85,15 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 					tcpConns := tcpConnections[topic]
 					tcpConn, ok := tcpConns[ipr]
 
-					//if _, ok2 := validPeersConnected[ipr]; ok2 {
-					//	ReduceTrustRegisterPeer(ipr)
-					//}
 					if _, ok2 := validPeersConnected[ipr]; !ok2 {
 						logger.GetLogger().Println("ignore when send to ", ipr)
-						//CloseAndRemoveConnection(tcpConn)
 					} else if ok {
 						logger.GetLogger().Printf("LoopSend: sending to %v for topic %v", ipr, topic)
 						err := Send(tcpConn, s[4:])
 						if err != nil {
 							logger.GetLogger().Printf("LoopSend: error sending to %v: %v", ipr, err)
-							deletedIP := CloseAndRemoveConnection(tcpConn)
-							if len(deletedIP) >= 1 {
-								ChanPeer <- deletedIP[0]
-							}
+							deleted := CloseAndRemoveConnection(tcpConn)
+							deletedIPs = append(deletedIPs, deleted...)
 						} else {
 							logger.GetLogger().Printf("LoopSend: successfully sent to %v for topic %v", ipr, topic)
 						}
@@ -116,10 +105,11 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 				PeersMutex.Unlock()
 				cancel()
 			}
-		//case b := <-waitChan:
-		//	if bytes.Equal(b, topic[:]) {
-		//		time.Sleep(time.Millisecond * 10)
-		//	}
+
+			// Notify about deleted peers outside the lock to avoid blocking
+			for _, deletedIP := range deletedIPs {
+				ChanPeer <- deletedIP
+			}
 		case <-Quit:
 			logger.GetLogger().Println("Should exit LoopSend")
 		default:

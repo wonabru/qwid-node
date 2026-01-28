@@ -363,14 +363,17 @@ func GetPeersCount() int {
 
 func LookUpForNewPeersToConnect(chanPeer chan []byte) {
 	for {
+		var newPeers [][]byte
+
 		PeersMutex.Lock()
-		logger.GetLogger().Printf("LookUpForNewPeersToConnect: checking %d peers in peersConnected, %d in oldPeers", len(peersConnected), len(oldPeers))
 		for topicip, topic := range peersConnected {
 			_, ok := oldPeers[topicip]
 			if ok == false {
 				logger.GetLogger().Println("Found new peer with ip", topicip)
 				oldPeers[topicip] = topic
-				chanPeer <- topicip[:]
+				peerCopy := make([]byte, len(topicip))
+				copy(peerCopy, topicip[:])
+				newPeers = append(newPeers, peerCopy)
 			}
 		}
 		for topicip := range oldPeers {
@@ -381,6 +384,11 @@ func LookUpForNewPeersToConnect(chanPeer chan []byte) {
 			}
 		}
 		PeersMutex.Unlock()
+
+		// Send notifications outside the lock to avoid blocking LoopSend
+		for _, peer := range newPeers {
+			chanPeer <- peer
+		}
 
 		time.Sleep(time.Second * 1)
 	}
