@@ -298,10 +298,12 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 	}
 
 	// Check if we already have a connection for this peer
-	if _, ok := tcpConnections[topic][ip]; ok {
-		// Overwrite with accepted connection - the other node reads from the outbound
-		// end of this connection via its StartNewConnection receive loop.
-		logger.GetLogger().Printf("Replacing connection for peer %v on topic %v with accepted connection", ip, topic)
+	if oldConn, ok := tcpConnections[topic][ip]; ok {
+		// Close the old connection before replacing it, so the other node's
+		// outbound receive loop gets a clean EOF instead of lingering and
+		// triggering repeated reconnections.
+		logger.GetLogger().Printf("Replacing connection for peer %v on topic %v with accepted connection, closing old", ip, topic)
+		oldConn.Close()
 	}
 
 	// Register the accepted connection for sending
