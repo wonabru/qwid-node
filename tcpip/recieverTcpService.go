@@ -212,7 +212,6 @@ func Receive(topic [2]byte, conn *net.TCPConn) []byte {
 		if err == io.EOF {
 			return []byte("<-CLS->")
 		}
-		logger.GetLogger().Println("n=", n, "err", err.Error())
 		//handleConnectionError(err, topic, conn)
 		return []byte("<-ERR->")
 	}
@@ -302,7 +301,6 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 		// Close the old connection before replacing it, so the other node's
 		// outbound receive loop gets a clean EOF instead of lingering and
 		// triggering repeated reconnections.
-		logger.GetLogger().Printf("Replacing connection for %v on topic %v", ip, topic)
 		oldConn.Close()
 	}
 
@@ -371,7 +369,6 @@ func LookUpForNewPeersToConnect(chanPeer chan []byte) {
 		for topicip, topic := range peersConnected {
 			_, ok := oldPeers[topicip]
 			if ok == false {
-				logger.GetLogger().Println("Found new peer with ip", topicip)
 				oldPeers[topicip] = topic
 				peerCopy := make([]byte, len(topicip))
 				copy(peerCopy, topicip[:])
@@ -381,7 +378,6 @@ func LookUpForNewPeersToConnect(chanPeer chan []byte) {
 		for topicip := range oldPeers {
 			_, ok := peersConnected[topicip]
 			if ok == false {
-				logger.GetLogger().Println("New peer is deleted with ip", topicip)
 				delete(oldPeers, topicip)
 			}
 		}

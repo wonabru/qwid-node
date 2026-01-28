@@ -118,8 +118,6 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 		ipport = fmt.Sprintf(":%d", Ports[topic])
 	}
 
-	logger.GetLogger().Printf("Attempting to connect to %s for topic %v", ipport, topic)
-
 	tcpAddr, err := net.ResolveTCPAddr("tcp", ipport)
 	if err != nil {
 		logger.GetLogger().Printf("Failed to resolve TCP address for %s: %v", ipport, err)
@@ -166,8 +164,7 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 	// only use this outbound connection for the receive loop.
 	outboundStoredInMap := false
 	if existingConn, exists := tcpConnections[topic][ip]; exists {
-		logger.GetLogger().Printf("Keeping existing connection for %v on topic %v", ip, topic)
-		_ = existingConn // keep existing connection in tcpConnections for LoopSend
+		_ = existingConn
 	} else {
 		tcpConnections[topic][ip] = tcpConn
 		outboundStoredInMap = true
@@ -178,8 +175,6 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 	validPeersConnected[ip] = common.ConnectionMaxTries
 	nodePeersConnected[ip] = common.ConnectionMaxTries
 	PeersMutex.Unlock()
-
-	logger.GetLogger().Printf("Successfully connected and registered for topic %v with %v", topic, ip)
 
 	reconnectionTries := 0
 	resetNumber := 0
@@ -222,7 +217,6 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 
 		select {
 		case <-Quit:
-			logger.GetLogger().Printf("Received quit signal for connection to %v", ip)
 			PeersMutex.Lock()
 			CloseAndRemoveConnection(tcpConn)
 			PeersMutex.Unlock()
@@ -248,8 +242,6 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 				continue
 			}
 			if bytes.Equal(r, []byte("<-CLS->")) {
-
-				logger.GetLogger().Println("Closing connection", ip, r)
 				receiveChan <- []byte("EXIT")
 				cleanupOutbound()
 				return
@@ -315,7 +307,6 @@ func CloseAndRemoveConnection(tcpConn *net.TCPConn) [][]byte {
 	for topic, connections := range tcpConnections {
 		for peerIP, conn := range connections {
 			if conn == tcpConn {
-				logger.GetLogger().Printf("Closing connection for topic %v, peer %v", topic, peerIP)
 				deletedIP = append(deletedIP, append(topic[:], peerIP[:]...))
 				tcpConn.Close()
 				copy(topicipBytes[:], append(topic[:], peerIP[:]...))
