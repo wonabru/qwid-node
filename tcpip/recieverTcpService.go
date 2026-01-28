@@ -299,11 +299,12 @@ func RegisterPeer(topic [2]byte, tcpConn *net.TCPConn) bool {
 
 	// Check if we already have a connection for this peer
 	if _, ok := tcpConnections[topic][ip]; ok {
-		// Don't close old connection - let its goroutine handle cleanup
-		logger.GetLogger().Printf("Replacing connection for peer %v on topic %v", ip, topic)
+		// Overwrite with accepted connection - the other node reads from the outbound
+		// end of this connection via its StartNewConnection receive loop.
+		logger.GetLogger().Printf("Replacing connection for peer %v on topic %v with accepted connection", ip, topic)
 	}
 
-	// Register the new connection
+	// Register the accepted connection for sending
 	tcpConnections[topic][ip] = tcpConn
 	peersConnected[topicipBytes] = topic
 	validPeersConnected[ip] = common.ConnectionMaxTries

@@ -158,12 +158,25 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 		return
 	}
 
-	// Register the outbound connection so it can be used for sending
+	// Register the outbound connection for receiving.
+	// If an accepted connection already exists in tcpConnections for this peer+topic,
+	// keep it for sending (the other node reads from the outbound end of that connection).
+	// This outbound connection will still be used for the receive loop below.
 	PeersMutex.Lock()
 	if _, ok := tcpConnections[topic]; !ok {
 		tcpConnections[topic] = make(map[[4]byte]*net.TCPConn)
 	}
-	tcpConnections[topic][ip] = tcpConn
+	// Track whether we stored the outbound connection in tcpConnections.
+	// If an accepted connection already exists, we keep it for sending and
+	// only use this outbound connection for the receive loop.
+	outboundStoredInMap := false
+	if existingConn, exists := tcpConnections[topic][ip]; exists {
+		logger.GetLogger().Printf("Keeping existing accepted connection for sending to %v on topic %v, using new outbound for receiving", ip, topic)
+		_ = existingConn // keep existing connection in tcpConnections for LoopSend
+	} else {
+		tcpConnections[topic][ip] = tcpConn
+		outboundStoredInMap = true
+	}
 	var topicipBytes [6]byte
 	copy(topicipBytes[:], append(topic[:], ip[:]...))
 	peersConnected[topicipBytes] = topic
@@ -176,16 +189,30 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 	reconnectionTries := 0
 	resetNumber := 0
 
+	// cleanupOutbound closes the outbound connection and triggers reconnection.
+	// If the outbound conn is not in tcpConnections, we close it directly and
+	// send a ChanPeer notification to trigger re-establishment.
+	cleanupOutbound := func() {
+		PeersMutex.Lock()
+		if outboundStoredInMap {
+			deletedIP := CloseAndRemoveConnection(tcpConn)
+			PeersMutex.Unlock()
+			for _, d := range deletedIP {
+				ChanPeer <- d
+			}
+		} else {
+			tcpConn.Close()
+			PeersMutex.Unlock()
+			// Notify to re-establish the receive connection
+			ChanPeer <- append(topic[:], ip[:]...)
+		}
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			logger.GetLogger().Printf("Recovered from panic in connection to %v: %v", ip, r)
 			receiveChan <- []byte("EXIT")
-			PeersMutex.Lock()
-			deletedIP := CloseAndRemoveConnection(tcpConn)
-			PeersMutex.Unlock()
-			if len(deletedIP) >= 1 {
-				ChanPeer <- deletedIP[0]
-			}
+			cleanupOutbound()
 		}
 	}()
 
@@ -203,11 +230,8 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 		case <-Quit:
 			logger.GetLogger().Printf("Received quit signal for connection to %v", ip)
 			PeersMutex.Lock()
-			deletedIP := CloseAndRemoveConnection(tcpConn)
+			CloseAndRemoveConnection(tcpConn)
 			PeersMutex.Unlock()
-			if len(deletedIP) >= 1 {
-				ChanPeer <- deletedIP[0]
-			}
 			return
 		default:
 			r := Receive(topic, tcpConn)
@@ -232,13 +256,8 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 			if bytes.Equal(r, []byte("<-CLS->")) {
 
 				logger.GetLogger().Println("Closing connection", ip, r)
-				PeersMutex.Lock()
 				receiveChan <- []byte("EXIT")
-				deletedIP := CloseAndRemoveConnection(tcpConn)
-				PeersMutex.Unlock()
-				if len(deletedIP) >= 1 {
-					ChanPeer <- deletedIP[0]
-				}
+				cleanupOutbound()
 				return
 
 			}
