@@ -5,6 +5,7 @@ import (
 	"fmt"
 	rand2 "math/rand"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 
@@ -27,13 +28,17 @@ var mutex sync.Mutex
 var MainWallet *wallet.Wallet
 
 func main() {
-	var ip string
+	var num int
+	var err error
 	if len(os.Args) > 1 {
-		ip = os.Args[1]
+		num, err = strconv.Atoi(os.Args[1])
+		if err != nil {
+			logger.GetLogger().Fatalln("Argument need to be int")
+		}
 	} else {
-		ip = "127.0.0.1"
+		num = 1
 	}
-	go clientrpc.ConnectRPC(ip)
+	go clientrpc.ConnectRPC("127.0.0.1")
 	//fmt.Print("Enter password: ")
 	//password, err := terminal.ReadPassword(0)
 	//if err != nil {
@@ -47,7 +52,7 @@ func main() {
 	wallet.InitActiveWallet(0, string(password), sigName, sigName2)
 	MainWallet = wallet.GetActiveWallet()
 
-	for range 100 {
+	for range num {
 		go sendTransactions(MainWallet)
 		//time.Sleep(time.Millisecond * 1)
 	}
