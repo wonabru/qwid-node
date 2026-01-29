@@ -21,6 +21,7 @@ var (
 	SendChanNonce     chan []byte
 	SendChanSelfNonce chan []byte
 	SendMutexNonce    sync.RWMutex
+	SendMutexSelfNonce sync.RWMutex
 	SendChanTx        chan []byte
 	SendMutexTx       sync.RWMutex
 	SendChanSync      chan []byte
@@ -161,7 +162,11 @@ func GenerateBlockMessage(bl blocks.Block) message.TransactionsMessage {
 func SendNonce(ip [4]byte, nb []byte) {
 	nb = append(ip[:], nb...)
 	SendMutexNonce.Lock()
-	SendChanNonce <- nb
+	select {
+	case SendChanNonce <- nb:
+	default:
+		logger.GetLogger().Println("SendNonce: channel full, dropping message")
+	}
 	SendMutexNonce.Unlock()
 }
 

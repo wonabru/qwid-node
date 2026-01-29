@@ -177,7 +177,7 @@ func sendNonceMsgInLoopSelf(chanRecv chan []byte) {
 	var topic = [2]byte{'S', 'S'}
 Q:
 	for range time.Tick(time.Second) {
-		sendNonceMsg(tcpip.MyIP, topic)
+		sendNonceMsgSelf(tcpip.MyIP, topic)
 		timeout := time.After(time.Second)
 
 		select {
@@ -213,12 +213,45 @@ func sendNonceMsg(ip [4]byte, topic [2]byte) {
 	}
 }
 
+func sendNonceMsgSelf(ip [4]byte, topic [2]byte) {
+	h := common.GetHeight()
+	if h < common.CurrentHeightOfNetwork {
+		return
+	}
+	n, err := generateNonceMsg(topic)
+	if err != nil {
+		logger.GetLogger().Println(err)
+		return
+	}
+	if !SendSelf(ip, n.GetBytes()) {
+		logger.GetLogger().Println("could not send self nonce message")
+	}
+}
+
 func Send(addr [4]byte, nb []byte) bool {
 	nb = append(addr[:], nb...)
 	if services.SendMutexNonce.TryLock() {
 		defer services.SendMutexNonce.Unlock()
-		services.SendChanNonce <- nb
-		return true
+		select {
+		case services.SendChanNonce <- nb:
+			return true
+		default:
+			return false
+		}
+	}
+	return false
+}
+
+func SendSelf(addr [4]byte, nb []byte) bool {
+	nb = append(addr[:], nb...)
+	if services.SendMutexSelfNonce.TryLock() {
+		defer services.SendMutexSelfNonce.Unlock()
+		select {
+		case services.SendChanSelfNonce <- nb:
+			return true
+		default:
+			return false
+		}
 	}
 	return false
 }
