@@ -31,6 +31,7 @@ func StartNewListener(topic [2]byte) {
 		select {
 		case <-Quit:
 			logger.GetLogger().Println("Should exit StartNewListener")
+			return
 		default:
 			_, err := Accept(topic, conn)
 			if err != nil {
@@ -107,6 +108,7 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 			}
 		case <-Quit:
 			logger.GetLogger().Println("Should exit LoopSend")
+			return
 		default:
 		}
 	}
@@ -187,11 +189,18 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 		if outboundStoredInMap {
 			deletedIP := CloseAndRemoveConnection(tcpConn)
 			PeersMutex.Unlock()
-			for _, d := range deletedIP {
-				ChanPeer <- d
+			if len(deletedIP) == 0 {
+				// tcpConn was nil or already removed — still notify for reconnection
+				ChanPeer <- append(topic[:], ip[:]...)
+			} else {
+				for _, d := range deletedIP {
+					ChanPeer <- d
+				}
 			}
 		} else {
-			tcpConn.Close()
+			if tcpConn != nil {
+				tcpConn.Close()
+			}
 			PeersMutex.Unlock()
 			// Notify to re-establish the receive connection
 			ChanPeer <- append(topic[:], ip[:]...)
@@ -233,6 +242,11 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 					tcpConn, err = net.DialTCP("tcp", nil, tcpAddr)
 					if err != nil {
 						logger.GetLogger().Printf("Connection attempt to %s failed: %v", ipport, err.Error())
+						// Reconnection failed — notify ChanPeer so the main loop
+						// can spawn a fresh subscriber, then exit this goroutine.
+						receiveChan <- []byte("EXIT")
+						ChanPeer <- append(topic[:], ip[:]...)
+						return
 					}
 					reconnectionTries = 0
 					continue
