@@ -18,6 +18,7 @@ import (
 )
 
 var LastRepliedIP [4]byte
+var lastReplyTime time.Time
 var EncryptionOptData []byte
 var encryptionMutex sync.Mutex
 
@@ -304,6 +305,10 @@ func StartSubscribingNonceMsg(ip [4]byte) {
 }
 
 func sendReply(addr [4]byte) {
+	if time.Since(lastReplyTime) < time.Second {
+		return
+	}
+	lastReplyTime = time.Now()
 	LastRepliedIP = addr
 	var topic = [2]byte{'N', 'N'}
 	n, err := generateNonceMsg(topic)
