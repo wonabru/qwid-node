@@ -303,8 +303,8 @@ func (db *BlockchainDB) Delete(key []byte) error {
 	if len(key) == 0 {
 		return errors.New("key cannot be empty")
 	}
-	db.mutex.Lock()
-	defer db.mutex.Unlock()
+	db.mutex.RLock()
+	defer db.mutex.RUnlock()
 	wo := gorocksdb.NewDefaultWriteOptions()
 	defer wo.Destroy()
 	return db.db.Delete(wo, key)
