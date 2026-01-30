@@ -430,7 +430,7 @@ func CheckBlockAndTransactions(newBlock *Block, lastBlock Block, merkleTrie *tra
 
 func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *transactionsPool.MerkleTree, checkWhenNotSync bool) error {
 
-	// Do NOT defer RemoveAllTransactionsRelatedToBlock here.
+	defer RemoveAllTransactionsRelatedToBlock(*newBlock)
 	// On failure, transactions must remain in the pool for the next valid block.
 	// On success, lines below explicitly move transactions to confirmed DB
 	// and remove them from the pool.
