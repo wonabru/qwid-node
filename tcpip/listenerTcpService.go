@@ -189,13 +189,8 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 		if outboundStoredInMap {
 			deletedIP := CloseAndRemoveConnection(tcpConn)
 			PeersMutex.Unlock()
-			if len(deletedIP) == 0 {
-				// tcpConn was nil or already removed — still notify for reconnection
-				ChanPeer <- append(topic[:], ip[:]...)
-			} else {
-				for _, d := range deletedIP {
-					ChanPeer <- d
-				}
+			for _, d := range deletedIP {
+				ChanPeer <- d
 			}
 		} else {
 			if tcpConn != nil {
@@ -242,10 +237,9 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 					tcpConn, err = net.DialTCP("tcp", nil, tcpAddr)
 					if err != nil {
 						logger.GetLogger().Printf("Connection attempt to %s failed: %v", ipport, err.Error())
-						// Reconnection failed — notify ChanPeer so the main loop
-						// can spawn a fresh subscriber, then exit this goroutine.
+						// Reconnection failed — exit cleanly so subscriber can
+						// be re-established by the peer discovery loop.
 						receiveChan <- []byte("EXIT")
-						ChanPeer <- append(topic[:], ip[:]...)
 						return
 					}
 					reconnectionTries = 0
