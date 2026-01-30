@@ -2,6 +2,9 @@ package nonceServices
 
 import (
 	"bytes"
+	"sync"
+	"time"
+
 	"github.com/wonabru/qwid-node/blocks"
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/logger"
@@ -13,8 +16,6 @@ import (
 	"github.com/wonabru/qwid-node/voting"
 	"github.com/wonabru/qwid-node/wallet"
 	"golang.org/x/exp/rand"
-	"sync"
-	"time"
 )
 
 var LastRepliedIP [4]byte
@@ -178,8 +179,12 @@ func sendNonceMsgInLoopSelf(chanRecv chan []byte) {
 	var topic = [2]byte{'S', 'S'}
 Q:
 	for range time.Tick(time.Second) {
-		sendNonceMsgSelf(tcpip.MyIP, topic)
 		timeout := time.After(time.Second)
+		ret := sendNonceMsgSelf(tcpip.MyIP, topic)
+
+		if !ret {
+			time.Sleep(time.Second)
+		}
 
 		select {
 		case s := <-chanRecv:
@@ -190,16 +195,16 @@ Q:
 			// Handle timeout
 			//logger.GetLogger().Println("sendNonceMsgInLoopSelf: Timeout occurred")
 			// You can break the loop or return from the function here
-			break
+			// break
 		}
 	}
 }
 
-func sendNonceMsg(ip [4]byte, topic [2]byte) {
-	h := common.GetHeight()
-	if h < common.CurrentHeightOfNetwork {
-		return
-	}
+func sendNonceMsg(ip [4]byte, topic [2]byte) bool {
+	// h := common.GetHeight()
+	// if h < common.CurrentHeightOfNetwork {
+	// 	return
+	// }
 	//isync := common.IsSyncing.Load()
 	//if isync == true {
 	//	return
@@ -207,26 +212,30 @@ func sendNonceMsg(ip [4]byte, topic [2]byte) {
 	n, err := generateNonceMsg(topic)
 	if err != nil {
 		logger.GetLogger().Println(err)
-		return
+		return false
 	}
 	if !Send(ip, n.GetBytes()) {
 		logger.GetLogger().Println("could not send nonce message")
+		return false
 	}
+	return true
 }
 
-func sendNonceMsgSelf(ip [4]byte, topic [2]byte) {
-	h := common.GetHeight()
-	if h < common.CurrentHeightOfNetwork {
-		return
-	}
+func sendNonceMsgSelf(ip [4]byte, topic [2]byte) bool {
+	// h := common.GetHeight()
+	// if h < common.CurrentHeightOfNetwork {
+	// 	return
+	// }
 	n, err := generateNonceMsg(topic)
 	if err != nil {
 		logger.GetLogger().Println(err)
-		return
+		return false
 	}
 	if !SendSelf(ip, n.GetBytes()) {
 		logger.GetLogger().Println("could not send self nonce message")
+		return false
 	}
+	return true
 }
 
 func Send(addr [4]byte, nb []byte) bool {
@@ -260,7 +269,10 @@ func SendSelf(addr [4]byte, nb []byte) bool {
 func sendNonceMsgInLoop() {
 	for range time.Tick(time.Second * 5) {
 		var topic = [2]byte{'N', 'N'}
-		sendNonceMsg([4]byte{0, 0, 0, 0}, topic)
+		ret := sendNonceMsg([4]byte{0, 0, 0, 0}, topic)
+		if !ret {
+			time.Sleep(time.Second)
+		}
 	}
 }
 
