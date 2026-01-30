@@ -430,7 +430,10 @@ func CheckBlockAndTransactions(newBlock *Block, lastBlock Block, merkleTrie *tra
 
 func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *transactionsPool.MerkleTree, checkWhenNotSync bool) error {
 
-	defer RemoveAllTransactionsRelatedToBlock(*newBlock)
+	// Do NOT defer RemoveAllTransactionsRelatedToBlock here.
+	// On failure, transactions must remain in the pool for the next valid block.
+	// On success, lines below explicitly move transactions to confirmed DB
+	// and remove them from the pool.
 	n, err := account.IntDelegatedAccountFromAddress(newBlock.GetHeader().DelegatedAccount)
 	if err != nil || n < 1 || n > 255 {
 		return fmt.Errorf("wrong delegated account: CheckBlockAndTransferFunds")
