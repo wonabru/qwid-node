@@ -654,7 +654,7 @@ func Verify(msg []byte, sig []byte, pubkey []byte, sigName, sigName2 string, isP
 		}
 		if verifier.Details().LengthPublicKey == len(pubkey) {
 			isVerified, err := verifier.Verify(msg, sig, pubkey)
-			logger.GetLogger().Println("isVerified:", isVerified)
+
 			if err != nil {
 				logger.GetLogger().Println(err)
 				return false

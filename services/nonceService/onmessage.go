@@ -26,7 +26,7 @@ func OnMessage(addr [4]byte, m []byte) {
 
 	h := common.GetHeight()
 
-	logger.GetLogger().Println("New message nonce from:", addr)
+
 	defer func() {
 		if r := recover(); r != nil {
 			debug.PrintStack()
