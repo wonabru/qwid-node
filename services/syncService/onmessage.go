@@ -22,6 +22,11 @@ import (
 
 var err error
 
+var (
+	connectingPeers      = make(map[[6]byte]bool)
+	connectingPeersMutex sync.Mutex
+)
+
 // peerHeightClaim tracks a peer's claimed height with timestamp
 type peerHeightClaim struct {
 	height    int64
@@ -155,17 +160,38 @@ func OnMessage(addr [4]byte, m []byte) {
 				if bytes.Equal(ip4[:], addr[:]) {
 					continue
 				}
-				if _, ok := peersConnectedNN[topicip]; !ok && !tcpip.IsIPBanned(ip4) {
-					go nonceServices.StartSubscribingNonceMsg(ip4)
+				connectingPeersMutex.Lock()
+				copy(topicip[:2], tcpip.NonceTopic[:])
+				if _, ok := peersConnectedNN[topicip]; !ok && !tcpip.IsIPBanned(ip4) && !connectingPeers[topicip] {
+					connectingPeers[topicip] = true
+					go func(pip [4]byte, key [6]byte) {
+						nonceServices.StartSubscribingNonceMsg(pip)
+						connectingPeersMutex.Lock()
+						delete(connectingPeers, key)
+						connectingPeersMutex.Unlock()
+					}(ip4, topicip)
 				}
 				copy(topicip[:2], tcpip.SyncTopic[:])
-				if _, ok := peersConnectedBB[topicip]; !ok && !tcpip.IsIPBanned(ip4) {
-					go StartSubscribingSyncMsg(ip4)
+				if _, ok := peersConnectedBB[topicip]; !ok && !tcpip.IsIPBanned(ip4) && !connectingPeers[topicip] {
+					connectingPeers[topicip] = true
+					go func(pip [4]byte, key [6]byte) {
+						StartSubscribingSyncMsg(pip)
+						connectingPeersMutex.Lock()
+						delete(connectingPeers, key)
+						connectingPeersMutex.Unlock()
+					}(ip4, topicip)
 				}
 				copy(topicip[:2], tcpip.TransactionTopic[:])
-				if _, ok := peersConnectedTT[topicip]; !ok && !tcpip.IsIPBanned(ip4) {
-					go transactionServices.StartSubscribingTransactionMsg(ip4)
+				if _, ok := peersConnectedTT[topicip]; !ok && !tcpip.IsIPBanned(ip4) && !connectingPeers[topicip] {
+					connectingPeers[topicip] = true
+					go func(pip [4]byte, key [6]byte) {
+						transactionServices.StartSubscribingTransactionMsg(pip)
+						connectingPeersMutex.Lock()
+						delete(connectingPeers, key)
+						connectingPeersMutex.Unlock()
+					}(ip4, topicip)
 				}
+				connectingPeersMutex.Unlock()
 				if tcpip.GetPeersCount() > common.MaxPeersConnected {
 					break
 				}
