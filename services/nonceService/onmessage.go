@@ -70,13 +70,13 @@ func OnMessage(addr [4]byte, m []byte) {
 			//logger.GetLogger().Print("nonce height invalid")
 			return
 		}
-
-		isValid = transaction.Verify(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2())
-		if isValid == false {
-			logger.GetLogger().Println("nonce signature is invalid")
-			tcpip.ReduceAndCheckIfBanIP(addr)
-			return
-		}
+		//KU TEMP TODO
+		// isValid = transaction.Verify(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2())
+		// if isValid == false {
+		// 	logger.GetLogger().Println("nonce signature is invalid")
+		// 	tcpip.ReduceAndCheckIfBanIP(addr)
+		// 	return
+		// }
 		//register checked Node IP
 		tcpip.NodeRegisterPeer(addr)
 		txDelAcc := transaction.TxData.Recipient
