@@ -298,7 +298,7 @@ func StartSubscribingNonceMsg(ip [4]byte) {
 				OnMessage(ipr, s[4:])
 				//send reply to valid nonce message from other nodes
 				if !bytes.Equal(ipr[:], tcpip.MyIP[:]) {
-					if !bytes.Equal(LastRepliedIP[:], ipr[:]) {
+					if !bytes.Equal(LastRepliedIP[:], ipr[:]) && !bytes.Equal(ipr[:], []byte{0, 0, 0, 0}) {
 						sendReply(ipr)
 					} else {
 						LastRepliedIP = [4]byte{0, 0, 0, 0}
