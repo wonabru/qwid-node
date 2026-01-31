@@ -401,6 +401,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			if len(hashesMissingAll) < 2 {
 				logger.GetLogger().Printf("Hash: %x", hashesMissingAll[0])
 			}
+			logger.GetLogger().Printf("Sending bt request to %v via TransactionTopic for %d hashes", addr, len(hashesMissingAll))
 			transactionServices.SendGT(addr, hashesMissingAll, "bt")
 			logger.GetLogger().Println("Waiting for missing transactions before continuing sync")
 			// Return and wait for transactions to arrive via "bx" handler

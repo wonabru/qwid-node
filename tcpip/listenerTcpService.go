@@ -152,6 +152,7 @@ func StartNewConnection(ip [4]byte, receiveChan chan []byte, topic [2]byte) {
 		logger.GetLogger().Printf("Failed to establish connection to %s after %d attempts: %v", ipport, maxRetries, err)
 		return
 	}
+	logger.GetLogger().Printf("Connection successful to %s topic %c%c", ipport, topic[0], topic[1])
 
 	// Register the outbound connection for receiving.
 	// If an accepted connection already exists in tcpConnections for this peer+topic,
