@@ -178,11 +178,11 @@ func generateNonceMsg(topic [2]byte) (message.TransactionsMessage, error) {
 func sendNonceMsgInLoopSelf(chanRecv chan []byte) {
 	var topic = [2]byte{'S', 'S'}
 Q:
-	for range time.Tick(time.Second) {
+	for {
 		ret := sendNonceMsgSelf(tcpip.MyIP, topic)
 
 		if !ret {
-			time.Sleep(2 * time.Second)
+			time.Sleep(3 * time.Second)
 		}
 
 		select {
@@ -191,7 +191,7 @@ Q:
 				break Q
 			}
 		default:
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(time.Second)
 		}
 	}
 }
