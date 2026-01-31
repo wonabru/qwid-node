@@ -36,7 +36,9 @@ func (a TransactionsMessage) GetTransactionsFromBytes(sigName, sigName2 string, 
 					continue
 					//return nil, err
 				}
-				if topic == tcpip.NonceTopic || topic == tcpip.SelfNonceTopic || at.Verify(sigName, sigName2, isPaused, isPaused2) {
+				if topic == tcpip.NonceTopic || topic == tcpip.SelfNonceTopic {
+					txn[topic] = append(txn[topic], at)
+				} else if at.Verify(sigName, sigName2, isPaused, isPaused2) {
 					txn[topic] = append(txn[topic], at)
 				} else {
 					logger.GetLogger().Println("warning: transaction fail to verify")
