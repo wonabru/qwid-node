@@ -2,8 +2,9 @@ package nonceServices
 
 import (
 	"bytes"
-	"github.com/wonabru/qwid-node/logger"
 	"runtime/debug"
+
+	"github.com/wonabru/qwid-node/logger"
 
 	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/blocks"
@@ -25,7 +26,6 @@ func OnMessage(addr [4]byte, m []byte) {
 	}
 
 	h := common.GetHeight()
-
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -184,6 +184,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			logger.GetLogger().Println(err)
 			return
 		}
+		logger.GetLogger().Printf("+++++ Processing block in nonce service ++++++")
 		txnbytes := amsg.GetTransactionsBytes()
 		bls := map[[2]byte]blocks.Block{}
 		for k, v := range txnbytes {
