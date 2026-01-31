@@ -1188,7 +1188,7 @@
                     html += '<td style="padding:8px;">' + tx.amount.toFixed(8) + ' QWD</td>';
                     html += '<td style="padding:8px;font-family:monospace;font-size:10px;">' + tx.sender.substring(0, 12) + '...</td>';
                     html += '<td style="padding:8px;font-family:monospace;font-size:10px;">' + tx.recipient.substring(0, 12) + '...</td>';
-                    html += '<td style="padding:8px;font-family:monospace;font-size:10px;">' + tx.hash.substring(0, 12) + '...</td>';
+                    html += '<td style="padding:8px;font-family:monospace;font-size:10px;word-break:break-all;">' + tx.hash + '</td>';
                     html += '</tr>';
                 }
 
@@ -1234,7 +1234,7 @@
                     html += '<td style="padding:8px;color:' + typeColor + ';">' + typeSign + tx.amount.toFixed(8) + ' QWD</td>';
                     html += '<td style="padding:8px;font-family:monospace;font-size:10px;">' + (addr ? addr.substring(0, 16) + '...' : '-') + '</td>';
                     html += '<td style="padding:8px;">' + tx.height + '</td>';
-                    html += '<td style="padding:8px;font-family:monospace;font-size:10px;">' + tx.hash.substring(0, 16) + '...</td>';
+                    html += '<td style="padding:8px;font-family:monospace;font-size:10px;word-break:break-all;">' + tx.hash + '</td>';
                     html += '</tr>';
                 }
 
@@ -1279,7 +1279,7 @@
                                 const addr = tx.type === 'sent' ? tx.recipient : tx.sender;
                                 content += '\n[' + tx.type.toUpperCase() + '] ' + sign + tx.amount.toFixed(8) + ' QWD\n';
                                 content += '  ' + (tx.type === 'sent' ? 'To: ' : 'From: ') + addr + '\n';
-                                content += '  Height: ' + tx.height + ' | Hash: ' + tx.hash.substring(0, 32) + '...\n';
+                                content += '  Height: ' + tx.height + ' | Hash: ' + tx.hash + '\n';
                             }
                         }
                     } else {

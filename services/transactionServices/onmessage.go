@@ -130,31 +130,31 @@ func OnMessage(addr [4]byte, m []byte) {
 		storedCount := 0
 		for _, v := range txn {
 			for _, t := range v {
-				// if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
-				// 	logger.GetLogger().Printf("bx: Transaction %x already exists in Pool", t.Hash.GetBytes()[:8])
-				// 	existedCount++
-				// 	continue
-				// }
-				//
-				// 				isAdded := transactionsPool.PoolsTx.AddTransaction(t, t.Hash)
-				// 				if isAdded {
-				addedCount++
-				// 					logger.GetLogger().Printf("bx: Added transaction %x to pool", t.Hash.GetBytes()[:8])
-				err := t.StoreToDBPoolTx(common.TransactionDBPrefix[:])
-				if err != nil {
-					logger.GetLogger().Printf("bx: FAILED to store transaction %x to DB: %v", t.Hash.GetBytes()[:8], err)
-					transactionsPool.PoolsTx.RemoveTransactionByHash(t.Hash.GetBytes())
-					err := transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], t.Hash.GetBytes())
+				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
+					logger.GetLogger().Printf("bx: Transaction %x already exists in Pool", t.Hash.GetBytes()[:8])
+					existedCount++
+					continue
+				}
+
+				isAdded := transactionsPool.PoolsTx.AddTransaction(t, t.Hash)
+				if isAdded {
+					addedCount++
+					logger.GetLogger().Printf("bx: Added transaction %x to pool", t.Hash.GetBytes()[:8])
+					err := t.StoreToDBPoolTx(common.TransactionDBPrefix[:])
 					if err != nil {
-						logger.GetLogger().Println(err)
+						logger.GetLogger().Printf("bx: FAILED to store transaction %x to DB: %v", t.Hash.GetBytes()[:8], err)
+						transactionsPool.PoolsTx.RemoveTransactionByHash(t.Hash.GetBytes())
+						err := transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], t.Hash.GetBytes())
+						if err != nil {
+							logger.GetLogger().Println(err)
+						}
+					} else {
+						storedCount++
+						logger.GetLogger().Printf("bx: Stored transaction %x to DB", t.Hash.GetBytes()[:8])
 					}
 				} else {
-					storedCount++
-					logger.GetLogger().Printf("bx: Stored transaction %x to DB", t.Hash.GetBytes()[:8])
+					logger.GetLogger().Printf("bx: Failed to add transaction %x to pool", t.Hash.GetBytes()[:8])
 				}
-				// 				} else {
-				// 					logger.GetLogger().Printf("bx: Failed to add transaction %x to pool", t.Hash.GetBytes()[:8])
-				// 				}
 			}
 		}
 		logger.GetLogger().Printf("bx: Summary - existed:%d, added:%d, stored:%d", existedCount, addedCount, storedCount)
@@ -197,18 +197,12 @@ func OnMessage(addr [4]byte, m []byte) {
 				// First try to load from confirmed DB
 				t, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hs)
 				if err != nil {
-					logger.GetLogger().Printf("    Not in confirmed DB: %v", err)
-					continue
-					// 					// If not in DB, try to load from Pool
-					// 					t, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hs)
-					// 					if err != nil {
-					// 						logger.GetLogger().Printf("    Not in Pool either: %v", err)
-					// 						logger.GetLogger().Println("cannot load transaction from DB or Pool", err)
-					// 						continue
-					// 					}
-					// 					logger.GetLogger().Println("    Found in Pool")
-				} else {
-					logger.GetLogger().Println("    Found in confirmed DB")
+					// If not in confirmed DB, try to load from Pool
+					t, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hs)
+					if err != nil {
+						logger.GetLogger().Println("cannot load transaction from DB or Pool", err)
+						continue
+					}
 				}
 				if len(t.GetBytes()) > 0 {
 					txs = append(txs, t)
