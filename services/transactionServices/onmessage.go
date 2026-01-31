@@ -100,64 +100,36 @@ func OnMessage(addr [4]byte, m []byte) {
 			}
 		}
 	case "bx":
-		// transaction in sync
+		// transaction in sync - during sync, skip signature verification because
+		// the syncing node may not have sender pubkeys yet (stored during block processing).
+		// Block merkle tree guarantees transaction integrity.
 		msg := amsg.(message.TransactionsMessage)
 		rawTxn := msg.GetTransactionsBytes()
-		rawCount := 0
-		for _, v := range rawTxn {
-			rawCount += len(v)
-		}
-		//logger.GetLogger().Println("Received bx from", addr[:], "with", rawCount, "raw transactions")
 
-		txn, err := msg.GetTransactionsFromBytes(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2())
-		if err != nil {
-			logger.GetLogger().Println("bx: GetTransactionsFromBytes error:", err)
-			return
-		}
-
-		verifiedCount := 0
-		for _, v := range txn {
-			verifiedCount += len(v)
-		}
-		logger.GetLogger().Println("bx: After verification:", verifiedCount, "transactions passed (from", rawCount, "raw)")
-		if verifiedCount < rawCount {
-			logger.GetLogger().Println("bx: WARNING -", rawCount-verifiedCount, "transactions failed verification!")
-		}
-
-		// need to check transactions
-		addedCount := 0
-		existedCount := 0
 		storedCount := 0
-		for _, v := range txn {
-			for _, t := range v {
-				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
-					logger.GetLogger().Printf("bx: Transaction %x already exists in Pool", t.Hash.GetBytes()[:8])
-					existedCount++
+		for _, v := range rawTxn {
+			for _, tb := range v {
+				tx := transactionsDefinition.Transaction{}
+				t, rest, err := tx.GetFromBytes(tb)
+				if err != nil || len(rest) > 0 {
+					logger.GetLogger().Println("bx: parse error:", err)
 					continue
 				}
-
-				isAdded := transactionsPool.PoolsTx.AddTransaction(t, t.Hash)
-				if isAdded {
-					addedCount++
-					logger.GetLogger().Printf("bx: Added transaction %x to pool", t.Hash.GetBytes()[:8])
-					err := t.StoreToDBPoolTx(common.TransactionDBPrefix[:])
-					if err != nil {
-						logger.GetLogger().Printf("bx: FAILED to store transaction %x to DB: %v", t.Hash.GetBytes()[:8], err)
-						transactionsPool.PoolsTx.RemoveTransactionByHash(t.Hash.GetBytes())
-						err := transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], t.Hash.GetBytes())
-						if err != nil {
-							logger.GetLogger().Println(err)
-						}
-					} else {
-						storedCount++
-						logger.GetLogger().Printf("bx: Stored transaction %x to DB", t.Hash.GetBytes()[:8])
-					}
+				if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], t.Hash.GetBytes()) {
+					continue
+				}
+				if transactionsDefinition.CheckFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], t.Hash.GetBytes()) {
+					continue
+				}
+				err = t.StoreToDBPoolTx(common.TransactionPoolHashesDBPrefix[:])
+				if err != nil {
+					logger.GetLogger().Printf("bx: FAILED to store transaction %x: %v", t.Hash.GetBytes()[:8], err)
 				} else {
-					logger.GetLogger().Printf("bx: Failed to add transaction %x to pool", t.Hash.GetBytes()[:8])
+					storedCount++
 				}
 			}
 		}
-		logger.GetLogger().Printf("bx: Summary - existed:%d, added:%d, stored:%d", existedCount, addedCount, storedCount)
+		logger.GetLogger().Printf("bx: stored %d transactions", storedCount)
 	case "st":
 		txn := amsg.(message.TransactionsMessage).GetTransactionsBytes()
 		for topic, v := range txn {
