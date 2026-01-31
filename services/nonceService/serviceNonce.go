@@ -191,8 +191,9 @@ Q:
 				break Q
 			}
 		default:
-			time.Sleep(time.Second)
+
 		}
+		time.Sleep(time.Second)
 	}
 }
 
