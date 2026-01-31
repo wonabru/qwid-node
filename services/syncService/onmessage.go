@@ -399,7 +399,6 @@ func OnMessage(addr [4]byte, m []byte) {
 		if incompleteTxn {
 			logger.GetLogger().Printf("Sync incomplete - requesting %d missing transactions from peer", len(hashesMissingAll))
 			transactionServices.SendGT(addr, hashesMissingAll, "bt")
-			transactionServices.SendGT(addr, hashesMissingAll, "st")
 			logger.GetLogger().Println("Waiting for missing transactions before continuing sync")
 			// Return and wait for transactions to arrive via "bx" handler
 			// Sync will be triggered again when transactions are received
@@ -446,7 +445,6 @@ func OnMessage(addr [4]byte, m []byte) {
 				if len(hashesMissing) > 0 {
 					logger.GetLogger().Printf("Detected %d missing transactions during fund transfer", len(hashesMissing))
 					transactionServices.SendGT(addr, hashesMissing, "bt")
-					transactionServices.SendGT(addr, hashesMissing, "st")
 				}
 				services.ResetAccountsAndBlocksSync(oldBlock.GetHeader().Height)
 				return
