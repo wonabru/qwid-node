@@ -201,14 +201,14 @@ Q:
 }
 
 func sendNonceMsg(ip [4]byte, topic [2]byte) bool {
-	// h := common.GetHeight()
-	// if h < common.CurrentHeightOfNetwork {
-	// 	return
-	// }
-	//isync := common.IsSyncing.Load()
-	//if isync == true {
-	//	return
-	//}
+	h := common.GetHeight()
+	if h < common.CurrentHeightOfNetwork {
+		return false
+	}
+	isync := common.IsSyncing.Load()
+	if isync == true {
+		return false
+	}
 	n, err := generateNonceMsg(topic)
 	if err != nil {
 		logger.GetLogger().Println(err)
@@ -222,10 +222,10 @@ func sendNonceMsg(ip [4]byte, topic [2]byte) bool {
 }
 
 func sendNonceMsgSelf(ip [4]byte, topic [2]byte) bool {
-	// h := common.GetHeight()
-	// if h < common.CurrentHeightOfNetwork {
-	// 	return
-	// }
+	h := common.GetHeight()
+	if h < common.CurrentHeightOfNetwork {
+		return false
+	}
 	n, err := generateNonceMsg(topic)
 	if err != nil {
 		logger.GetLogger().Println(err)
