@@ -18,8 +18,8 @@ import (
 	"golang.org/x/exp/rand"
 )
 
-var LastRepliedIP [4]byte
-var lastReplyTime time.Time
+var lastReplyPerPeer = make(map[[4]byte]time.Time)
+var lastReplyMutex sync.Mutex
 var EncryptionOptData []byte
 var encryptionMutex sync.Mutex
 
@@ -301,11 +301,15 @@ func StartSubscribingNonceMsg(ip [4]byte) {
 				copy(ipr[:], s[:4])
 				OnMessage(ipr, s[4:])
 				//send reply to valid nonce message from other nodes
-				if !bytes.Equal(ipr[:], tcpip.MyIP[:]) {
-					if !bytes.Equal(LastRepliedIP[:], ipr[:]) && !bytes.Equal(ipr[:], []byte{0, 0, 0, 0}) {
+				if !bytes.Equal(ipr[:], tcpip.MyIP[:]) && !bytes.Equal(ipr[:], []byte{0, 0, 0, 0}) {
+					lastReplyMutex.Lock()
+					lastTime := lastReplyPerPeer[ipr]
+					if time.Since(lastTime) >= 5*time.Second {
+						lastReplyPerPeer[ipr] = time.Now()
+						lastReplyMutex.Unlock()
 						sendReply(ipr)
-					} else if !bytes.Equal(ipr[:], []byte{0, 0, 0, 0}) {
-						copy(ipr[:], LastRepliedIP[:])
+					} else {
+						lastReplyMutex.Unlock()
 					}
 				}
 			}
