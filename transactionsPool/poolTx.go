@@ -111,6 +111,15 @@ func (tp *TransactionPool) AddTransaction(tx transactionsDefinition.Transaction,
 	tp.updateIndices()
 	return true
 }
+func (tp *TransactionPool) HasTransaction(hash []byte) bool {
+	var h [common.HashLength]byte
+	copy(h[:], hash)
+	tp.rwmutex.RLock()
+	defer tp.rwmutex.RUnlock()
+	_, exists := tp.transactions[h]
+	return exists
+}
+
 func (tp *TransactionPool) PeekTransactions(n int, heightOrHash int64) []transactionsDefinition.Transaction {
 
 	hash := [common.HashLength]byte{}

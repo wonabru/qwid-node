@@ -5,6 +5,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/rpc"
+	"strconv"
+	"sync"
+
 	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/blocks"
 	"github.com/wonabru/qwid-node/common"
@@ -19,10 +24,6 @@ import (
 	"github.com/wonabru/qwid-node/transactionsDefinition"
 	"github.com/wonabru/qwid-node/transactionsPool"
 	"github.com/wonabru/qwid-node/wallet"
-	"net"
-	"net/rpc"
-	"strconv"
-	"sync"
 )
 
 var listenerMutex sync.Mutex
@@ -340,14 +341,46 @@ func handleDETS(line []byte, reply *[]byte) {
 		*reply = append([]byte("AC"), am...)
 		break
 	case common.HashLength:
-		tx, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], line)
-		if err != nil {
-			logger.GetLogger().Println(err)
+		location := ""
+		var tx transactionsDefinition.Transaction
+		var err error
+
+		// Check confirmed DB (TT)
+		tx, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], line)
+		if err == nil {
+			location = "confirmed_db"
+		}
+
+		// Check pool DB (D0)
+		if location == "" {
+			tx, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], line)
+			if err == nil {
+				location = "pool_db"
+			}
+		}
+
+		// Check in-memory pools
+		if location == "" && transactionsPool.PoolsTx.HasTransaction(line) {
+			location = "memory_main"
+		}
+		if location == "" && transactionsPool.PoolTxEscrow.HasTransaction(line) {
+			location = "memory_escrow"
+		}
+		if location == "" && transactionsPool.PoolTxMultiSign.HasTransaction(line) {
+			location = "memory_multisign"
+		}
+
+		if location == "" {
+			logger.GetLogger().Println("transaction not found in any location:", hex.EncodeToString(line))
 			*reply = []byte("TX")
 			return
 		}
 		txb := tx.GetBytes()
-		*reply = append([]byte("TX"), txb...)
+		locationBytes := []byte(location)
+		// Format: "TX" + 1 byte location length + location string + tx bytes
+		*reply = append([]byte("TX"), byte(len(locationBytes)))
+		*reply = append(*reply, locationBytes...)
+		*reply = append(*reply, txb...)
 		break
 	case 8:
 		height := common.GetInt64FromByte(line)

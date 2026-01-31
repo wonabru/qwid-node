@@ -1283,6 +1283,9 @@
                             }
                         }
                     } else {
+                        if (res.location) {
+                            content += 'Location: ' + res.location + '\n\n';
+                        }
                         content += res.data || JSON.stringify(res, null, 2);
                     }
 

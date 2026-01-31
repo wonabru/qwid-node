@@ -42,13 +42,13 @@ type StatsResponse struct {
 }
 
 type AccountResponse struct {
-	Address          string  `json:"address"`
-	Balance          float64 `json:"balance"`
-	StakedAmount     float64 `json:"stakedAmount"`
-	LockedAmount     float64 `json:"lockedAmount"`
-	RewardsAmount    float64 `json:"rewardsAmount"`
-	TotalHoldings    float64 `json:"totalHoldings"`
-	StakingDetails   []StakingDetail `json:"stakingDetails"`
+	Address        string          `json:"address"`
+	Balance        float64         `json:"balance"`
+	StakedAmount   float64         `json:"stakedAmount"`
+	LockedAmount   float64         `json:"lockedAmount"`
+	RewardsAmount  float64         `json:"rewardsAmount"`
+	TotalHoldings  float64         `json:"totalHoldings"`
+	StakingDetails []StakingDetail `json:"stakingDetails"`
 }
 
 type StakingDetail struct {
@@ -58,11 +58,11 @@ type StakingDetail struct {
 }
 
 type WalletInfoResponse struct {
-	Loaded     bool   `json:"loaded"`
-	Address    string `json:"address"`
-	PubKeyHex  string `json:"pubKeyHex"`
-	SigName    string `json:"sigName"`
-	SigName2   string `json:"sigName2"`
+	Loaded    bool   `json:"loaded"`
+	Address   string `json:"address"`
+	PubKeyHex string `json:"pubKeyHex"`
+	SigName   string `json:"sigName"`
+	SigName2  string `json:"sigName2"`
 }
 
 func SignMessage(line []byte) []byte {
@@ -934,15 +934,27 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
 
 	switch string(reply[:2]) {
 	case "TX":
+		// Format: "TX" + 1 byte location length + location string + tx bytes
+		if len(reply) < 3 {
+			jsonError(w, "Transaction not found", http.StatusNotFound)
+			return
+		}
+		locLen := int(reply[2])
+		if len(reply) < 3+locLen {
+			jsonError(w, "Invalid response format", http.StatusInternalServerError)
+			return
+		}
+		location := string(reply[3 : 3+locLen])
 		tx := transactionsDefinition.Transaction{}
-		tx, _, err := tx.GetFromBytes(reply[2:])
+		tx, _, err := tx.GetFromBytes(reply[3+locLen:])
 		if err != nil {
 			jsonError(w, "Failed to parse transaction", http.StatusInternalServerError)
 			return
 		}
 		jsonResponse(w, map[string]interface{}{
-			"type": "transaction",
-			"data": tx.GetString(),
+			"type":     "transaction",
+			"data":     tx.GetString(),
+			"location": location,
 		})
 	case "AC":
 		var acc account.Account
@@ -1007,14 +1019,14 @@ func GetDetails(w http.ResponseWriter, r *http.Request) {
 		addr.Init(acc.Address[:])
 
 		jsonResponse(w, map[string]interface{}{
-			"type":              "account",
-			"address":           addr.GetHex(),
-			"balance":           acc.GetBalanceConfirmedFloat(),
-			"transactionDelay":  acc.TransactionDelay,
-			"multiSignNumber":   acc.MultiSignNumber,
-			"sentCount":         len(acc.TransactionsSender),
-			"receivedCount":     len(acc.TransactionsRecipient),
-			"transactions":      transactions,
+			"type":             "account",
+			"address":          addr.GetHex(),
+			"balance":          acc.GetBalanceConfirmedFloat(),
+			"transactionDelay": acc.TransactionDelay,
+			"multiSignNumber":  acc.MultiSignNumber,
+			"sentCount":        len(acc.TransactionsSender),
+			"receivedCount":    len(acc.TransactionsRecipient),
+			"transactions":     transactions,
 		})
 	case "BL":
 		bb := blocks.Block{}
@@ -1071,7 +1083,7 @@ func Vote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Action        string `json:"action"`        // pausePrimary, unpausePrimary, replacePrimary, pauseSecondary, unpauseSecondary, replaceSecondary
+		Action         string `json:"action"`         // pausePrimary, unpausePrimary, replacePrimary, pauseSecondary, unpauseSecondary, replaceSecondary
 		EncryptionName string `json:"encryptionName"` // Name of encryption (optional, uses current if empty)
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
