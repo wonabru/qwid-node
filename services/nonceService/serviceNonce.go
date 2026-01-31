@@ -182,7 +182,7 @@ Q:
 		ret := sendNonceMsgSelf(tcpip.MyIP, topic)
 
 		if !ret {
-			time.Sleep(time.Second)
+			time.Sleep(2 * time.Second)
 		}
 
 		select {
@@ -191,7 +191,7 @@ Q:
 				break Q
 			}
 		default:
-
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
