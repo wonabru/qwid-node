@@ -166,6 +166,7 @@ func OnMessage(addr [4]byte, m []byte) {
 					connectingPeers[topicip] = true
 					go func(pip [4]byte, key [6]byte) {
 						nonceServices.StartSubscribingNonceMsg(pip)
+						time.Sleep(10 * time.Second)
 						connectingPeersMutex.Lock()
 						delete(connectingPeers, key)
 						connectingPeersMutex.Unlock()
@@ -176,6 +177,7 @@ func OnMessage(addr [4]byte, m []byte) {
 					connectingPeers[topicip] = true
 					go func(pip [4]byte, key [6]byte) {
 						StartSubscribingSyncMsg(pip)
+						time.Sleep(10 * time.Second)
 						connectingPeersMutex.Lock()
 						delete(connectingPeers, key)
 						connectingPeersMutex.Unlock()
@@ -186,6 +188,7 @@ func OnMessage(addr [4]byte, m []byte) {
 					connectingPeers[topicip] = true
 					go func(pip [4]byte, key [6]byte) {
 						transactionServices.StartSubscribingTransactionMsg(pip)
+						time.Sleep(10 * time.Second)
 						connectingPeersMutex.Lock()
 						delete(connectingPeers, key)
 						connectingPeersMutex.Unlock()

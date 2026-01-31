@@ -176,9 +176,9 @@ func OnMessage(addr [4]byte, m []byte) {
 						continue
 					}
 				}
-				if len(t.GetBytes()) > 0 {
-					txs = append(txs, t)
-				}
+				// if len(t.GetBytes()) > 0 {
+				txs = append(txs, t)
+				// }
 			}
 			logger.GetLogger().Println("  Found", len(txs), "transactions to send")
 			transactionMsg, err := GenerateTransactionMsg(txs, []byte("bx"), topic)
