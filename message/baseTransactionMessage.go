@@ -2,6 +2,7 @@ package message
 
 import (
 	"fmt"
+
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/logger"
 	"github.com/wonabru/qwid-node/tcpip"
@@ -35,7 +36,7 @@ func (a TransactionsMessage) GetTransactionsFromBytes(sigName, sigName2 string, 
 					continue
 					//return nil, err
 				}
-				if at.Verify(sigName, sigName2, isPaused, isPaused2) || topic == tcpip.NonceTopic || topic == tcpip.SelfNonceTopic {
+				if topic == tcpip.NonceTopic || topic == tcpip.SelfNonceTopic || at.Verify(sigName, sigName2, isPaused, isPaused2) {
 					txn[topic] = append(txn[topic], at)
 				} else {
 					logger.GetLogger().Println("warning: transaction fail to verify")
