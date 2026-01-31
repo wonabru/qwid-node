@@ -264,12 +264,13 @@ func SendSelf(addr [4]byte, nb []byte) bool {
 }
 
 func sendNonceMsgInLoop() {
-	for range time.Tick(time.Second * 5) {
+	for {
 		var topic = [2]byte{'N', 'N'}
 		ret := sendNonceMsg([4]byte{0, 0, 0, 0}, topic)
 		if !ret {
-			time.Sleep(time.Second)
+			time.Sleep(3 * time.Second)
 		}
+		time.Sleep(5 * time.Second)
 	}
 }
 

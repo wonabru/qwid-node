@@ -2,13 +2,14 @@ package syncServices
 
 import (
 	"bytes"
+	"time"
+
 	"github.com/wonabru/qwid-node/blocks"
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/logger"
 	"github.com/wonabru/qwid-node/message"
 	"github.com/wonabru/qwid-node/services"
 	"github.com/wonabru/qwid-node/tcpip"
-	"time"
 )
 
 func InitSyncService() {
@@ -151,11 +152,12 @@ func Send(addr [4]byte, nb []byte) bool {
 }
 
 func sendSyncMsgInLoop() {
-	for range time.Tick(time.Second) {
+	for {
 		n := generateSyncMsgHeight()
 		if !Send([4]byte{0, 0, 0, 0}, n) {
 			logger.GetLogger().Println("could not send 'hi' message")
 		}
+		time.Sleep(time.Second)
 	}
 }
 
