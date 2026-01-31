@@ -491,6 +491,10 @@ func handleSTAT(byt []byte, reply *[]byte) {
 	sm.Stats.Height = common.GetHeight()
 	sm.Stats.HeightMax = common.GetHeightMax()
 	sm.Stats.Syncing = common.IsSyncing.Load()
+	lastBlock, err := blocks.LoadBlock(sm.Stats.Height)
+	if err == nil {
+		sm.Stats.Difficulty = lastBlock.BaseBlock.BaseHeader.Difficulty
+	}
 	sm.Mu.Unlock()
 	msb, err := common.Marshal(sm.Stats, common.StatDBPrefix)
 	if err != nil {

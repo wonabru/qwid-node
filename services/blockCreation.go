@@ -3,6 +3,8 @@ package services
 import (
 	"bytes"
 	"fmt"
+	"sync"
+
 	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/blocks"
 	"github.com/wonabru/qwid-node/common"
@@ -14,18 +16,17 @@ import (
 	"github.com/wonabru/qwid-node/transactionsDefinition"
 	"github.com/wonabru/qwid-node/transactionsPool"
 	"github.com/wonabru/qwid-node/wallet"
-	"sync"
 )
 
 var (
-	SendChanNonce     chan []byte
-	SendChanSelfNonce chan []byte
-	SendMutexNonce    sync.RWMutex
+	SendChanNonce      chan []byte
+	SendChanSelfNonce  chan []byte
+	SendMutexNonce     sync.RWMutex
 	SendMutexSelfNonce sync.RWMutex
-	SendChanTx        chan []byte
-	SendMutexTx       sync.RWMutex
-	SendChanSync      chan []byte
-	SendMutexSync     sync.RWMutex
+	SendChanTx         chan []byte
+	SendMutexTx        sync.RWMutex
+	SendChanSync       chan []byte
+	SendMutexSync      sync.RWMutex
 )
 
 func CreateBlockFromNonceMessage(nonceTx []transactionsDefinition.Transaction,
@@ -162,12 +163,13 @@ func GenerateBlockMessage(bl blocks.Block) message.TransactionsMessage {
 func SendNonce(ip [4]byte, nb []byte) {
 	nb = append(ip[:], nb...)
 	SendMutexNonce.Lock()
+	defer SendMutexNonce.Unlock()
 	select {
 	case SendChanNonce <- nb:
 	default:
 		logger.GetLogger().Println("SendNonce: channel full, dropping message")
 	}
-	SendMutexNonce.Unlock()
+
 }
 
 func BroadcastBlock(bl blocks.Block) {
