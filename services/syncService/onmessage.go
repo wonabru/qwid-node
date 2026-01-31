@@ -13,7 +13,6 @@ import (
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/message"
 	"github.com/wonabru/qwid-node/services"
-	nonceServices "github.com/wonabru/qwid-node/services/nonceService"
 	"github.com/wonabru/qwid-node/services/transactionServices"
 	"github.com/wonabru/qwid-node/statistics"
 	"github.com/wonabru/qwid-node/tcpip"
@@ -145,61 +144,58 @@ func OnMessage(addr [4]byte, m []byte) {
 	case "hi": // getheader
 
 		txn := amsg.(message.TransactionsMessage).GetTransactionsBytes()
-		var topicip [6]byte
-		var ip4 [4]byte
-		if tcpip.GetPeersCount() < common.MaxPeersConnected {
-			peers := txn[[2]byte{'P', 'P'}]
-			peersConnectedNN := tcpip.GetPeersConnected(tcpip.NonceTopic)
-			peersConnectedBB := tcpip.GetPeersConnected(tcpip.SyncTopic)
-			peersConnectedTT := tcpip.GetPeersConnected(tcpip.TransactionTopic)
+		// var topicip [6]byte
+		// var ip4 [4]byte
+		// if tcpip.GetPeersCount() < common.MaxPeersConnected {
+		// 	peers := txn[[2]byte{'P', 'P'}]
+		// 	peersConnectedNN := tcpip.GetPeersConnected(tcpip.NonceTopic)
+		// 	peersConnectedBB := tcpip.GetPeersConnected(tcpip.SyncTopic)
+		// 	peersConnectedTT := tcpip.GetPeersConnected(tcpip.TransactionTopic)
 
-			for _, ip := range peers {
-				copy(ip4[:], ip)
-				copy(topicip[2:], ip)
-				copy(topicip[:2], tcpip.NonceTopic[:])
-				if bytes.Equal(ip4[:], addr[:]) {
-					continue
-				}
-				connectingPeersMutex.Lock()
-				copy(topicip[:2], tcpip.NonceTopic[:])
-				if _, ok := peersConnectedNN[topicip]; !ok && !tcpip.IsIPBanned(ip4) && !connectingPeers[topicip] {
-					connectingPeers[topicip] = true
-					go func(pip [4]byte, key [6]byte) {
-						nonceServices.StartSubscribingNonceMsg(pip)
-						time.Sleep(10 * time.Second)
-						connectingPeersMutex.Lock()
-						delete(connectingPeers, key)
-						connectingPeersMutex.Unlock()
-					}(ip4, topicip)
-				}
-				copy(topicip[:2], tcpip.SyncTopic[:])
-				if _, ok := peersConnectedBB[topicip]; !ok && !tcpip.IsIPBanned(ip4) && !connectingPeers[topicip] {
-					connectingPeers[topicip] = true
-					go func(pip [4]byte, key [6]byte) {
-						StartSubscribingSyncMsg(pip)
-						time.Sleep(10 * time.Second)
-						connectingPeersMutex.Lock()
-						delete(connectingPeers, key)
-						connectingPeersMutex.Unlock()
-					}(ip4, topicip)
-				}
-				copy(topicip[:2], tcpip.TransactionTopic[:])
-				if _, ok := peersConnectedTT[topicip]; !ok && !tcpip.IsIPBanned(ip4) && !connectingPeers[topicip] {
-					connectingPeers[topicip] = true
-					go func(pip [4]byte, key [6]byte) {
-						transactionServices.StartSubscribingTransactionMsg(pip)
-						time.Sleep(10 * time.Second)
-						connectingPeersMutex.Lock()
-						delete(connectingPeers, key)
-						connectingPeersMutex.Unlock()
-					}(ip4, topicip)
-				}
-				connectingPeersMutex.Unlock()
-				if tcpip.GetPeersCount() > common.MaxPeersConnected {
-					break
-				}
-			}
-		}
+		// 	for _, ip := range peers {
+		// 		copy(ip4[:], ip)
+		// 		copy(topicip[2:], ip)
+		// 		copy(topicip[:2], tcpip.NonceTopic[:])
+		// 		if bytes.Equal(ip4[:], addr[:]) {
+		// 			continue
+		// 		}
+		// 		connectingPeersMutex.Lock()
+		// 		copy(topicip[:2], tcpip.NonceTopic[:])
+		// 		if _, ok := peersConnectedNN[topicip]; !ok && !tcpip.IsIPBanned(ip4) && !connectingPeers[topicip] {
+		// 			connectingPeers[topicip] = true
+		// 			go func(pip [4]byte, key [6]byte) {
+		// 				nonceServices.StartSubscribingNonceMsg(pip)
+		// 				connectingPeersMutex.Lock()
+		// 				delete(connectingPeers, key)
+		// 				connectingPeersMutex.Unlock()
+		// 			}(ip4, topicip)
+		// 		}
+		// 		copy(topicip[:2], tcpip.SyncTopic[:])
+		// 		if _, ok := peersConnectedBB[topicip]; !ok && !tcpip.IsIPBanned(ip4) && !connectingPeers[topicip] {
+		// 			connectingPeers[topicip] = true
+		// 			go func(pip [4]byte, key [6]byte) {
+		// 				StartSubscribingSyncMsg(pip)
+		// 				connectingPeersMutex.Lock()
+		// 				delete(connectingPeers, key)
+		// 				connectingPeersMutex.Unlock()
+		// 			}(ip4, topicip)
+		// 		}
+		// 		copy(topicip[:2], tcpip.TransactionTopic[:])
+		// 		if _, ok := peersConnectedTT[topicip]; !ok && !tcpip.IsIPBanned(ip4) && !connectingPeers[topicip] {
+		// 			connectingPeers[topicip] = true
+		// 			go func(pip [4]byte, key [6]byte) {
+		// 				transactionServices.StartSubscribingTransactionMsg(pip)
+		// 				connectingPeersMutex.Lock()
+		// 				delete(connectingPeers, key)
+		// 				connectingPeersMutex.Unlock()
+		// 			}(ip4, topicip)
+		// 		}
+		// 		connectingPeersMutex.Unlock()
+		// 		if tcpip.GetPeersCount() > common.MaxPeersConnected {
+		// 			break
+		// 		}
+		// 	}
+		// }
 		if h < common.CurrentHeightOfNetwork {
 			common.IsSyncing.Store(true)
 		}
