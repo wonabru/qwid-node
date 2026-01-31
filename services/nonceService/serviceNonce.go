@@ -179,7 +179,6 @@ func sendNonceMsgInLoopSelf(chanRecv chan []byte) {
 	var topic = [2]byte{'S', 'S'}
 Q:
 	for range time.Tick(time.Second) {
-		timeout := time.After(time.Second)
 		ret := sendNonceMsgSelf(tcpip.MyIP, topic)
 
 		if !ret {
@@ -191,11 +190,8 @@ Q:
 			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
 				break Q
 			}
-		case <-timeout:
-			// Handle timeout
-			//logger.GetLogger().Println("sendNonceMsgInLoopSelf: Timeout occurred")
-			// You can break the loop or return from the function here
-			break
+		default:
+
 		}
 	}
 }
