@@ -395,7 +395,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			}
 
 		}
-		common.IsSyncing.Store(true)
+
 		if incompleteTxn {
 			logger.GetLogger().Printf("Sync incomplete - requesting %d missing transactions from peer", len(hashesMissingAll))
 			transactionServices.SendGT(addr, hashesMissingAll, "bt")
@@ -405,6 +405,7 @@ func OnMessage(addr [4]byte, m []byte) {
 			// Sync will be triggered again when transactions are received
 			return
 		}
+		common.IsSyncing.Store(true)
 		logger.GetLogger().Println("Starting final block processing and fund transfers")
 
 		defer func() {
