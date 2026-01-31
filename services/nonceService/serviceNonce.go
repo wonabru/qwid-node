@@ -300,8 +300,8 @@ func StartSubscribingNonceMsg(ip [4]byte) {
 				if !bytes.Equal(ipr[:], tcpip.MyIP[:]) {
 					if !bytes.Equal(LastRepliedIP[:], ipr[:]) && !bytes.Equal(ipr[:], []byte{0, 0, 0, 0}) {
 						sendReply(ipr)
-					} else {
-						LastRepliedIP = [4]byte{0, 0, 0, 0}
+					} else if !bytes.Equal(ipr[:], []byte{0, 0, 0, 0}) {
+						copy(ipr[:], LastRepliedIP[:])
 					}
 				}
 			}
@@ -315,11 +315,7 @@ func StartSubscribingNonceMsg(ip [4]byte) {
 }
 
 func sendReply(addr [4]byte) {
-	if time.Since(lastReplyTime) < time.Second {
-		return
-	}
-	lastReplyTime = time.Now()
-	LastRepliedIP = addr
+	logger.GetLogger().Println("send reply to ", addr)
 	var topic = [2]byte{'N', 'N'}
 	n, err := generateNonceMsg(topic)
 	if err != nil {
