@@ -265,6 +265,10 @@ func SendSelf(addr [4]byte, nb []byte) bool {
 
 func sendNonceMsgInLoop() {
 	for {
+		if len(tcpip.GetPeersConnected(tcpip.NonceTopic)) == 0 {
+			time.Sleep(3 * time.Second)
+			continue
+		}
 		var topic = [2]byte{'N', 'N'}
 		ret := sendNonceMsg([4]byte{0, 0, 0, 0}, topic)
 		if !ret {

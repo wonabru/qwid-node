@@ -153,6 +153,10 @@ func Send(addr [4]byte, nb []byte) bool {
 
 func sendSyncMsgInLoop() {
 	for {
+		if len(tcpip.GetPeersConnected(tcpip.SyncTopic)) == 0 {
+			time.Sleep(3 * time.Second)
+			continue
+		}
 		n := generateSyncMsgHeight()
 		if !Send([4]byte{0, 0, 0, 0}, n) {
 			logger.GetLogger().Println("could not send 'hi' message")
