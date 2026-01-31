@@ -195,7 +195,7 @@ Q:
 			// Handle timeout
 			//logger.GetLogger().Println("sendNonceMsgInLoopSelf: Timeout occurred")
 			// You can break the loop or return from the function here
-			break Q
+			break
 		}
 	}
 }
