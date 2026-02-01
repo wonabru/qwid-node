@@ -292,7 +292,7 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tm
 	if err != nil {
 		return false
 	}
-	logger.GetLogger().Println("transaction hash: ", tx.GetHash().GetHex())
+	// logger.GetLogger().Println("transaction hash: ", tx.GetHash().GetHex())
 	if !bytes.Equal(b, tx.GetHash().GetBytes()) {
 		logger.GetLogger().Println("check transaction hash fails")
 		return false
