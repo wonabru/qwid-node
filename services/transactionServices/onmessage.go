@@ -7,6 +7,7 @@ import (
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/database"
 	"github.com/wonabru/qwid-node/logger"
+	"github.com/wonabru/qwid-node/pubkeys"
 	"github.com/wonabru/qwid-node/message"
 	"github.com/wonabru/qwid-node/tcpip"
 	"github.com/wonabru/qwid-node/transactionsDefinition"
@@ -239,6 +240,11 @@ func storePubKeyFromTransaction(pk common.PubKey, senderAddr common.Address) {
 	if err != nil {
 		logger.GetLogger().Println("storePubKeyFromTransaction: DB put error:", err)
 		return
+	}
+	// Also store in patricia trie so LoadPubKeyWithPrimary can find it
+	err = pubkeys.AddPubKeyToAddress(pk, pk.MainAddress)
+	if err != nil {
+		logger.GetLogger().Println("storePubKeyFromTransaction: patricia trie error:", err)
 	}
 	logger.GetLogger().Println("storePubKeyFromTransaction: stored pubkey for", pk.Address.GetHex())
 }

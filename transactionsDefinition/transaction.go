@@ -427,5 +427,10 @@ func storePubKeyImmediately(pk common.PubKey, senderAddr common.Address) {
 		logger.GetLogger().Println("storePubKeyImmediately: DB put error:", err)
 		return
 	}
+	// Also store in patricia trie so LoadPubKeyWithPrimary can find it
+	err = pubkeys.AddPubKeyToAddress(pk, pk.MainAddress)
+	if err != nil {
+		logger.GetLogger().Println("storePubKeyImmediately: patricia trie error:", err)
+	}
 	logger.GetLogger().Println("storePubKeyImmediately: stored pubkey for", pk.Address.GetHex())
 }
