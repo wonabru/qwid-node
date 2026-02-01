@@ -86,6 +86,7 @@ func InitNonceService() {
 	time.Sleep(time.Second)
 	go sendNonceMsgInLoop()
 	go InitChannelVoting(blocks.VoteChannel)
+	go sendNonceMsgInLoopSelf()
 }
 
 func generateNonceMsg(topic [2]byte) (message.TransactionsMessage, error) {
@@ -175,9 +176,9 @@ func generateNonceMsg(topic [2]byte) (message.TransactionsMessage, error) {
 	return n, nil
 }
 
-func sendNonceMsgInLoopSelf(chanRecv chan []byte) {
+func sendNonceMsgInLoopSelf() {
 	var topic = [2]byte{'S', 'S'}
-Q:
+	// Q:
 	for {
 		ret := sendNonceMsgSelf(tcpip.MyIP, topic)
 
@@ -185,14 +186,14 @@ Q:
 			time.Sleep(3 * time.Second)
 		}
 
-		select {
-		case s := <-chanRecv:
-			if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
-				break Q
-			}
-		default:
+		// select {
+		// case s := <-chanRecv:
+		// 	if len(s) == 4 && bytes.Equal(s, []byte("EXIT")) {
+		// 		break Q
+		// 	}
+		// default:
 
-		}
+		// }
 		time.Sleep(time.Second)
 	}
 }
@@ -341,7 +342,7 @@ func StartSubscribingNonceMsgSelf() {
 	quit := false
 	var ip [4]byte
 	go tcpip.StartNewConnection(tcpip.MyIP, recvChanSelf, tcpip.SelfNonceTopic)
-	go sendNonceMsgInLoopSelf(recvChanExit)
+
 	for !services.QUIT.Load() && !quit {
 		select {
 		case s := <-recvChanSelf:
