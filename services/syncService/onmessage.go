@@ -214,7 +214,8 @@ func OnMessage(addr [4]byte, m []byte) {
 			services.AdjustShiftInPastInReset(lastOtherHeight)
 			lastBlockHashBytes, err := blocks.LoadHashOfBlock(h)
 			if err != nil {
-				panic(err)
+				logger.GetLogger().Println("cannot load block hash at height", h, ":", err)
+				return
 			}
 			if !bytes.Equal(lastOtherBlockHashBytes, lastBlockHashBytes) {
 				SendGetHeaders(addr, lastOtherHeight)
@@ -264,7 +265,8 @@ func OnMessage(addr [4]byte, m []byte) {
 					}
 					block, err := block.GetFromBytes(t)
 					if err != nil {
-						panic("cannot unmarshal header")
+						logger.GetLogger().Println("cannot unmarshal header:", err)
+						return
 					}
 					blcks = append(blcks, block)
 				}
@@ -314,22 +316,24 @@ func OnMessage(addr [4]byte, m []byte) {
 			if index <= h {
 				hashOfMyBlockBytes, err := blocks.LoadHashOfBlock(index)
 				if err != nil {
-					defer services.AdjustShiftInPastInReset(hmax)
+					services.AdjustShiftInPastInReset(hmax)
 					common.ShiftToPastMutex.RLock()
-					defer common.ShiftToPastMutex.RUnlock()
 					services.ResetAccountsAndBlocksSync(index - common.ShiftToPastInReset)
-					panic("cannot load block hash")
+					common.ShiftToPastMutex.RUnlock()
+					logger.GetLogger().Println("cannot load block hash at index", index, "- reset done")
+					return
 				}
 				if bytes.Equal(block.BlockHash.GetBytes(), hashOfMyBlockBytes) {
 					lastGoodBlock = index
 					continue
 				}
 				logger.GetLogger().Printf("Block hash mismatch at index %d - potential fork detected", index)
-				defer services.AdjustShiftInPastInReset(hmax)
+				services.AdjustShiftInPastInReset(hmax)
 				common.ShiftToPastMutex.RLock()
-				defer common.ShiftToPastMutex.RUnlock()
 				services.ResetAccountsAndBlocksSync(index - common.ShiftToPastInReset)
-				panic("potential fork detected")
+				common.ShiftToPastMutex.RUnlock()
+				logger.GetLogger().Println("fork detected at index", index, "- reset done")
+				return
 			}
 			if was {
 				oldBlock = blcks[i-1]
@@ -338,7 +342,7 @@ func OnMessage(addr [4]byte, m []byte) {
 				oldBlock, err = blocks.LoadBlock(index - 1)
 				if err != nil {
 					logger.GetLogger().Printf("ERROR: Failed to load previous block for index %d: %v", index-1, err)
-					panic("cannot load block")
+					return
 				}
 				was = true
 				logger.GetLogger().Printf("Loaded previous block from storage for index %d", index)
@@ -389,11 +393,12 @@ func OnMessage(addr [4]byte, m []byte) {
 
 			if header.Height != index {
 				logger.GetLogger().Printf("ERROR: Height mismatch - Block header height: %d, Expected index: %d", header.Height, index)
-				defer services.AdjustShiftInPastInReset(hmax)
+				services.AdjustShiftInPastInReset(hmax)
 				common.ShiftToPastMutex.RLock()
-				defer common.ShiftToPastMutex.RUnlock()
 				services.ResetAccountsAndBlocksSync(index - common.ShiftToPastInReset)
-				panic("not relevant height vs index")
+				common.ShiftToPastMutex.RUnlock()
+				logger.GetLogger().Println("height mismatch - reset done")
+				return
 			}
 
 			logger.GetLogger().Printf("Performing base block verification for block %d", index)
@@ -404,9 +409,10 @@ func OnMessage(addr [4]byte, m []byte) {
 				tcpip.ReduceAndCheckIfBanIP(addr)
 				services.AdjustShiftInPastInReset(hmax)
 				common.ShiftToPastMutex.RLock()
-				defer common.ShiftToPastMutex.RUnlock()
 				services.ResetAccountsAndBlocksSync(index - common.ShiftToPastInReset)
-				panic(err)
+				common.ShiftToPastMutex.RUnlock()
+				logger.GetLogger().Println("block verification failed at index", index, ":", err, "- reset done")
+				return
 
 			}
 			merkleTries[index] = merkleTrie
@@ -462,7 +468,7 @@ func OnMessage(addr [4]byte, m []byte) {
 				oldBlock, err = blocks.LoadBlock(index - 1)
 				if err != nil {
 					logger.GetLogger().Printf("ERROR: Failed to load previous block for index %d: %v", index-1, err)
-					panic("cannot load block")
+					return
 				}
 				was = true
 			}
