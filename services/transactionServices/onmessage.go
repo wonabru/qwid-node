@@ -1,13 +1,8 @@
 package transactionServices
 
 import (
-	"bytes"
-	"encoding/json"
-
 	"github.com/wonabru/qwid-node/common"
-	"github.com/wonabru/qwid-node/database"
 	"github.com/wonabru/qwid-node/logger"
-	"github.com/wonabru/qwid-node/pubkeys"
 	"github.com/wonabru/qwid-node/message"
 	"github.com/wonabru/qwid-node/tcpip"
 	"github.com/wonabru/qwid-node/transactionsDefinition"
@@ -50,26 +45,26 @@ func OnMessage(addr [4]byte, m []byte) {
 		for _, v := range txn {
 			for _, t := range v {
 				//logger.GetLogger().Println("Processing transaction:", t.Hash.GetHex())
-				pk := t.TxData.Pubkey
+				// pk := t.TxData.Pubkey
 				//if len(pk.GetBytes()) > 0 {
 				//	logger.GetLogger().Println("  Transaction has pubkey, length:", len(pk.GetBytes()))
 				//}
 				if transactionsPool.PoolsTx.TransactionExists(t.Hash.GetBytes()) {
 					//logger.GetLogger().Println("  Transaction already exists in Pool, skipping")
 					// Even if already in pool, store the pubkey if present
-					if len(pk.GetBytes()) > 0 {
-						//logger.GetLogger().Println("  Storing pubkey from existing transaction")
-						storePubKeyFromTransaction(pk, t.GetSenderAddress())
-					}
+					// if len(pk.GetBytes()) > 0 {
+					// 	//logger.GetLogger().Println("  Storing pubkey from existing transaction")
+					// 	storePubKeyFromTransaction(pk, t.GetSenderAddress())
+					// }
 					continue
 				}
 				if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], t.Hash.GetBytes()) {
 					//logger.GetLogger().Println("  Transaction already exists in DB, skipping")
 					// Even if already in DB, store the pubkey if present
-					if len(pk.GetBytes()) > 0 {
-						//logger.GetLogger().Println("  Storing pubkey from existing transaction in DB")
-						storePubKeyFromTransaction(pk, t.GetSenderAddress())
-					}
+					// if len(pk.GetBytes()) > 0 {
+					// 	//logger.GetLogger().Println("  Storing pubkey from existing transaction in DB")
+					// 	storePubKeyFromTransaction(pk, t.GetSenderAddress())
+					// }
 					continue
 				}
 
@@ -86,11 +81,11 @@ func OnMessage(addr [4]byte, m []byte) {
 						continue
 					}
 					// Store pubkey immediately so it's available for nonce verification
-					pk := t.TxData.Pubkey
-					if len(pk.GetBytes()) > 0 {
-						//logger.GetLogger().Println("Storing pubkey from transaction immediately")
-						storePubKeyFromTransaction(pk, t.GetSenderAddress())
-					}
+					// pk := t.TxData.Pubkey
+					// if len(pk.GetBytes()) > 0 {
+					// 	//logger.GetLogger().Println("Storing pubkey from transaction immediately")
+					// 	storePubKeyFromTransaction(pk, t.GetSenderAddress())
+					// }
 					// Always broadcast local transactions (from RPC/wallet with addr 0.0.0.0)
 					// For remote transactions, only broadcast if not syncing
 					isLocalTx := addr == [4]byte{0, 0, 0, 0}
@@ -198,53 +193,53 @@ func OnMessage(addr [4]byte, m []byte) {
 
 // storePubKeyFromTransaction stores the pubkey from a transaction immediately
 // so it's available for nonce verification before the block is processed
-func storePubKeyFromTransaction(pk common.PubKey, senderAddr common.Address) {
-	zeroBytes := make([]byte, common.AddressLength)
-	// Derive address from pubkey bytes if not set
-	if bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
-		derivedAddr, err := common.PubKeyToAddress(pk.GetBytes(), pk.Primary)
-		if err != nil {
-			logger.GetLogger().Println("storePubKeyFromTransaction: cannot derive address:", err)
-			return
-		}
-		pk.Address = derivedAddr
-	}
-	// Set MainAddress if not set
-	if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
-		pk.MainAddress = senderAddr
-	}
-	// Store in DB using the same method as blocks.StorePubKey
-	// For primary keys: pk.Address should match senderAddr
-	// For secondary keys: pk.MainAddress should match senderAddr
-	addressMatch := false
-	if pk.Primary {
-		addressMatch = bytes.Equal(pk.Address.GetBytes(), senderAddr.GetBytes())
-	} else {
-		addressMatch = bytes.Equal(pk.MainAddress.GetBytes(), senderAddr.GetBytes())
-	}
-	if !addressMatch {
-		logger.GetLogger().Println("storePubKeyFromTransaction: pubkey address doesn't match sender, skipping")
-		logger.GetLogger().Println("  pk.Primary:", pk.Primary)
-		logger.GetLogger().Println("  pk.Address:", pk.Address.GetHex())
-		logger.GetLogger().Println("  pk.MainAddress:", pk.MainAddress.GetHex())
-		logger.GetLogger().Println("  senderAddr:", senderAddr.GetHex())
-		return
-	}
-	// Store pubkey marshal
-	pkm, err := json.Marshal(pk)
-	if err != nil {
-		logger.GetLogger().Println("storePubKeyFromTransaction: marshal error:", err)
-		return
-	}
-	err = database.MainDB.Put(append(common.PubKeyMarshalDBPrefix[:], pk.Address.GetBytes()...), pkm)
-	if err != nil {
-		logger.GetLogger().Println("storePubKeyFromTransaction: DB put error:", err)
-		return
-	}
-	// Also store in patricia trie so LoadPubKeyWithPrimary can find it
-	err = pubkeys.AddPubKeyToAddress(pk, pk.MainAddress)
-	if err != nil {
-		logger.GetLogger().Println("storePubKeyFromTransaction: patricia trie error:", err)
-	}
-	logger.GetLogger().Println("storePubKeyFromTransaction: stored pubkey for", pk.Address.GetHex())
-}
+// func storePubKeyFromTransaction(pk common.PubKey, senderAddr common.Address) {
+// 	zeroBytes := make([]byte, common.AddressLength)
+// 	// Derive address from pubkey bytes if not set
+// 	if bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
+// 		derivedAddr, err := common.PubKeyToAddress(pk.GetBytes(), pk.Primary)
+// 		if err != nil {
+// 			logger.GetLogger().Println("storePubKeyFromTransaction: cannot derive address:", err)
+// 			return
+// 		}
+// 		pk.Address = derivedAddr
+// 	}
+// 	// Set MainAddress if not set
+// 	if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
+// 		pk.MainAddress = senderAddr
+// 	}
+// 	// Store in DB using the same method as blocks.StorePubKey
+// 	// For primary keys: pk.Address should match senderAddr
+// 	// For secondary keys: pk.MainAddress should match senderAddr
+// 	addressMatch := false
+// 	if pk.Primary {
+// 		addressMatch = bytes.Equal(pk.Address.GetBytes(), senderAddr.GetBytes())
+// 	} else {
+// 		addressMatch = bytes.Equal(pk.MainAddress.GetBytes(), senderAddr.GetBytes())
+// 	}
+// 	if !addressMatch {
+// 		logger.GetLogger().Println("storePubKeyFromTransaction: pubkey address doesn't match sender, skipping")
+// 		logger.GetLogger().Println("  pk.Primary:", pk.Primary)
+// 		logger.GetLogger().Println("  pk.Address:", pk.Address.GetHex())
+// 		logger.GetLogger().Println("  pk.MainAddress:", pk.MainAddress.GetHex())
+// 		logger.GetLogger().Println("  senderAddr:", senderAddr.GetHex())
+// 		return
+// 	}
+// 	// Store pubkey marshal
+// 	pkm, err := json.Marshal(pk)
+// 	if err != nil {
+// 		logger.GetLogger().Println("storePubKeyFromTransaction: marshal error:", err)
+// 		return
+// 	}
+// 	err = database.MainDB.Put(append(common.PubKeyMarshalDBPrefix[:], pk.Address.GetBytes()...), pkm)
+// 	if err != nil {
+// 		logger.GetLogger().Println("storePubKeyFromTransaction: DB put error:", err)
+// 		return
+// 	}
+// 	// Also store in patricia trie so LoadPubKeyWithPrimary can find it
+// 	err = pubkeys.AddPubKeyToAddress(pk, pk.MainAddress)
+// 	if err != nil {
+// 		logger.GetLogger().Println("storePubKeyFromTransaction: patricia trie error:", err)
+// 	}
+// 	logger.GetLogger().Println("storePubKeyFromTransaction: stored pubkey for", pk.Address.GetHex())
+// }
