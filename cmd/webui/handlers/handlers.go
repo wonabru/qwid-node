@@ -854,18 +854,21 @@ func GetHistory(w http.ResponseWriter, r *http.Request) {
 		h := sentHashes[i]
 		clientrpc.InRPC <- SignMessage(append([]byte("DETS"), h.GetBytes()...))
 		reply := <-clientrpc.OutRPC
-		if len(reply) > 2 && string(reply[:2]) == "TX" {
-			tx := transactionsDefinition.Transaction{}
-			tx, _, err := tx.GetFromBytes(reply[2:])
-			if err == nil {
-				transactions = append(transactions, map[string]interface{}{
-					"type":      "sent",
-					"hash":      tx.Hash.GetHex(),
-					"recipient": tx.TxData.Recipient.GetHex(),
-					"amount":    account.Int64toFloat64(tx.TxData.Amount),
-					"height":    tx.Height,
-					"time":      tx.TxParam.SendingTime,
-				})
+		if len(reply) > 3 && string(reply[:2]) == "TX" {
+			locLen := int(reply[2])
+			if len(reply) > 3+locLen {
+				tx := transactionsDefinition.Transaction{}
+				tx, _, err := tx.GetFromBytes(reply[3+locLen:])
+				if err == nil {
+					transactions = append(transactions, map[string]interface{}{
+						"type":      "sent",
+						"hash":      tx.Hash.GetHex(),
+						"recipient": tx.TxData.Recipient.GetHex(),
+						"amount":    account.Int64toFloat64(tx.TxData.Amount),
+						"height":    tx.Height,
+						"time":      tx.TxParam.SendingTime,
+					})
+				}
 			}
 		}
 	}
@@ -879,18 +882,21 @@ func GetHistory(w http.ResponseWriter, r *http.Request) {
 		h := recvHashes[i]
 		clientrpc.InRPC <- SignMessage(append([]byte("DETS"), h.GetBytes()...))
 		reply := <-clientrpc.OutRPC
-		if len(reply) > 2 && string(reply[:2]) == "TX" {
-			tx := transactionsDefinition.Transaction{}
-			tx, _, err := tx.GetFromBytes(reply[2:])
-			if err == nil {
-				transactions = append(transactions, map[string]interface{}{
-					"type":   "received",
-					"hash":   tx.Hash.GetHex(),
-					"sender": tx.TxParam.Sender.GetHex(),
-					"amount": account.Int64toFloat64(tx.TxData.Amount),
-					"height": tx.Height,
-					"time":   tx.TxParam.SendingTime,
-				})
+		if len(reply) > 3 && string(reply[:2]) == "TX" {
+			locLen := int(reply[2])
+			if len(reply) > 3+locLen {
+				tx := transactionsDefinition.Transaction{}
+				tx, _, err := tx.GetFromBytes(reply[3+locLen:])
+				if err == nil {
+					transactions = append(transactions, map[string]interface{}{
+						"type":   "received",
+						"hash":   tx.Hash.GetHex(),
+						"sender": tx.TxParam.Sender.GetHex(),
+						"amount": account.Int64toFloat64(tx.TxData.Amount),
+						"height": tx.Height,
+						"time":   tx.TxParam.SendingTime,
+					})
+				}
 			}
 		}
 	}
