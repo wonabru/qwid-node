@@ -3,11 +3,12 @@ package services
 import (
 	"bufio"
 	"fmt"
+	"os"
+
 	"github.com/wonabru/qwid-node/blocks"
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/logger"
 	"github.com/wonabru/qwid-node/wallet"
-	"os"
 )
 
 func checkBlock(newBlock blocks.Block, lastBlock blocks.Block, checkFinal bool) error {
