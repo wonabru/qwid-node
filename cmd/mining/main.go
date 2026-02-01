@@ -226,6 +226,8 @@ func main() {
 	go tcpip.LookUpForNewPeersToConnect(tcpip.ChanPeer)
 	topic := [2]byte{}
 	ip := [4]byte{}
+	lastReconnect := make(map[[6]byte]time.Time)
+	reconnectCooldown := 10 * time.Second
 
 	logger.GetLogger().Println("Entering main loop...")
 QF:
@@ -235,6 +237,13 @@ QF:
 		case topicip := <-tcpip.ChanPeer:
 			copy(topic[:], topicip[:2])
 			copy(ip[:], topicip[2:])
+			var key [6]byte
+			copy(key[:], topicip[:6])
+			if time.Since(lastReconnect[key]) < reconnectCooldown {
+				logger.GetLogger().Printf("Reconnect cooldown for %c%c %v, skipping", topic[0], topic[1], ip)
+				continue
+			}
+			lastReconnect[key] = time.Now()
 			if topic[0] == 'T' {
 				go transactionServices.StartSubscribingTransactionMsg(ip)
 			}
