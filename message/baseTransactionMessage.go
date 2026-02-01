@@ -40,9 +40,11 @@ func (a TransactionsMessage) GetTransactionsFromBytes(sigName, sigName2 string, 
 					continue
 					//return nil, err
 				}
-				pk := at.TxData.GetPubKey()
-				if len(pk.GetBytes()) > 0 {
-					storePubKeyFromTransaction(pk, pk.MainAddress)
+				if !(topic == tcpip.NonceTopic) && !(topic == tcpip.SelfNonceTopic) {
+					pk := at.TxData.GetPubKey()
+					if len(pk.GetBytes()) > 0 {
+						storePubKeyFromTransaction(pk, pk.MainAddress)
+					}
 				}
 				if topic == tcpip.NonceTopic || topic == tcpip.SelfNonceTopic {
 					txn[topic] = append(txn[topic], at)
