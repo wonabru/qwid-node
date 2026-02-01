@@ -2,6 +2,7 @@ package transactionsPool
 
 import (
 	"fmt"
+
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/logger"
 	"github.com/wonabru/qwid-node/transactionsDefinition"
@@ -17,7 +18,7 @@ func RemoveBadTransactionByHash(hash []byte, height int64, tree *MerkleTree) err
 	}
 	// NOTE: Do NOT delete from confirmed DB (TransactionDBPrefix) - other nodes need these
 	// transactions for sync. Only remove from pool DB.
-	// err = transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], hash)
+	err = transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], hash)
 	if err != nil {
 		logger.GetLogger().Println(err)
 	}
