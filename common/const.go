@@ -75,6 +75,7 @@ var (
 	OutputAddressesHashesDBPrefix    = [2]byte{'C', '0'}
 	TokenDetailsDBPrefix             = [2]byte{'T', 'D'}
 	DexAccountsDBPrefix              = [2]byte{'D', 'A'}
+	BadTransactionDBPrefix           = [2]byte{'B', 'T'}
 )
 
 var chainID = int16(23)

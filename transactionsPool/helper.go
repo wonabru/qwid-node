@@ -12,7 +12,22 @@ func RemoveBadTransactionByHash(hash []byte, height int64, tree *MerkleTree) err
 	PoolsTx.RemoveTransactionByHash(hash)
 	PoolTxEscrow.RemoveTransactionByHash(hash)
 	PoolTxMultiSign.RemoveTransactionByHash(hash)
-	err := transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionPoolHashesDBPrefix[:], hash)
+
+	// Try to load transaction from pool or confirmed DB before removing
+	tx, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hash)
+	if err != nil {
+		tx, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hash)
+	}
+
+	// Store to bad transaction DB so other nodes can still sync it
+	if err == nil && len(tx.GetBytes()) > 0 {
+		err = tx.StoreToDBPoolTx(common.BadTransactionDBPrefix[:])
+		if err != nil {
+			logger.GetLogger().Println("failed to store bad transaction:", err)
+		}
+	}
+
+	err = transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionPoolHashesDBPrefix[:], hash)
 	if err != nil {
 		logger.GetLogger().Println(err)
 	}

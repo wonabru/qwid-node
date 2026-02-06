@@ -137,8 +137,12 @@ func OnMessage(addr [4]byte, m []byte) {
 					// If not in Pool, try to load from confirmed DB
 					t, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hs)
 					if err != nil {
-						logger.GetLogger().Println("cannot load transaction from Pool or DB", err)
-						continue
+						// If not in confirmed DB, try bad transaction DB
+						t, err = transactionsDefinition.LoadFromDBPoolTx(common.BadTransactionDBPrefix[:], hs)
+						if err != nil {
+							logger.GetLogger().Println("cannot load transaction from Pool, DB, or BadTx", err)
+							continue
+						}
 					}
 				}
 				if len(t.GetBytes()) > 0 {
@@ -168,8 +172,12 @@ func OnMessage(addr [4]byte, m []byte) {
 					// If not in confirmed DB, try to load from Pool
 					t, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hs)
 					if err != nil {
-						logger.GetLogger().Println("cannot load transaction from DB or Pool", err)
-						continue
+						// If not in Pool, try bad transaction DB (transactions that failed validation but are in blocks)
+						t, err = transactionsDefinition.LoadFromDBPoolTx(common.BadTransactionDBPrefix[:], hs)
+						if err != nil {
+							logger.GetLogger().Println("cannot load transaction from DB, Pool, or BadTx", err)
+							continue
+						}
 					}
 				}
 				// if len(t.GetBytes()) > 0 {
