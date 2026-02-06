@@ -172,7 +172,20 @@ func CheckBlockTransfers(block Block, lastBlock Block, tree *transactionsPool.Me
 			// if common.IsSyncing.Load() {
 			poolTx, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hash)
 			if err != nil {
-				return 0, 0, err
+				// Try to recover from bad transaction DB during sync
+				poolTx, err = transactionsDefinition.LoadFromDBPoolTx(common.BadTransactionDBPrefix[:], hash)
+				if err != nil {
+					return 0, 0, err
+				}
+				// Validate recovered bad transaction
+				if !poolTx.Verify(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2()) {
+					return 0, 0, fmt.Errorf("bad transaction failed validation: %x", hash[:8])
+				}
+				// Store to confirmed DB
+				err = poolTx.StoreToDBPoolTx(common.TransactionDBPrefix[:])
+				if err != nil {
+					return 0, 0, err
+				}
 			}
 			//TODO
 			//err = transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], hash)
