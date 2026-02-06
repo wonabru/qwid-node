@@ -164,21 +164,27 @@ func CheckBlockTransfers(block Block, lastBlock Block, tree *transactionsPool.Me
 	accounts := map[[common.AddressLength]byte]account.Account{}
 	stakingAccounts := map[[common.AddressLength]byte]account.StakingAccount{}
 	totalFee := int64(0)
-	for _, tx := range txs {
+	logger.GetLogger().Printf("CheckBlockTransfers: block %d has %d transactions, lastSupply=%d", block.GetHeader().Height, len(txs), lastSupply)
+	for i, tx := range txs {
 		hash := tx.GetBytes()
+		txSource := "pool"
 		poolTx, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hash)
 		if err != nil {
 			transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionPoolHashesDBPrefix[:], hash)
 			// if common.IsSyncing.Load() {
 			poolTx, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hash)
+			txSource = "confirmed"
 			if err != nil {
 				// Try to recover from bad transaction DB during sync
 				poolTx, err = transactionsDefinition.LoadFromDBPoolTx(common.BadTransactionDBPrefix[:], hash)
+				txSource = "badTx"
 				if err != nil {
+					logger.GetLogger().Printf("  tx[%d] %x NOT FOUND in any DB", i, hash[:8])
 					return 0, 0, err
 				}
 				// Validate recovered bad transaction
 				if !poolTx.Verify(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2()) {
+					logger.GetLogger().Printf("  tx[%d] %x from badTx FAILED validation", i, hash[:8])
 					return 0, 0, fmt.Errorf("bad transaction failed validation: %x", hash[:8])
 				}
 				// Store to confirmed DB
@@ -208,6 +214,9 @@ func CheckBlockTransfers(block Block, lastBlock Block, tree *transactionsPool.Me
 		fee := poolTx.GasPrice * poolTx.GasUsage
 		totalFee += fee
 		amount := poolTx.TxData.Amount
+		logger.GetLogger().Printf("  tx[%d] %x src=%s amount=%d fee=%d gasPrice=%d gasUsage=%d sender=%x recipient=%x",
+			i, hash[:8], txSource, amount, fee, poolTx.GasPrice, poolTx.GasUsage,
+			poolTx.TxParam.Sender.GetBytes()[:8], poolTx.TxData.Recipient.GetBytes()[:8])
 		total_amount := fee + amount
 		address := poolTx.GetSenderAddress()
 		recipientAddress := poolTx.TxData.Recipient
@@ -468,12 +477,23 @@ func CheckBlockAndTransferFunds(newBlock *Block, lastBlock Block, merkleTrie *tr
 
 	staked, rewarded := GetSupplyInStakedAccounts()
 	//coinsInDex := account.GetCoinLiquidityInDex()
-	if GetSupplyInAccounts()+staked+rewarded+reward+lastBlock.BlockFee != newBlock.GetBlockSupply() {
-		logger.GetLogger().Println("GetSupplyInAccounts()", GetSupplyInAccounts())
+	supplyInAccounts := GetSupplyInAccounts()
+	calculatedSupply := supplyInAccounts + staked + rewarded + reward + lastBlock.BlockFee
+	expectedSupply := newBlock.GetBlockSupply()
+	if calculatedSupply != expectedSupply {
+		logger.GetLogger().Println("=== SUPPLY MISMATCH DEBUG ===")
+		logger.GetLogger().Println("GetSupplyInAccounts():", supplyInAccounts)
 		logger.GetLogger().Println("staked:", staked)
-		logger.GetLogger().Println("rewarded", rewarded)
-		logger.GetLogger().Println("lastBlock.BlockFee", lastBlock.BlockFee)
-		logger.GetLogger().Println("GetSupplyInAccounts()+staked+rewarded+reward+lastBlock.BlockFee:", GetSupplyInAccounts()+staked+rewarded+reward+lastBlock.BlockFee, "newBlock.GetBlockSupply():", newBlock.GetBlockSupply())
+		logger.GetLogger().Println("rewarded:", rewarded)
+		logger.GetLogger().Println("reward:", reward)
+		logger.GetLogger().Println("lastBlock.BlockFee:", lastBlock.BlockFee)
+		logger.GetLogger().Println("totalFee:", totalFee)
+		logger.GetLogger().Println("Calculated:", calculatedSupply)
+		logger.GetLogger().Println("Expected (block):", expectedSupply)
+		logger.GetLogger().Println("Difference:", calculatedSupply-expectedSupply)
+		logger.GetLogger().Println("lastBlock.Height:", lastBlock.GetHeader().Height)
+		logger.GetLogger().Println("lastBlock.Supply:", lastBlock.GetBlockSupply())
+		logger.GetLogger().Println("=== END SUPPLY MISMATCH DEBUG ===")
 		return fmt.Errorf("block supply checking fails vs account balances: CheckBlockAndTransferFunds")
 	}
 	hashes := newBlock.GetBlockTransactionsHashes()

@@ -178,6 +178,22 @@ func OnMessage(addr [4]byte, m []byte) {
 							logger.GetLogger().Println("cannot load transaction from DB, Pool, or BadTx", err)
 							continue
 						}
+						// Try to recover from bad transaction DB during sync
+						t, err = transactionsDefinition.LoadFromDBPoolTx(common.BadTransactionDBPrefix[:], hs)
+						if err != nil {
+							logger.GetLogger().Printf("  tx %x NOT FOUND in any DB", hs[:8])
+							return
+						}
+						// Validate recovered bad transaction
+						if !t.Verify(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2()) {
+							logger.GetLogger().Printf("  tx %x from badTx FAILED validation", hs[:8])
+							return
+						}
+						// Store to confirmed DB
+						err = t.StoreToDBPoolTx(common.TransactionDBPrefix[:])
+						if err != nil {
+							return
+						}
 					}
 				}
 				// if len(t.GetBytes()) > 0 {
