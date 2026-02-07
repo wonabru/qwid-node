@@ -6,6 +6,7 @@ import (
 	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/logger"
+	"github.com/wonabru/qwid-node/pubkeys"
 	"github.com/wonabru/qwid-node/transactionsDefinition"
 	"github.com/wonabru/qwid-node/transactionsPool"
 )
@@ -42,6 +43,29 @@ func CheckStakingTransaction(tx transactionsDefinition.Transaction, sumAmount in
 		n, err = account.IntDelegatedAccountFromAddress(addressRecipient)
 	}
 	if n > 0 && n < 256 {
+		// If the sender intends to be an operator, verify both pubkeys are registered
+		operational := len(tx.TxData.OptData) > 0
+		if operational && amount > 0 {
+			senderAddr := tx.GetSenderAddress()
+			addresses, err := pubkeys.LoadAddresses(senderAddr)
+			if err != nil {
+				logger.GetLogger().Println("operator must have registered pubkeys: CheckStakingTransaction")
+				return false
+			}
+			hasPrimary := false
+			hasSecondary := false
+			for _, addr := range addresses {
+				if addr.Primary {
+					hasPrimary = true
+				} else {
+					hasSecondary = true
+				}
+			}
+			if !hasPrimary || !hasSecondary {
+				logger.GetLogger().Println("operator must have both primary and secondary pubkeys registered: CheckStakingTransaction")
+				return false
+			}
+		}
 		if tx.GetLockedAmount() > 0 {
 
 			if amount <= 0 {
