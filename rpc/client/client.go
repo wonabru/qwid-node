@@ -39,6 +39,7 @@ func ConnectRPC(ip string) {
 			err = client.Call("Listener.Send", line, &reply)
 			if err != nil {
 				logger.GetLogger().Printf("RPC call failed: %v. Reconnecting...", err)
+				OutRPC <- []byte("Timeout")
 				for {
 					client, err = rpc.Dial("tcp", address)
 					if err == nil {

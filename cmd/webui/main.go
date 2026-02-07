@@ -37,6 +37,10 @@ func main() {
 		port = os.Args[2]
 	}
 
+	// Set up signal handler early so Ctrl+C always works
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
 	statistics.InitStatsManager()
 	go clientrpc.ConnectRPC(ip)
 	time.Sleep(time.Second)
@@ -44,9 +48,24 @@ func main() {
 	ipThis := tcpip.MyIP
 	ipStr := net.IPv4(ipThis[0], ipThis[1], ipThis[2], ipThis[3])
 
-	sigName, sigName2, err := handlers.SetCurrentEncryptions()
-	if err != nil {
-		fmt.Println("Warning: error retrieving current encryption:", err)
+	// Try to get encryption config with timeout
+	sigName, sigName2 := "", ""
+	encDone := make(chan struct{})
+	go func() {
+		var err error
+		sigName, sigName2, err = handlers.SetCurrentEncryptions()
+		if err != nil {
+			fmt.Println("Warning: error retrieving current encryption:", err)
+		}
+		close(encDone)
+	}()
+	select {
+	case <-encDone:
+	case <-time.After(5 * time.Second):
+		fmt.Println("Warning: timeout retrieving encryption config from node, using defaults")
+	case <-stop:
+		fmt.Println("\nShutting down...")
+		os.Exit(0)
 	}
 
 	w := wallet.EmptyWallet(0, sigName, sigName2)
@@ -104,10 +123,6 @@ func main() {
 		Addr:    ":" + port,
 		Handler: mux,
 	}
-
-	// Handle graceful shutdown
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

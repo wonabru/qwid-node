@@ -154,8 +154,8 @@ func VerifyEncryptionForPausing(height int64, totalStaked int64, primary bool) b
 		_, _, staked = GenerateEncryption2Data(height)
 	}
 
-	// 1/3 for pausing
-	if staked < int64(float32(totalStaked)/3.0) {
+	// 1/3 for pausing (use integer arithmetic to avoid float32 precision loss)
+	if staked*3 < totalStaked {
 		logger.GetLogger().Println("staked:", account.Int64toFloat64(staked), "total staked", account.Int64toFloat64(totalStaked))
 		return false
 	}
@@ -172,8 +172,8 @@ func VerifyEncryptionForReplacing(height int64, totalStaked int64, primary bool)
 		_, _, staked = GenerateEncryption2Data(height)
 	}
 
-	// 2/3 for invalidation
-	if staked < int64(2.0*float32(totalStaked)/3.0) {
+	// 2/3 for replacing (use integer arithmetic to avoid float32 precision loss)
+	if staked*3 < totalStaked*2 {
 		logger.GetLogger().Println("staked:", account.Int64toFloat64(staked), "total staked", account.Int64toFloat64(totalStaked))
 		return false
 	}

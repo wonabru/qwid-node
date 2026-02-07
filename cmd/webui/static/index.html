@@ -458,7 +458,7 @@
                     </label>
                     <label style="display:flex;align-items:center;cursor:pointer;">
                         <input type="checkbox" id="usePrimaryEncryption" checked style="width:auto;margin-right:8px;">
-                        Use Primary Encryption
+                        Use Primary Encryption <span id="sendEncLabel" style="color:#888;margin-left:5px;font-size:12px;"></span>
                     </label>
                 </div>
                 <button class="btn-primary" onclick="sendTransaction()">Send Transaction</button>
@@ -688,9 +688,7 @@
                         </div>
                     </div>
                     <div style="border-top:1px solid rgba(255,255,255,0.1);margin:15px 0;"></div>
-                    <p>Current Height: <span id="encHeight" style="color:#aaa;">-</span></p>
                     <p>Voting Window: every <span id="encVotingWindow" style="color:#aaa;">-</span> blocks</p>
-                    <p>Next Voting Block: <span id="encNextVoting" style="color:#aaa;">-</span></p>
                 </div>
             </div>
         </div>
@@ -1439,11 +1437,26 @@
                 document.getElementById('secondaryPubKeyLen').textContent = res.secondaryPubKeyLength || '-';
                 document.getElementById('secondarySigLen').textContent = res.secondarySignatureLength || '-';
 
-                if (res.height !== undefined) {
-                    document.getElementById('encHeight').textContent = res.height;
+                if (res.votingWindow !== undefined) {
                     document.getElementById('encVotingWindow').textContent = res.votingWindow;
-                    document.getElementById('encNextVoting').textContent = res.nextVotingBlock;
                 }
+
+                // Auto-set encryption checkboxes based on pause status
+                const usePrimary = !res.primaryPaused;
+                const checkboxIds = ['usePrimaryEncryption', 'stakingUsePrimaryEncryption', 'escrowUsePrimaryEncryption', 'dexUsePrimaryEncryption'];
+                checkboxIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.checked = usePrimary;
+                        if (res.primaryPaused && res.secondaryPaused) {
+                            el.disabled = true;
+                        } else if (res.primaryPaused || res.secondaryPaused) {
+                            el.disabled = true;
+                        } else {
+                            el.disabled = false;
+                        }
+                    }
+                });
             } catch (e) {
                 console.error('Failed to update encryption status:', e);
             }
