@@ -135,9 +135,10 @@ func SampleTransaction(w *wallet.Wallet) transactionsDefinition.Transaction {
 		Hash:      common.Hash{},
 		Signature: common.Signature{},
 		Height:    0,
-		GasPrice:  0,
+		GasPrice:  int64(rand2.Intn(0x0000000f) + 1),
 		GasUsage:  0,
 	}
+	t.GasUsage = t.GasUsageEstimate()
 
 	clientrpc.InRPC <- SignMessage([]byte("STAT"))
 	var reply []byte
