@@ -154,7 +154,7 @@ func SampleTransaction(w *wallet.Wallet) transactionsDefinition.Transaction {
 	if err != nil {
 		logger.GetLogger().Println("calc hash error", err)
 	}
-	err = t.Sign(w, false)
+	err = t.Sign(w, true)
 	if err != nil {
 		logger.GetLogger().Println("Signing error", err)
 	}
