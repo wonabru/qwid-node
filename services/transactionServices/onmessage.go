@@ -160,12 +160,9 @@ func OnMessage(addr [4]byte, m []byte) {
 		}
 	case "bt":
 		txn := amsg.(message.TransactionsMessage).GetTransactionsBytes()
-		logger.GetLogger().Println("Received bt request from", addr[:], "with", len(txn), "topics")
 		for topic, v := range txn {
-			logger.GetLogger().Println("  Topic:", topic, "requesting", len(v), "transactions")
 			txs := []transactionsDefinition.Transaction{}
 			for _, hs := range v {
-				logger.GetLogger().Printf("  Looking for tx hash: %x", hs)
 				// First try to load from confirmed DB
 				t, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hs)
 				if err != nil {
