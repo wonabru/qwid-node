@@ -150,8 +150,8 @@ func IsAllTransactions(block Block) [][]byte {
 		isInPoolEscrow := transactionsPool.PoolTxEscrow.HasTransaction(hash)
 		isInPoolMultisign := transactionsPool.PoolTxMultiSign.HasTransaction(hash)
 		isInPool := transactionsDefinition.CheckFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hash)
-		isInConfirmed := transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], hash)
-		if !isInPoolEscrow && !isInPoolMultisign && !isInPoolMain && !isInPool && !isInConfirmed {
+		// isInConfirmed := transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], hash) // && !isInConfirmed
+		if !isInPoolEscrow && !isInPoolMultisign && !isInPoolMain && !isInPool {
 			hashes = append(hashes, hash)
 		}
 	}
