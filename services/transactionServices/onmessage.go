@@ -172,33 +172,26 @@ func OnMessage(addr [4]byte, m []byte) {
 					// If not in confirmed DB, try to load from Pool
 					t, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hs)
 					if err != nil {
-						// If not in Pool, try bad transaction DB (transactions that failed validation but are in blocks)
-						t, err = transactionsDefinition.LoadFromDBPoolTx(common.BadTransactionDBPrefix[:], hs)
-						if err != nil {
-							logger.GetLogger().Println("cannot load transaction from DB, Pool, or BadTx", err)
-							continue
-						}
-						// Try to recover from bad transaction DB during sync
+						// If not in Pool, try bad transaction DB
 						t, err = transactionsDefinition.LoadFromDBPoolTx(common.BadTransactionDBPrefix[:], hs)
 						if err != nil {
 							logger.GetLogger().Printf("  tx %x NOT FOUND in any DB", hs[:8])
-							return
+							continue
 						}
 						// Validate recovered bad transaction
 						if !t.Verify(common.SigName(), common.SigName2(), common.IsPaused(), common.IsPaused2()) {
 							logger.GetLogger().Printf("  tx %x from badTx FAILED validation", hs[:8])
-							return
+							continue
 						}
 						// Store to confirmed DB
 						err = t.StoreToDBPoolTx(common.TransactionDBPrefix[:])
 						if err != nil {
-							return
+							logger.GetLogger().Printf("  tx %x failed to store to confirmed DB: %v", hs[:8], err)
+							continue
 						}
 					}
 				}
-				// if len(t.GetBytes()) > 0 {
 				txs = append(txs, t)
-				// }
 			}
 			logger.GetLogger().Println("  Found", len(txs), "transactions to send")
 			transactionMsg, err := GenerateTransactionMsg(txs, []byte("bx"), topic)
