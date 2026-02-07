@@ -237,6 +237,28 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tm
 		logger.GetLogger().Println("transaction amount has to be larger or equal 0")
 		return false
 	}
+	// If operator staking transaction, verify both pubkeys are registered
+	if n > 0 && n < 256 && len(tx.TxData.OptData) > 0 && tx.GetData().Amount > 0 {
+		senderAddr := tx.GetSenderAddress()
+		addresses, addrErr := pubkeys.LoadAddresses(senderAddr)
+		if addrErr != nil {
+			logger.GetLogger().Println("operator must have registered pubkeys: Verify")
+			return false
+		}
+		hasPrimary := false
+		hasSecondary := false
+		for _, addr := range addresses {
+			if addr.Primary {
+				hasPrimary = true
+			} else {
+				hasSecondary = true
+			}
+		}
+		if !hasPrimary || !hasSecondary {
+			logger.GetLogger().Println("operator must have both primary and secondary pubkeys registered: Verify")
+			return false
+		}
+	}
 	if tx.GetLockedAmount() > 0 {
 		n, err := account.IntDelegatedAccountFromAddress(tx.GetDelegatedAccountForLocking())
 
