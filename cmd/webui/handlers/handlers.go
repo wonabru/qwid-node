@@ -69,18 +69,6 @@ type WalletInfoResponse struct {
 	SigName2  string `json:"sigName2"`
 }
 
-// resolvePrimary returns which encryption to actually use based on pause status.
-// If primary is paused, forces secondary; if secondary is paused, forces primary.
-func resolvePrimary(requested bool) bool {
-	if requested && common.IsPaused() {
-		return false
-	}
-	if !requested && common.IsPaused2() {
-		return true
-	}
-	return requested
-}
-
 func SignMessage(line []byte) []byte {
 	operation := string(line[0:4])
 	verificationNeeded := true
@@ -503,7 +491,7 @@ func SendTransaction(w http.ResponseWriter, r *http.Request) {
 
 	// Public key inclusion
 	pk := common.PubKey{}
-	primary := resolvePrimary(req.UsePrimaryEncryption)
+	primary := req.UsePrimaryEncryption
 	if req.IncludePubKey {
 		if primary {
 			pk = MainWallet.Account1.PublicKey
@@ -706,7 +694,7 @@ func ExecuteStaking(w http.ResponseWriter, r *http.Request) {
 
 	// Public key
 	pk := common.PubKey{}
-	primary := resolvePrimary(req.UsePrimaryEncryption)
+	primary := req.UsePrimaryEncryption
 	if req.IncludePubKey {
 		if primary {
 			pk = MainWallet.Account1.PublicKey
@@ -1278,7 +1266,7 @@ func ModifyEscrow(w http.ResponseWriter, r *http.Request) {
 
 	// Public key
 	pk := common.PubKey{}
-	primary := resolvePrimary(req.UsePrimaryEncryption)
+	primary := req.UsePrimaryEncryption
 	if req.IncludePubKey {
 		if primary {
 			pk = MainWallet.Account1.PublicKey
@@ -1563,7 +1551,7 @@ func ExecuteDex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tx.Sign(MainWallet, resolvePrimary(req.UsePrimaryEncryption)); err != nil {
+	if err := tx.Sign(MainWallet, req.UsePrimaryEncryption); err != nil {
 		jsonError(w, fmt.Sprintf("Failed to sign transaction: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -1677,7 +1665,7 @@ func TradeDex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tx.Sign(MainWallet, resolvePrimary(req.UsePrimaryEncryption)); err != nil {
+	if err := tx.Sign(MainWallet, req.UsePrimaryEncryption); err != nil {
 		jsonError(w, fmt.Sprintf("Failed to sign transaction: %v", err), http.StatusInternalServerError)
 		return
 	}

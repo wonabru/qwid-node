@@ -458,7 +458,7 @@
                     </label>
                     <label style="display:flex;align-items:center;cursor:pointer;">
                         <input type="checkbox" id="usePrimaryEncryption" checked style="width:auto;margin-right:8px;">
-                        Use Primary Encryption <span id="sendEncLabel" style="color:#888;margin-left:5px;font-size:12px;"></span>
+                        Use Primary Encryption
                     </label>
                 </div>
                 <button class="btn-primary" onclick="sendTransaction()">Send Transaction</button>
@@ -515,10 +515,6 @@
                 </div>
 
                 <div class="form-group" style="display:flex;gap:20px;">
-                    <label style="display:flex;align-items:center;cursor:pointer;">
-                        <input type="checkbox" id="stakingIncludePubKey" style="width:auto;margin-right:8px;">
-                        Include Public Key
-                    </label>
                     <label style="display:flex;align-items:center;cursor:pointer;">
                         <input type="checkbox" id="stakingUsePrimaryEncryption" checked style="width:auto;margin-right:8px;">
                         Use Primary Encryption
@@ -1199,7 +1195,6 @@
             const delegatedAccount = document.getElementById('stakingDelegatedAccount').value || '1';
             const amount = parseFloat(document.getElementById('stakingAmount').value) || 0;
             const intendOperator = document.getElementById('intendOperator').checked;
-            const includePubKey = document.getElementById('stakingIncludePubKey').checked;
             const usePrimaryEncryption = document.getElementById('stakingUsePrimaryEncryption').checked;
 
             if (amount <= 0) {
@@ -1213,7 +1208,7 @@
                     delegatedAccount,
                     amount,
                     intendOperator,
-                    includePubKey,
+                    includePubKey: false,
                     usePrimaryEncryption
                 });
                 if (res.error) {
@@ -1441,22 +1436,7 @@
                     document.getElementById('encVotingWindow').textContent = res.votingWindow;
                 }
 
-                // Auto-set encryption checkboxes based on pause status
-                const usePrimary = !res.primaryPaused;
-                const checkboxIds = ['usePrimaryEncryption', 'stakingUsePrimaryEncryption', 'escrowUsePrimaryEncryption', 'dexUsePrimaryEncryption'];
-                checkboxIds.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        el.checked = usePrimary;
-                        if (res.primaryPaused && res.secondaryPaused) {
-                            el.disabled = true;
-                        } else if (res.primaryPaused || res.secondaryPaused) {
-                            el.disabled = true;
-                        } else {
-                            el.disabled = false;
-                        }
-                    }
-                });
+                // No auto-disable — user has full manual control over encryption choice
             } catch (e) {
                 console.error('Failed to update encryption status:', e);
             }
