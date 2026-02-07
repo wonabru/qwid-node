@@ -322,6 +322,18 @@ func CloseAndRemoveConnection(tcpConn *net.TCPConn) [][]byte {
 				delete(tcpConnections[topic], peerIP)
 				delete(peersConnected, topicipBytes)
 				delete(oldPeers, topicipBytes)
+				// If no more topic connections remain for this IP, remove from peer maps
+				hasConnection := false
+				for _, conns := range tcpConnections {
+					if _, ok := conns[peerIP]; ok {
+						hasConnection = true
+						break
+					}
+				}
+				if !hasConnection {
+					delete(validPeersConnected, peerIP)
+					delete(nodePeersConnected, peerIP)
+				}
 				return deletedIP
 			}
 		}

@@ -205,12 +205,16 @@ func Receive(topic [2]byte, conn *net.TCPConn) []byte {
 		return []byte("<-CLS->")
 	}
 
+	conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 	buf := make([]byte, bufSize)
 	n, err := conn.Read(buf)
 
 	if err != nil {
 		if err == io.EOF {
 			return []byte("<-CLS->")
+		}
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			return nil // read timeout, not an error — just no data yet
 		}
 		//handleConnectionError(err, topic, conn)
 		return []byte("<-ERR->")
@@ -330,13 +334,14 @@ func GetPeersConnected(topic [2]byte) map[[6]byte][2]byte {
 func GetIPsConnected() [][]byte {
 	if PeersMutex.TryLock() {
 		defer PeersMutex.Unlock()
+		// Only return IPs that have at least one active TCP connection
 		uniqueIPs := make(map[[4]byte]struct{})
-		for key, value := range nodePeersConnected {
-			if value > 1 {
-				if bytes.Equal(key[:], MyIP[:]) {
+		for _, connections := range tcpConnections {
+			for ip := range connections {
+				if bytes.Equal(ip[:], MyIP[:]) {
 					continue
 				}
-				uniqueIPs[key] = struct{}{}
+				uniqueIPs[ip] = struct{}{}
 			}
 		}
 		var ips [][]byte
@@ -358,7 +363,15 @@ func GetIPsConnected() [][]byte {
 func GetPeersCount() int {
 	PeersMutex.RLock()
 	defer PeersMutex.RUnlock()
-	return PeersCount
+	uniqueIPs := make(map[[4]byte]struct{})
+	for _, connections := range tcpConnections {
+		for ip := range connections {
+			if !bytes.Equal(ip[:], MyIP[:]) {
+				uniqueIPs[ip] = struct{}{}
+			}
+		}
+	}
+	return len(uniqueIPs)
 }
 
 func LookUpForNewPeersToConnect(chanPeer chan []byte) {
