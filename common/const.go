@@ -25,7 +25,7 @@ var (
 	MaxGasUsage                    int64   = 13700000 // circa 6.5k transactions in block
 	MaxGasPrice                    int64   = 100000
 	MaxTransactionsPerBlock        int16   = 5000 // on average 500 TPS
-	MaxTransactionInPool                   = 10000
+	MaxTransactionInPool                   = 50000
 	MaxPeersConnected              int     = 6
 	NumberOfHashesInBucket         int64   = 20
 	NumberOfBlocksInBucket         int64   = 20
