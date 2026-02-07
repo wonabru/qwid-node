@@ -41,10 +41,6 @@ func RemoveBadTransactionByHash(hash []byte, height int64, tree *MerkleTree) err
 	if err == nil {
 		logger.GetLogger().Println("transaction is in trie")
 	}
-	err = RemoveMerkleTrieFromDB(height)
-	if err != nil {
-		logger.GetLogger().Println(err)
-	}
 	PoolsTx.BanTransactionByHash(hash)
 	PoolTxEscrow.BanTransactionByHash(hash)
 	PoolTxMultiSign.BanTransactionByHash(hash)
