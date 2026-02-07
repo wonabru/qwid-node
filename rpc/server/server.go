@@ -134,6 +134,8 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 		handlePEND(byt, reply)
 	case "PEER":
 		handlePEER(byt, reply)
+	case "PUBA":
+		handlePUBA(byt, reply)
 	default:
 		*reply = []byte("Invalid operation")
 	}
@@ -588,6 +590,53 @@ func handlePEER(byt []byte, reply *[]byte) {
 	result, err := json.Marshal(resp)
 	if err != nil {
 		*reply = []byte("{\"error\":\"failed to marshal peer info\"}")
+		return
+	}
+	*reply = result
+}
+
+func handlePUBA(line []byte, reply *[]byte) {
+	if len(line) < common.AddressLength {
+		*reply = []byte("{\"error\":\"invalid address length\"}")
+		return
+	}
+
+	addr := common.Address{}
+	err := addr.Init(line[:common.AddressLength])
+	if err != nil {
+		*reply = []byte("{\"error\":\"invalid address\"}")
+		return
+	}
+
+	type PubKeyAddrInfo struct {
+		Address string `json:"address"`
+		Primary bool   `json:"primary"`
+	}
+	type PubKeyResponse struct {
+		HasPrimary   bool             `json:"hasPrimary"`
+		HasSecondary bool             `json:"hasSecondary"`
+		Addresses    []PubKeyAddrInfo `json:"addresses"`
+	}
+
+	resp := PubKeyResponse{}
+	addresses, err := pubkeys.LoadAddresses(addr)
+	if err == nil {
+		for _, a := range addresses {
+			resp.Addresses = append(resp.Addresses, PubKeyAddrInfo{
+				Address: a.GetHex(),
+				Primary: a.Primary,
+			})
+			if a.Primary {
+				resp.HasPrimary = true
+			} else {
+				resp.HasSecondary = true
+			}
+		}
+	}
+
+	result, err := json.Marshal(resp)
+	if err != nil {
+		*reply = []byte("{\"error\":\"failed to marshal pubkey info\"}")
 		return
 	}
 	*reply = result

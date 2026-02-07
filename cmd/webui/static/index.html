@@ -390,6 +390,33 @@
                     <p style="color:#666;">No staking information available</p>
                 </div>
             </div>
+
+            <div class="card">
+                <h3>PubKey Registration</h3>
+                <div id="pubkeyInfo" style="font-family:monospace;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;">
+                        <div>
+                            <div style="margin-bottom:5px;">Primary PubKey:</div>
+                            <span id="primaryPubKeyStatus" style="font-weight:bold;">Loading...</span>
+                        </div>
+                        <div>
+                            <div style="margin-bottom:5px;">Secondary PubKey:</div>
+                            <span id="secondaryPubKeyStatus" style="font-weight:bold;">Loading...</span>
+                        </div>
+                    </div>
+                    <div id="pubkeyAddresses" style="margin-top:10px;"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Account Details</h3>
+                <div id="accountDetails" style="font-family:monospace;">
+                    <p>Escrow Delay: <span id="accountEscrowDelay" style="color:#aaa;">-</span> blocks</p>
+                    <p>Multi-Sig Required: <span id="accountMultiSig" style="color:#aaa;">-</span></p>
+                    <p>Sent Transactions: <span id="accountSentCount" style="color:#aaa;">-</span></p>
+                    <p>Received Transactions: <span id="accountRecvCount" style="color:#aaa;">-</span></p>
+                </div>
+            </div>
         </div>
 
         <!-- Send Panel -->
@@ -975,9 +1002,59 @@
                         });
                         document.getElementById('stakingDetails').innerHTML = html;
                     }
+
+                    // Account details
+                    document.getElementById('accountEscrowDelay').textContent = res.escrowDelay || '0';
+                    document.getElementById('accountMultiSig').textContent = res.multiSignNumber || '0';
+                    document.getElementById('accountSentCount').textContent = res.sentCount || '0';
+                    document.getElementById('accountRecvCount').textContent = res.receivedCount || '0';
                 }
             } catch (e) {
                 console.error('Failed to update account:', e);
+            }
+
+            // Fetch pubkey registration info
+            try {
+                const pk = await api('/api/pubkey-info');
+                if (!pk.error) {
+                    const primaryEl = document.getElementById('primaryPubKeyStatus');
+                    if (pk.hasPrimary) {
+                        primaryEl.textContent = 'Registered';
+                        primaryEl.style.color = '#66bb6a';
+                    } else {
+                        primaryEl.textContent = 'NOT Registered';
+                        primaryEl.style.color = '#ef5350';
+                    }
+
+                    const secondaryEl = document.getElementById('secondaryPubKeyStatus');
+                    if (pk.hasSecondary) {
+                        secondaryEl.textContent = 'Registered';
+                        secondaryEl.style.color = '#66bb6a';
+                    } else {
+                        secondaryEl.textContent = 'NOT Registered';
+                        secondaryEl.style.color = '#ef5350';
+                    }
+
+                    if (pk.addresses && pk.addresses.length > 0) {
+                        let html = '<div style="font-size:12px;color:#888;margin-top:5px;">';
+                        html += '<div style="margin-bottom:5px;">Registered Addresses:</div>';
+                        pk.addresses.forEach(a => {
+                            const label = a.primary ? 'Primary' : 'Secondary';
+                            const color = a.primary ? '#4fc3f7' : '#ce93d8';
+                            html += '<div style="margin-bottom:3px;">';
+                            html += '<span style="color:' + color + ';">[' + label + ']</span> ';
+                            html += '<span style="color:#aaa;">' + a.address + '</span>';
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                        document.getElementById('pubkeyAddresses').innerHTML = html;
+                    } else {
+                        document.getElementById('pubkeyAddresses').innerHTML =
+                            '<p style="color:#888;font-size:12px;">No pubkey addresses registered. Send a transaction with "Include PubKey" to register.</p>';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch pubkey info:', e);
             }
         }
 

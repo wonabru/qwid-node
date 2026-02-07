@@ -39,12 +39,12 @@ var (
 	MaxTransactionInMultiSigPool   int64   = 60480        //one week
 	MaxNumberTransactionInChunk            = 100
 	ConnectionMaxTries                     = 10
-	BannedTimeSeconds              int64   = 2                  // 2 blocks
+	BannedTimeSeconds              int64   = 2                   // 2 blocks
 	MessageInitialization                  = [4]byte{2, 0, 2, 9} // will be overwrite in init() by MaxMessageSizeBytes
 	MaxMessageSizeBytes            int32   = 151126018           // should be adjusted to maximal message sent
 	DefaultWalletHomePath                  = "/.qwid/wallet/"
 	DefaultBlockchainHomePath              = "/.qwid/db/blockchain/"
-	ConnectionsWithoutVerification         = [][]byte{[]byte("TRAN"), []byte("STAT"), []byte("ENCR"), []byte("DETS"), []byte("STAK"), []byte("ADEX")}
+	ConnectionsWithoutVerification         = [][]byte{[]byte("TRAN"), []byte("STAT"), []byte("ENCR"), []byte("DETS"), []byte("STAK"), []byte("ADEX"), []byte("PUBA")}
 	CurrentHeightOfNetwork         int64   = 23
 )
 

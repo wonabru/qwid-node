@@ -42,13 +42,17 @@ type StatsResponse struct {
 }
 
 type AccountResponse struct {
-	Address        string          `json:"address"`
-	Balance        float64         `json:"balance"`
-	StakedAmount   float64         `json:"stakedAmount"`
-	LockedAmount   float64         `json:"lockedAmount"`
-	RewardsAmount  float64         `json:"rewardsAmount"`
-	TotalHoldings  float64         `json:"totalHoldings"`
-	StakingDetails []StakingDetail `json:"stakingDetails"`
+	Address          string          `json:"address"`
+	Balance          float64         `json:"balance"`
+	StakedAmount     float64         `json:"stakedAmount"`
+	LockedAmount     float64         `json:"lockedAmount"`
+	RewardsAmount    float64         `json:"rewardsAmount"`
+	TotalHoldings    float64         `json:"totalHoldings"`
+	StakingDetails   []StakingDetail `json:"stakingDetails"`
+	EscrowDelay      int64           `json:"escrowDelay"`
+	MultiSignNumber  uint8           `json:"multiSignNumber"`
+	SentCount        int             `json:"sentCount"`
+	ReceivedCount    int             `json:"receivedCount"`
 }
 
 type StakingDetail struct {
@@ -346,13 +350,17 @@ func GetAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := AccountResponse{
-		Address:        MainWallet.MainAddress.GetHex(),
-		Balance:        conf,
-		StakedAmount:   stake,
-		LockedAmount:   locks,
-		RewardsAmount:  rewards,
-		TotalHoldings:  conf + stake + rewards,
-		StakingDetails: stakingDetails,
+		Address:         MainWallet.MainAddress.GetHex(),
+		Balance:         conf,
+		StakedAmount:    stake,
+		LockedAmount:    locks,
+		RewardsAmount:   rewards,
+		TotalHoldings:   conf + stake + rewards,
+		StakingDetails:  stakingDetails,
+		EscrowDelay:     acc.TransactionDelay,
+		MultiSignNumber: acc.MultiSignNumber,
+		SentCount:       len(acc.TransactionsSender),
+		ReceivedCount:   len(acc.TransactionsRecipient),
 	}
 	jsonResponse(w, resp)
 }
@@ -1081,6 +1089,28 @@ func GetPools(w http.ResponseWriter, r *http.Request) {
 
 func Trade(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, map[string]string{"status": "not implemented"})
+}
+
+func GetPubKeyInfo(w http.ResponseWriter, r *http.Request) {
+	if MainWallet == nil || !MainWallet.Check() {
+		jsonError(w, "Load wallet first", http.StatusBadRequest)
+		return
+	}
+
+	clientrpc.InRPC <- SignMessage(append([]byte("PUBA"), MainWallet.MainAddress.GetBytes()...))
+	reply := <-clientrpc.OutRPC
+	if bytes.Equal(reply, []byte("Timeout")) {
+		jsonError(w, "Timeout", http.StatusGatewayTimeout)
+		return
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(reply, &resp); err != nil {
+		jsonError(w, "Failed to parse pubkey info", http.StatusInternalServerError)
+		return
+	}
+
+	jsonResponse(w, resp)
 }
 
 func GetEncryptionStatus(w http.ResponseWriter, r *http.Request) {
