@@ -1083,6 +1083,38 @@ func Trade(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, map[string]string{"status": "not implemented"})
 }
 
+func GetEncryptionStatus(w http.ResponseWriter, r *http.Request) {
+	// Refresh encryption config from node
+	SetCurrentEncryptions()
+
+	resp := map[string]interface{}{
+		"primaryName":            common.SigName(),
+		"primaryPaused":          common.IsPaused(),
+		"primaryPubKeyLength":    common.PubKeyLength(false),
+		"primarySignatureLength": common.SignatureLength(false),
+
+		"secondaryName":            common.SigName2(),
+		"secondaryPaused":          common.IsPaused2(),
+		"secondaryPubKeyLength":    common.PubKeyLength2(false),
+		"secondarySignatureLength": common.SignatureLength2(false),
+	}
+
+	// Also get current height for voting window context
+	clientrpc.InRPC <- SignMessage([]byte("STAT"))
+	reply := <-clientrpc.OutRPC
+	if !bytes.Equal(reply, []byte("Timeout")) {
+		sm := statistics.GetStatsManager()
+		st := sm.Stats
+		if err := common.Unmarshal(reply, common.StatDBPrefix, &st); err == nil {
+			resp["height"] = st.Height
+			resp["votingWindow"] = common.VotingHeightDistance
+			resp["nextVotingBlock"] = (st.Height/int64(common.VotingHeightDistance) + 1) * int64(common.VotingHeightDistance)
+		}
+	}
+
+	jsonResponse(w, resp)
+}
+
 func Vote(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		jsonError(w, "Method not allowed", http.StatusMethodNotAllowed)

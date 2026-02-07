@@ -79,6 +79,7 @@ func main() {
 	mux.HandleFunc("/api/dex/info", corsMiddleware(handlers.GetDexInfo))
 	mux.HandleFunc("/api/dex/execute", corsMiddleware(handlers.ExecuteDex))
 	mux.HandleFunc("/api/vote", corsMiddleware(handlers.Vote))
+	mux.HandleFunc("/api/encryption-status", corsMiddleware(handlers.GetEncryptionStatus))
 	mux.HandleFunc("/api/escrow/modify", corsMiddleware(handlers.ModifyEscrow))
 	mux.HandleFunc("/api/smartcontract/call", corsMiddleware(handlers.CallSmartContract))
 	mux.HandleFunc("/api/logs", corsMiddleware(handlers.GetLogs))

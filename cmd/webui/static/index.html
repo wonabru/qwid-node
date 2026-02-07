@@ -644,8 +644,26 @@
             <div class="card">
                 <h3>Current Encryption Status</h3>
                 <div id="encryptionStatus" style="font-family:monospace;">
-                    <p>Primary: <span id="currentPrimary">Loading...</span></p>
-                    <p>Secondary: <span id="currentSecondary">Loading...</span></p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                        <div>
+                            <h4 style="margin-bottom:10px;color:#4fc3f7;">Primary Encryption</h4>
+                            <p>Name: <span id="currentPrimary" style="color:#fff;">Loading...</span></p>
+                            <p>Status: <span id="primaryPausedStatus">Loading...</span></p>
+                            <p>PubKey Size: <span id="primaryPubKeyLen" style="color:#aaa;">-</span> bytes</p>
+                            <p>Signature Size: <span id="primarySigLen" style="color:#aaa;">-</span> bytes</p>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom:10px;color:#ce93d8;">Secondary Encryption</h4>
+                            <p>Name: <span id="currentSecondary" style="color:#fff;">Loading...</span></p>
+                            <p>Status: <span id="secondaryPausedStatus">Loading...</span></p>
+                            <p>PubKey Size: <span id="secondaryPubKeyLen" style="color:#aaa;">-</span> bytes</p>
+                            <p>Signature Size: <span id="secondarySigLen" style="color:#aaa;">-</span> bytes</p>
+                        </div>
+                    </div>
+                    <div style="border-top:1px solid rgba(255,255,255,0.1);margin:15px 0;"></div>
+                    <p>Current Height: <span id="encHeight" style="color:#aaa;">-</span></p>
+                    <p>Voting Window: every <span id="encVotingWindow" style="color:#aaa;">-</span> blocks</p>
+                    <p>Next Voting Block: <span id="encNextVoting" style="color:#aaa;">-</span></p>
                 </div>
             </div>
         </div>
@@ -1315,6 +1333,45 @@
             }
         }
 
+        async function updateEncryptionStatus() {
+            try {
+                const res = await api('/api/encryption-status');
+                document.getElementById('currentPrimary').textContent = res.primaryName || 'Unknown';
+                document.getElementById('currentSecondary').textContent = res.secondaryName || 'Unknown';
+
+                const primaryStatus = document.getElementById('primaryPausedStatus');
+                if (res.primaryPaused) {
+                    primaryStatus.textContent = 'PAUSED';
+                    primaryStatus.style.color = '#ef5350';
+                } else {
+                    primaryStatus.textContent = 'Active';
+                    primaryStatus.style.color = '#66bb6a';
+                }
+
+                const secondaryStatus = document.getElementById('secondaryPausedStatus');
+                if (res.secondaryPaused) {
+                    secondaryStatus.textContent = 'PAUSED';
+                    secondaryStatus.style.color = '#ef5350';
+                } else {
+                    secondaryStatus.textContent = 'Active';
+                    secondaryStatus.style.color = '#66bb6a';
+                }
+
+                document.getElementById('primaryPubKeyLen').textContent = res.primaryPubKeyLength || '-';
+                document.getElementById('primarySigLen').textContent = res.primarySignatureLength || '-';
+                document.getElementById('secondaryPubKeyLen').textContent = res.secondaryPubKeyLength || '-';
+                document.getElementById('secondarySigLen').textContent = res.secondarySignatureLength || '-';
+
+                if (res.height !== undefined) {
+                    document.getElementById('encHeight').textContent = res.height;
+                    document.getElementById('encVotingWindow').textContent = res.votingWindow;
+                    document.getElementById('encNextVoting').textContent = res.nextVotingBlock;
+                }
+            } catch (e) {
+                console.error('Failed to update encryption status:', e);
+            }
+        }
+
         // Escrow functions
         async function modifyAccount() {
             const escrowDelay = parseInt(document.getElementById('escrowDelay').value) || 0;
@@ -1591,9 +1648,11 @@
         // Initialize
         updateStats();
         checkWallet();
+        updateEncryptionStatus();
         loadLogFiles();
         setInterval(updateStats, 1000);  // Every 1 seconds (was 1 second)
         setInterval(() => { if (walletLoaded) updateAccount(); }, 3000);  // Every 3 seconds (was 3 seconds)
+        setInterval(updateEncryptionStatus, 10000);  // Every 10 seconds
     </script>
 </body>
 </html>
