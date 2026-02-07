@@ -126,9 +126,6 @@ localhost port that should be closed from anywhere:
 
     19009 - wallet - node communication
 
-    8000 - qt requirements (localhost only)
-
-
 To create account and manage wallet:
 
     go run cmd/generateNewWallet/main.go
