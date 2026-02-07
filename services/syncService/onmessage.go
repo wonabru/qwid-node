@@ -429,15 +429,19 @@ func OnMessage(addr [4]byte, m []byte) {
 		}
 
 		if incompleteTxn {
-			logger.GetLogger().Printf("Sync incomplete - requesting %d missing transactions from peer", len(hashesMissingAll))
-			if len(hashesMissingAll) < 2 {
-				logger.GetLogger().Printf("Hash: %x", hashesMissingAll[0])
+			logger.GetLogger().Printf("Sync incomplete - requesting %d missing transactions from peer in chunks", len(hashesMissingAll))
+			maxChunk := common.MaxNumberTransactionInChunk
+			for i := 0; i < len(hashesMissingAll); i += maxChunk {
+				end := i + maxChunk
+				if end > len(hashesMissingAll) {
+					end = len(hashesMissingAll)
+				}
+				chunk := hashesMissingAll[i:end]
+				logger.GetLogger().Printf("Sending bt chunk %d-%d of %d to %v", i, end, len(hashesMissingAll), addr)
+				transactionServices.SendGT(addr, chunk, "bt")
+				time.Sleep(500 * time.Millisecond)
 			}
-			logger.GetLogger().Printf("Sending bt request to %v via TransactionTopic for %d hashes", addr, len(hashesMissingAll))
-			transactionServices.SendGT(addr, hashesMissingAll, "bt")
 			logger.GetLogger().Println("Waiting for missing transactions before continuing sync")
-			// Return and wait for transactions to arrive via "bx" handler
-			// Sync will be triggered again when transactions are received
 			return
 		}
 		common.IsSyncing.Store(true)
@@ -480,10 +484,15 @@ func OnMessage(addr [4]byte, m []byte) {
 				hashesMissing := blocks.IsAllTransactions(block)
 				if len(hashesMissing) > 0 {
 					logger.GetLogger().Printf("Detected %d missing transactions during fund transfer", len(hashesMissing))
-					if len(hashesMissing) < 2 {
-						logger.GetLogger().Println("Hash: ", string(hashesMissing[0]))
+					maxChunk := common.MaxNumberTransactionInChunk
+					for j := 0; j < len(hashesMissing); j += maxChunk {
+						end := j + maxChunk
+						if end > len(hashesMissing) {
+							end = len(hashesMissing)
+						}
+						transactionServices.SendGT(addr, hashesMissing[j:end], "bt")
+						time.Sleep(500 * time.Millisecond)
 					}
-					transactionServices.SendGT(addr, hashesMissing, "bt")
 				}
 				services.ResetAccountsAndBlocksSync(oldBlock.GetHeader().Height)
 				return
