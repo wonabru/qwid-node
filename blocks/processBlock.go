@@ -214,9 +214,6 @@ func CheckBlockTransfers(block Block, lastBlock Block, tree *transactionsPool.Me
 		fee := poolTx.GasPrice * poolTx.GasUsage
 		totalFee += fee
 		amount := poolTx.TxData.Amount
-		logger.GetLogger().Printf("  tx[%d] %x src=%s amount=%d fee=%d gasPrice=%d gasUsage=%d sender=%x recipient=%x",
-			i, hash[:8], txSource, amount, fee, poolTx.GasPrice, poolTx.GasUsage,
-			poolTx.TxParam.Sender.GetBytes()[:8], poolTx.TxData.Recipient.GetBytes()[:8])
 		total_amount := fee + amount
 		address := poolTx.GetSenderAddress()
 		recipientAddress := poolTx.TxData.Recipient

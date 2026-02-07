@@ -173,7 +173,6 @@ func ProcessBlockPubKey(block Block) error {
 		pk := t.TxData.Pubkey
 		// Skip if pubkey bytes are empty (no pubkey included in transaction)
 		if len(pk.GetBytes()) == 0 {
-			logger.GetLogger().Println("ProcessBlockPubKey: no pubkey in transaction", txh.GetHex())
 			continue
 		}
 		logger.GetLogger().Println("ProcessBlockPubKey: pubkey found in transaction", txh.GetHex())
