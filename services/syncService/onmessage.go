@@ -25,6 +25,7 @@ var err error
 var (
 	connectingPeers      = make(map[[6]byte]bool)
 	connectingPeersMutex sync.Mutex
+	syncProcessMutex     sync.Mutex
 )
 
 // peerHeightClaim tracks a peer's claimed height with timestamp
@@ -249,6 +250,11 @@ func OnMessage(addr [4]byte, m []byte) {
 		SendGetHeaders(addr, validatedHeight)
 		return
 	case "sh":
+		// Serialize sync batch processing — only one "sh" handler at a time
+		syncProcessMutex.Lock()
+		defer syncProcessMutex.Unlock()
+		// Re-read height after acquiring lock since another batch may have advanced it
+		h = common.GetHeight()
 
 		txn := amsg.(message.TransactionsMessage).GetTransactionsBytes()
 		blcks := []blocks.Block{}
@@ -456,11 +462,13 @@ func OnMessage(addr [4]byte, m []byte) {
 		}()
 		common.BlockMutex.Lock()
 		defer common.BlockMutex.Unlock()
+		// Re-read height after acquiring lock — another goroutine may have advanced it
+		h = common.GetHeight()
 		was = false
 		for i := 0; i < len(blcks); i++ {
 			block := blcks[i]
 			index := indices[i]
-			if block.GetHeader().Height <= lastGoodBlock {
+			if block.GetHeader().Height <= lastGoodBlock || index <= h {
 				logger.GetLogger().Printf("Skipping already verified block %d", index)
 				continue
 			}
