@@ -167,17 +167,14 @@ func CheckBlockTransfers(block Block, lastBlock Block, tree *transactionsPool.Me
 	logger.GetLogger().Printf("CheckBlockTransfers: block %d has %d transactions, lastSupply=%d", block.GetHeader().Height, len(txs), lastSupply)
 	for i, tx := range txs {
 		hash := tx.GetBytes()
-		txSource := "pool"
 		poolTx, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hash)
 		if err != nil {
 			transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionPoolHashesDBPrefix[:], hash)
 			// if common.IsSyncing.Load() {
 			poolTx, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hash)
-			txSource = "confirmed"
 			if err != nil {
 				// Try to recover from bad transaction DB during sync
 				poolTx, err = transactionsDefinition.LoadFromDBPoolTx(common.BadTransactionDBPrefix[:], hash)
-				txSource = "badTx"
 				if err != nil {
 					logger.GetLogger().Printf("  tx[%d] %x NOT FOUND in any DB", i, hash[:8])
 					return 0, 0, err
