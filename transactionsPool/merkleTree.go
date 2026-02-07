@@ -80,9 +80,8 @@ func NewMerkleTree(data [][]byte) ([]MerkleNode, error) {
 func NewMerkleNode(left, right *MerkleNode, data []byte) (*MerkleNode, error) {
 	node := MerkleNode{}
 
-	globalMutex.Lock()
-	defer globalMutex.Unlock()
-
+	// No lock needed: this creates a new local node from local data.
+	// The caller (BuildMerkleTree) acquires globalMutex after tree construction.
 	if left == nil && right == nil {
 		hash, err := common.CalcHashToByte(data)
 		if err != nil {
@@ -126,9 +125,8 @@ func (n *MerkleNode) containsTxHash(index int64, hash []byte) (bool, int64) {
 		return false, index - 1
 	}
 
-	globalMutex.RLock()
-	defer globalMutex.RUnlock()
-
+	// No lock here: callers (IsTxHashInTree, FindTransactionInBlocks) hold globalMutex.RLock.
+	// Recursive RLock deadlocks when a writer is waiting (Go RWMutex blocks new readers).
 	index++
 	if bytes.Equal(n.Data, hash) {
 		return true, index - 1
@@ -340,17 +338,23 @@ func FindTransactionInBlocks(targetHash []byte, height int64) (int64, error) {
 		return -1, fmt.Errorf("no merkle tree root hash")
 	}
 
+	// Hold RLock for containsTxHash traversal (explicit unlock before deferred Destroy's write lock)
+	globalMutex.RLock()
 	left, hl := tree.Root[0].containsTxHash(0, targetHash)
 	if left {
+		globalMutex.RUnlock()
 		return hl, nil
 	}
 
 	if len(tree.Root) > 1 {
 		right, hr := tree.Root[1].containsTxHash(0, targetHash)
 		if right {
+			globalMutex.RUnlock()
 			return hr, nil
 		}
 	}
+	globalMutex.RUnlock()
+
 	//TODO the least
 	hashes, err := LoadTxHashes(height)
 	if err != nil {
