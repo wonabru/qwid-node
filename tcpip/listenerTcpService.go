@@ -11,7 +11,7 @@ import (
 	"github.com/wonabru/qwid-node/logger"
 )
 
-var ChanPeer = make(chan []byte)
+var ChanPeer = make(chan []byte, 50)
 
 func StartNewListener(topic [2]byte) {
 

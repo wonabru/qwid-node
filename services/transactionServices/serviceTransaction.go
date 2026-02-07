@@ -120,8 +120,12 @@ func Send(addr [4]byte, nb []byte) bool {
 	nb = append(addr[:], nb...)
 	if services.SendMutexTx.TryLock() {
 		defer services.SendMutexTx.Unlock()
-		services.SendChanTx <- nb
-		return true
+		select {
+		case services.SendChanTx <- nb:
+			return true
+		default:
+			return false
+		}
 	}
 	return false
 }

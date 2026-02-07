@@ -145,8 +145,12 @@ func Send(addr [4]byte, nb []byte) bool {
 	nb = append(addr[:], nb...)
 	if services.SendMutexSync.TryLock() {
 		defer services.SendMutexSync.Unlock()
-		services.SendChanSync <- nb
-		return true
+		select {
+		case services.SendChanSync <- nb:
+			return true
+		default:
+			return false
+		}
 	}
 	return false
 }
@@ -173,7 +177,7 @@ func startPublishingSyncMsg() {
 
 func StartSubscribingSyncMsg(ip [4]byte) {
 
-	recvChan := make(chan []byte, 10) // Use a buffered channel
+	recvChan := make(chan []byte, 100) // Use a buffered channel
 	quit := false
 	var ipr [4]byte
 	go tcpip.StartNewConnection(ip, recvChan, tcpip.SyncTopic)
