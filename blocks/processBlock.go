@@ -38,7 +38,7 @@ func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*tr
 	}
 	rootMerkleTrie := newBlock.GetHeader().RootMerkleTree
 	txs := newBlock.TransactionsHashes
-	txsBytes := make([][]byte, 0, len(txs))
+	txsBytes := make([][]byte, len(txs))
 	for _, tx := range txs {
 		hash := tx.GetBytes()
 		txsBytes = append(txsBytes, hash)

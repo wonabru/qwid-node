@@ -135,7 +135,7 @@ func OnMessage(addr [4]byte, m []byte) {
 		}
 
 		txs := transactionsPool.PoolsTx.PeekTransactions(int(common.MaxTransactionsPerBlock), nonceHeight)
-		txsBytes := make([][]byte, 0, len(txs))
+		txsBytes := make([][]byte, len(txs))
 		transactionsHashes := []common.Hash{}
 		for _, tx := range txs {
 			hash := tx.GetHash().GetBytes()
