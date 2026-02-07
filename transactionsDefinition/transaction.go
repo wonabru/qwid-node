@@ -233,9 +233,10 @@ func CheckFromDBPoolTx(prefix []byte, hashTransaction []byte) bool {
 func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tmp bool) bool {
 	recipientAddress := tx.TxData.Recipient
 	n, err := account.IntDelegatedAccountFromAddress(recipientAddress)
-	// Nonce transactions (delegated account recipient with zero amount) are exempt from gas fees
+	// Nonce transactions (delegated account recipient with zero amount) and genesis transactions are exempt from gas fees
 	isNonceTx := err == nil && n > 0 && n < 256 && tx.GetData().Amount == 0
-	if !isNonceTx {
+	isGenesisTx := tx.Height == 0
+	if !isNonceTx && !isGenesisTx {
 		if tx.GasPrice <= 0 {
 			logger.GetLogger().Println("transaction gas price must be greater than 0")
 			return false
