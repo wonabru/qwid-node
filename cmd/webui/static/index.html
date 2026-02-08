@@ -777,10 +777,13 @@ contract Coin {
 
                 <div class="form-group">
                     <label>Select Token</label>
-                    <select id="dexTokenSelect" onchange="updateDexToken()">
+                    <select id="dexTokenSelect" onchange="updateDexToken()" style="font-family:monospace;font-size:12px;">
                         <option value="">-- Select Token --</option>
                     </select>
-                    <button class="btn-secondary" onclick="refreshTokens()" style="margin-left:10px;">Refresh Tokens</button>
+                    <div style="display:flex;gap:10px;margin-top:8px;">
+                        <button class="btn-secondary" onclick="refreshTokens()">Refresh Tokens</button>
+                        <button class="btn-secondary" onclick="copyTokenAddress()">Copy Address</button>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -1748,7 +1751,8 @@ contract Coin {
                     for (const [addr, info] of Object.entries(res.tokens)) {
                         const opt = document.createElement('option');
                         opt.value = addr;
-                        opt.textContent = addr.substring(0, 16) + '... : ' + (info.Name || info.Symbols || 'Unknown');
+                        const tokenName = info.name || info.symbols || 'Unknown';
+                        opt.textContent = tokenName + ' (' + addr + ')';
                         select.appendChild(opt);
                     }
                 }
@@ -1756,6 +1760,19 @@ contract Coin {
             } catch (e) {
                 showMessage('Failed to refresh tokens: ' + e.message, 'error');
             }
+        }
+
+        function copyTokenAddress() {
+            const addr = document.getElementById('dexTokenSelect').value;
+            if (!addr) {
+                showMessage('No token selected', 'error');
+                return;
+            }
+            navigator.clipboard.writeText(addr).then(() => {
+                showMessage('Token address copied: ' + addr);
+            }).catch(() => {
+                showMessage('Failed to copy address', 'error');
+            });
         }
 
         async function updateDexToken() {
