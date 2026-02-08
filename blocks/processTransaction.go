@@ -46,7 +46,7 @@ func CheckStakingTransaction(tx transactionsDefinition.Transaction, sumAmount in
 	if n > 0 && n < 256 {
 		// If the sender intends to be an operator, verify both pubkeys are registered
 		operational := len(tx.TxData.OptData) > 0
-		if operational && amount > 0 {
+		if operational && amount > 0 && !common.IsSyncing.Load() {
 			senderAddr := tx.GetSenderAddress()
 			addresses, err := pubkeys.LoadAddresses(senderAddr)
 			if err != nil {

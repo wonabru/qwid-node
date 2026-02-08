@@ -407,6 +407,13 @@ func handleACCT(line []byte, reply *[]byte) {
 	account.AccountsRWMutex.RLock()
 	acc := account.Accounts.AllAccounts[byt]
 	defer account.AccountsRWMutex.RUnlock()
+	// Limit to last 50 transaction hashes
+	if len(acc.TransactionsSender) > 50 {
+		acc.TransactionsSender = acc.TransactionsSender[len(acc.TransactionsSender)-50:]
+	}
+	if len(acc.TransactionsRecipient) > 50 {
+		acc.TransactionsRecipient = acc.TransactionsRecipient[len(acc.TransactionsRecipient)-50:]
+	}
 	am := acc.Marshal()
 
 	*reply = am
@@ -520,7 +527,7 @@ func handlePEND(byt []byte, reply *[]byte) {
 	pendingTxs := []PendingTx{}
 
 	// Get from main pool
-	txs := transactionsPool.PoolsTx.PeekTransactions(100, 0)
+	txs := transactionsPool.PoolsTx.PeekTransactions(50, 0)
 	for _, tx := range txs {
 		pendingTxs = append(pendingTxs, PendingTx{
 			Hash:      tx.Hash.GetHex(),
@@ -533,7 +540,7 @@ func handlePEND(byt []byte, reply *[]byte) {
 	}
 
 	// Get from escrow pool
-	escrowTxs := transactionsPool.PoolTxEscrow.PeekTransactions(100, 0)
+	escrowTxs := transactionsPool.PoolTxEscrow.PeekTransactions(50, 0)
 	for _, tx := range escrowTxs {
 		pendingTxs = append(pendingTxs, PendingTx{
 			Hash:      tx.Hash.GetHex(),
@@ -546,7 +553,7 @@ func handlePEND(byt []byte, reply *[]byte) {
 	}
 
 	// Get from multi-sig pool
-	multiTxs := transactionsPool.PoolTxMultiSign.PeekTransactions(100, 0)
+	multiTxs := transactionsPool.PoolTxMultiSign.PeekTransactions(50, 0)
 	for _, tx := range multiTxs {
 		pendingTxs = append(pendingTxs, PendingTx{
 			Hash:      tx.Hash.GetHex(),
