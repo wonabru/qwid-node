@@ -389,7 +389,7 @@ func (tx *Transaction) Verify(sigName, sigName2 string, isPausedTmp, isPaused2Tm
 		}
 		logger.GetLogger().Println("  Address verification OK")
 		// Store pubkey immediately so it's available for nonce verification
-		storePubKeyImmediately(pk, senderAddr)
+		// storePubKeyImmediately(pk, senderAddr)
 	}
 	//logger.GetLogger().Println(sigName, sigName2, isPausedTmp, isPaused2Tmp)
 	return wallet.Verify(b, signature.GetBytes(), pkb, sigName, sigName2, isPausedTmp, isPaused2Tmp)
