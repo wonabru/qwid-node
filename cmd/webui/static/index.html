@@ -283,7 +283,10 @@
                     <label>Password</label>
                     <input type="password" id="walletPassword" placeholder="Enter password">
                 </div>
-                <button class="btn-primary" onclick="loadWallet()">Load Wallet</button>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn-primary" onclick="loadWallet()">Load Wallet</button>
+                    <button class="btn-secondary" onclick="createWallet()">Create New Wallet</button>
+                </div>
             </div>
 
             <div class="card" id="walletInfoCard" style="display:none;">
@@ -986,6 +989,34 @@ contract Coin {
                 }
             } catch (e) {
                 showMessage('Failed to load wallet: ' + e.message, 'error');
+            }
+        }
+
+        // Create new wallet
+        async function createWallet() {
+            const walletNumber = parseInt(document.getElementById('walletNumber').value) || 0;
+            const password = document.getElementById('walletPassword').value;
+
+            if (!password) {
+                showMessage('Please enter a password', 'error');
+                return;
+            }
+
+            try {
+                const res = await api('/api/wallet/create', 'POST', { walletNumber, password });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                } else {
+                    showMessage('Wallet created successfully!');
+                    walletLoaded = true;
+                    document.getElementById('walletInfoCard').style.display = 'block';
+                    document.getElementById('walletDetails').innerHTML =
+                        '<p class="wallet-info">Address: ' + res.address + '</p>';
+                    updateAccount();
+                    checkWallet();
+                }
+            } catch (e) {
+                showMessage('Failed to create wallet: ' + e.message, 'error');
             }
         }
 

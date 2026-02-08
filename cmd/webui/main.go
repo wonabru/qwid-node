@@ -79,6 +79,7 @@ func main() {
 	// API routes
 	mux.HandleFunc("/api/stats", corsMiddleware(handlers.GetStats))
 	mux.HandleFunc("/api/wallet/load", corsMiddleware(handlers.LoadWallet))
+	mux.HandleFunc("/api/wallet/create", corsMiddleware(handlers.CreateWallet))
 	mux.HandleFunc("/api/wallet/info", corsMiddleware(handlers.GetWalletInfo))
 	mux.HandleFunc("/api/wallet/change-password", corsMiddleware(handlers.ChangePassword))
 	mux.HandleFunc("/api/wallet/mnemonic", corsMiddleware(handlers.GetMnemonic))

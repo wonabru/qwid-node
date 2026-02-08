@@ -235,6 +235,78 @@ func LoadWallet(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func CreateWallet(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		jsonError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		WalletNumber int    `json:"walletNumber"`
+		Password     string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.WalletNumber < 0 || req.WalletNumber > 255 {
+		jsonError(w, "Wallet number should be between 0 and 255", http.StatusBadRequest)
+		return
+	}
+	if len(req.Password) < 1 {
+		jsonError(w, "Password cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	sigName, sigName2, err := SetCurrentEncryptions()
+	if err != nil {
+		jsonError(w, "Error retrieving encryption", http.StatusInternalServerError)
+		return
+	}
+
+	wl := wallet.EmptyWallet(uint8(req.WalletNumber), sigName, sigName2)
+	wl.SetPassword(req.Password)
+	wl.Iv = wallet.GenerateNewIv()
+
+	acc, err := wallet.GenerateNewAccount(wl, wl.SigName)
+	if err != nil {
+		jsonError(w, fmt.Sprintf("Failed to generate primary account: %v", err), http.StatusInternalServerError)
+		return
+	}
+	wl.MainAddress = acc.Address
+	acc.PublicKey.MainAddress = wl.MainAddress
+	wl.Account1 = acc
+	copy(wl.Account1.EncryptedSecretKey, acc.EncryptedSecretKey)
+
+	acc, err = wallet.GenerateNewAccount(wl, wl.SigName2)
+	if err != nil {
+		jsonError(w, fmt.Sprintf("Failed to generate secondary account: %v", err), http.StatusInternalServerError)
+		return
+	}
+	wl.Account2 = acc
+	copy(wl.Account2.EncryptedSecretKey, acc.EncryptedSecretKey)
+
+	err = os.MkdirAll(wl.HomePath, 0755)
+	if err != nil {
+		jsonError(w, fmt.Sprintf("Failed to create wallet directory: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	err = wl.StoreJSON()
+	if err != nil {
+		jsonError(w, fmt.Sprintf("Failed to store wallet: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	MainWallet = &wl
+
+	jsonResponse(w, map[string]interface{}{
+		"success": true,
+		"address": wl.MainAddress.GetHex(),
+	})
+}
+
 func ChangePassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		jsonError(w, "Method not allowed", http.StatusMethodNotAllowed)
