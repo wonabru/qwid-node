@@ -10,7 +10,10 @@ import (
 func AddPubKeyToAddress(pk common.PubKey, mainAddress common.Address) error {
 	as, err := LoadAddresses(mainAddress)
 	if err != nil {
-		return err
+		if err.Error() != "key not found" {
+			return err
+		}
+		as = []common.Address{}
 	}
 	address, err := common.PubKeyToAddress(pk.GetBytes(), pk.Primary)
 	if err != nil {
