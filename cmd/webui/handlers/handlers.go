@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/blocks"
@@ -110,31 +111,53 @@ func SignMessage(line []byte) []byte {
 }
 
 func SetCurrentEncryptions() (string, string, error) {
-	clientrpc.InRPC <- SignMessage([]byte("ENCR"))
-	var reply []byte
-	reply = <-clientrpc.OutRPC
-	if bytes.Equal(reply, []byte("Timeout")) {
-		return "", "", fmt.Errorf("timeout")
+	type result struct {
+		sig1, sig2 string
+		err        error
 	}
-	enc1b, left, err := common.BytesWithLenToBytes(reply)
-	if err != nil {
-		return "", "", err
+	ch := make(chan result, 1)
+	go func() {
+		clientrpc.InRPC <- SignMessage([]byte("ENCR"))
+		reply := <-clientrpc.OutRPC
+		if bytes.Equal(reply, []byte("Timeout")) {
+			ch <- result{err: fmt.Errorf("timeout")}
+			return
+		}
+		enc1b, left, err := common.BytesWithLenToBytes(reply)
+		if err != nil {
+			ch <- result{err: err}
+			return
+		}
+		enc2b, _, err := common.BytesWithLenToBytes(left)
+		if err != nil {
+			ch <- result{err: err}
+			return
+		}
+		enc1, err := blocks.FromBytesToEncryptionConfig(enc1b, true)
+		if err != nil {
+			ch <- result{err: err}
+			return
+		}
+		common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, true)
+		enc2, err := blocks.FromBytesToEncryptionConfig(enc2b, false)
+		if err != nil {
+			ch <- result{err: err}
+			return
+		}
+		common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, enc2.IsPaused, false)
+		ch <- result{sig1: enc1.SigName, sig2: enc2.SigName}
+	}()
+	select {
+	case r := <-ch:
+		return r.sig1, r.sig2, r.err
+	case <-time.After(5 * time.Second):
+		// Fall back to already-configured encryption names
+		s1, s2 := common.SigName(), common.SigName2()
+		if s1 != "" && s2 != "" {
+			return s1, s2, nil
+		}
+		return "", "", fmt.Errorf("timeout retrieving encryption config")
 	}
-	enc2b, _, err := common.BytesWithLenToBytes(left)
-	if err != nil {
-		return "", "", err
-	}
-	enc1, err := blocks.FromBytesToEncryptionConfig(enc1b, true)
-	if err != nil {
-		return "", "", err
-	}
-	common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, true)
-	enc2, err := blocks.FromBytesToEncryptionConfig(enc2b, false)
-	if err != nil {
-		return "", "", err
-	}
-	common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, enc2.IsPaused, false)
-	return enc1.SigName, enc2.SigName, nil
 }
 
 func GetStats(w http.ResponseWriter, r *http.Request) {
