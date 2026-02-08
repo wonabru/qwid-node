@@ -30,6 +30,10 @@ go run cmd/webui/main.go                    # localhost:8080
 go run cmd/webui/main.go <node_ip>          # custom node IP
 go run cmd/webui/main.go <node_ip> <port>   # custom node IP and port
 
+# Run Public Wallet Website (multi-user)
+go run cmd/website/main.go <node_ip> <port> <wallet_num> <wallet_password>
+go run cmd/website/main.go 127.0.0.1 9090 0 mypassword
+
 # Run tests
 go test ./...
 go test ./account         # single package
@@ -53,6 +57,7 @@ go test -v ./wallet       # verbose output
 | `cmd/mining/` | Mining node entry point |
 | `cmd/gui/` | Qt-based wallet GUI |
 | `cmd/webui/` | Web-based wallet UI (HTTP server) |
+| `cmd/website/` | Multi-user public wallet website (HTTP server, sessions, user registry) |
 | `account/` | Account, staking, and DEX state management |
 | `blocks/` | Block creation, processing, and proof-of-synergy consensus |
 | `core/evm/` | Ethereum Virtual Machine implementation |

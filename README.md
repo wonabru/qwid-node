@@ -164,3 +164,25 @@ Web UI Features:
 
 Press Ctrl+C to stop the web server.
 
+Run Public Wallet Website (multi-user):
+
+    go run cmd/website/main.go <node_ip> <port> <wallet_num> <wallet_password>
+
+Examples:
+
+    go run cmd/website/main.go 127.0.0.1 9090 0 mypassword
+
+Then open http://localhost:9090 in a web browser. Users register with username+password and each gets their own wallet.
+
+Website Features:
+- **Multi-user**: Each user registers and gets a unique quantum-resistant wallet
+- **Dashboard**: View balance, staking, rewards, network stats, receive address
+- **Send**: Send QWD to any address or delegated account
+- **Staking**: Stake, unstake, withdraw rewards to any delegated account
+- **History**: View sent and received transaction history
+- **DEX**: Browse tokens, view pool info, buy/sell tokens, manage liquidity
+- **Explorer**: Search by transaction hash, block height, or account address
+- **Settings**: Change password, view recovery mnemonic
+
+User wallets are stored at `~/.qwid/website/users/<username>/`. The node operator's wallet (specified via CLI args) is used for RPC message signing.
+

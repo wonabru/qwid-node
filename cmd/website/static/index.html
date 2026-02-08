@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QWID Wallet</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        .header {
+            background: rgba(0,0,0,0.3);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 { color: #00d4ff; font-size: 24px; }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .header-info { font-size: 14px; color: #888; }
+        .user-menu { position: relative; }
+        .user-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 5px;
+            background: #1a1a2e;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            min-width: 200px;
+            z-index: 100;
+            overflow: hidden;
+        }
+        .user-dropdown.show { display: block; }
+        .user-dropdown a {
+            display: block;
+            padding: 12px 16px;
+            color: #e0e0e0;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .user-dropdown a:hover { background: rgba(255,255,255,0.05); }
+        .user-dropdown a.danger { color: #ff4757; }
+        .tabs {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: #888;
+            font-size: 14px;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        .tab:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .tab.active { background: rgba(0,212,255,0.1); color: #00d4ff; border-bottom: 2px solid #00d4ff; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .panel { display: none; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 20px; margin-top: 20px; }
+        .panel.active { display: block; }
+        .card { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 20px; margin-bottom: 15px; }
+        .card h3 { color: #00d4ff; margin-bottom: 15px; font-size: 16px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .stat-item { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; }
+        .stat-label { font-size: 12px; color: #888; margin-bottom: 5px; }
+        .stat-value { font-size: 20px; font-weight: bold; color: #fff; }
+        .stat-value.highlight { color: #00d4ff; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #00d4ff; }
+        input::placeholder, textarea::placeholder { color: #666; }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%); color: #000; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,212,255,0.3); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+        .btn-danger { background: linear-gradient(135deg, #ff4757 0%, #cc0000 100%); color: #fff; }
+        .alert { padding: 12px 15px; border-radius: 6px; margin-bottom: 15px; }
+        .alert-success { background: rgba(0,255,100,0.1); border: 1px solid rgba(0,255,100,0.3); color: #00ff64; }
+        .alert-error { background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.3); color: #ff4757; }
+        .wallet-info { font-family: monospace; word-break: break-all; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; font-size: 12px; }
+        .balance-display { text-align: center; padding: 30px; }
+        .balance-amount { font-size: 48px; font-weight: bold; color: #00d4ff; }
+        .balance-label { font-size: 14px; color: #888; margin-top: 5px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #888; font-size: 12px; }
+        .hidden { display: none !important; }
+        .syncing-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ffc800; animation: pulse 1s infinite; margin-right: 5px; }
+        .syncing-indicator.synced { background: #00ff64; animation: none; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .staking-details { margin-top: 15px; }
+        .staking-row { display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 4px; margin-bottom: 5px; }
+        #message { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; z-index: 1000; display: none; }
+        .tx-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .tx-table th, .tx-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+        .tx-table th { color: #888; font-weight: normal; font-size: 12px; }
+        .tx-type-sent { color: #ff4757; }
+        .tx-type-received { color: #00ff64; }
+        .copy-btn { cursor: pointer; background: rgba(0,212,255,0.2); border: none; color: #00d4ff; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px; }
+        .copy-btn:hover { background: rgba(0,212,255,0.4); }
+        .login-container { max-width: 400px; margin: 80px auto; padding: 0 20px; }
+        .login-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 40px 30px; text-align: center; }
+        .login-card h2 { color: #00d4ff; margin-bottom: 10px; }
+        .login-card p { color: #888; margin-bottom: 25px; font-size: 14px; }
+        .login-btns { display: flex; gap: 10px; }
+        .login-btns button { flex: 1; }
+        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .checkbox-group input[type="checkbox"] { width: auto; margin: 0; }
+        .checkbox-group label { margin: 0; color: #e0e0e0; font-size: 14px; }
+        .inline-form { display: flex; gap: 10px; align-items: flex-end; }
+        .inline-form .form-group { flex: 1; }
+        .inline-form button { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div id="message"></div>
+
+    <!-- Login/Register Screen -->
+    <div id="auth-screen">
+        <div class="header">
+            <h1>QWID Wallet</h1>
+            <span class="header-info">Quantum-Resistant Blockchain</span>
+        </div>
+        <div class="login-container">
+            <div class="login-card">
+                <h2>Welcome</h2>
+                <p>Login or create an account to manage your QWID wallet</p>
+                <div id="auth-alert"></div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="auth-username" placeholder="Enter username" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="auth-password" placeholder="Enter password" autocomplete="current-password">
+                </div>
+                <div class="login-btns">
+                    <button class="btn-primary" onclick="login()">Login</button>
+                    <button class="btn-secondary" onclick="register()">Register</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Screen (hidden until login) -->
+    <div id="app-screen" class="hidden">
+        <div class="header">
+            <h1>QWID Wallet</h1>
+            <div class="header-right">
+                <span class="header-info">
+                    <span class="syncing-indicator" id="sync-dot"></span>
+                    <span id="header-height">-</span>
+                </span>
+                <div class="user-menu">
+                    <button class="user-btn" onclick="toggleUserMenu()" id="user-btn">User</button>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <a onclick="showMnemonic()">Show Mnemonic</a>
+                        <a onclick="showChangePassword()">Change Password</a>
+                        <a onclick="logout()" class="danger">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs" id="tabs">
+            <button class="tab active" onclick="showTab('dashboard')">Dashboard</button>
+            <button class="tab" onclick="showTab('send')">Send</button>
+            <button class="tab" onclick="showTab('staking')">Staking</button>
+            <button class="tab" onclick="showTab('history')">History</button>
+            <button class="tab" onclick="showTab('dex')">DEX</button>
+            <button class="tab" onclick="showTab('explorer')">Explorer</button>
+        </div>
+
+        <div class="container">
+            <!-- Dashboard -->
+            <div id="panel-dashboard" class="panel active">
+                <div class="card">
+                    <div class="balance-display">
+                        <div class="balance-amount" id="dash-balance">0.00</div>
+                        <div class="balance-label">QWD Balance</div>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Holdings</div>
+                        <div class="stat-value highlight" id="dash-total">0.00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Staked</div>
+                        <div class="stat-value" id="dash-staked">0.00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Rewards</div>
+                        <div class="stat-value" id="dash-rewards">0.00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Locked</div>
+                        <div class="stat-value" id="dash-locked">0.00</div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 15px;">
+                    <h3>Receive Address</h3>
+                    <div class="wallet-info" id="dash-address">-</div>
+                    <button class="copy-btn" style="margin-top:10px" onclick="copyAddress()">Copy Address</button>
+                </div>
+                <div class="card">
+                    <h3>Network Stats</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Block Height</div>
+                            <div class="stat-value" id="stat-height">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">TPS</div>
+                            <div class="stat-value" id="stat-tps">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Difficulty</div>
+                            <div class="stat-value" id="stat-difficulty">-</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Price Oracle</div>
+                            <div class="stat-value" id="stat-price">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Send -->
+            <div id="panel-send" class="panel">
+                <div class="card">
+                    <h3>Send QWD</h3>
+                    <div id="send-alert"></div>
+                    <div class="form-group">
+                        <label>Recipient Address (hex or delegated account number)</label>
+                        <input type="text" id="send-recipient" placeholder="Address or account number">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (QWD)</label>
+                        <input type="number" id="send-amount" placeholder="0.00" step="0.00000001" min="0">
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="send-pubkey">
+                        <label for="send-pubkey">Include public key</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="send-primary" checked>
+                        <label for="send-primary">Use primary encryption</label>
+                    </div>
+                    <button class="btn-primary" onclick="sendTransaction()">Send Transaction</button>
+                </div>
+            </div>
+
+            <!-- Staking -->
+            <div id="panel-staking" class="panel">
+                <div class="card">
+                    <h3>Current Staking</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Total Staked</div>
+                            <div class="stat-value highlight" id="stk-staked">0.00</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total Rewards</div>
+                            <div class="stat-value" id="stk-rewards">0.00</div>
+                        </div>
+                    </div>
+                    <div class="staking-details" id="stk-details"></div>
+                </div>
+                <div class="card">
+                    <h3>Stake / Unstake / Withdraw</h3>
+                    <div id="staking-alert"></div>
+                    <div class="form-group">
+                        <label>Action</label>
+                        <select id="stk-action">
+                            <option value="stake">Stake</option>
+                            <option value="unstake">Unstake</option>
+                            <option value="withdraw">Withdraw Rewards</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Delegated Account (number or address)</label>
+                        <input type="text" id="stk-delegated" placeholder="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (QWD)</label>
+                        <input type="number" id="stk-amount" placeholder="0.00" step="0.00000001" min="0">
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="stk-pubkey">
+                        <label for="stk-pubkey">Include public key</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="stk-primary" checked>
+                        <label for="stk-primary">Use primary encryption</label>
+                    </div>
+                    <button class="btn-primary" onclick="executeStaking()">Execute</button>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div id="panel-history" class="panel">
+                <div class="card">
+                    <h3>Transaction History</h3>
+                    <button class="btn-secondary" onclick="loadHistory()" style="margin-bottom:15px">Refresh</button>
+                    <div id="history-loading" class="hidden">Loading...</div>
+                    <table class="tx-table">
+                        <thead>
+                            <tr><th>Type</th><th>Address</th><th>Amount</th><th>Height</th><th>Hash</th></tr>
+                        </thead>
+                        <tbody id="history-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DEX -->
+            <div id="panel-dex" class="panel">
+                <div class="card">
+                    <h3>Token List</h3>
+                    <button class="btn-secondary" onclick="loadTokens()" style="margin-bottom:15px">Refresh Tokens</button>
+                    <div id="dex-tokens"></div>
+                </div>
+                <div class="card">
+                    <h3>Pool Info</h3>
+                    <div class="form-group">
+                        <label>Token Address</label>
+                        <input type="text" id="dex-token-addr" placeholder="Token contract address (hex)">
+                    </div>
+                    <button class="btn-secondary" onclick="loadDexInfo()" style="margin-bottom:15px">Load Pool</button>
+                    <div id="dex-pool-info"></div>
+                </div>
+                <div class="card">
+                    <h3>Trade</h3>
+                    <div id="dex-alert"></div>
+                    <div class="form-group">
+                        <label>Token Address</label>
+                        <input type="text" id="dex-trade-addr" placeholder="Token contract address (hex)">
+                    </div>
+                    <div class="form-group">
+                        <label>Action</label>
+                        <select id="dex-action">
+                            <option value="buy">Buy Token</option>
+                            <option value="sell">Sell Token</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input type="number" id="dex-amount" placeholder="0.00" step="0.00000001" min="0">
+                    </div>
+                    <button class="btn-primary" onclick="tradeDex()">Execute Trade</button>
+                </div>
+                <div class="card">
+                    <h3>Liquidity</h3>
+                    <div id="dex-liq-alert"></div>
+                    <div class="form-group">
+                        <label>Token Address</label>
+                        <input type="text" id="dex-liq-addr" placeholder="Token contract address (hex)">
+                    </div>
+                    <div class="form-group">
+                        <label>Operation</label>
+                        <select id="dex-liq-op">
+                            <option value="addLiquidity">Add Liquidity</option>
+                            <option value="withdrawToken">Withdraw Token</option>
+                            <option value="withdrawQWD">Withdraw QWD</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Token Amount</label>
+                        <input type="number" id="dex-liq-token" placeholder="0.00" step="0.00000001" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>QWD Amount</label>
+                        <input type="number" id="dex-liq-qwd" placeholder="0.00" step="0.00000001" min="0">
+                    </div>
+                    <button class="btn-primary" onclick="executeDex()">Execute</button>
+                </div>
+            </div>
+
+            <!-- Explorer -->
+            <div id="panel-explorer" class="panel">
+                <div class="card">
+                    <h3>Explorer</h3>
+                    <p style="color:#888; margin-bottom:15px">Search by transaction hash, block height, or account address</p>
+                    <div class="inline-form">
+                        <div class="form-group">
+                            <input type="text" id="explorer-query" placeholder="Tx hash, block height, or address">
+                        </div>
+                        <button class="btn-primary" onclick="searchExplorer()">Search</button>
+                    </div>
+                    <div id="explorer-result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mnemonic Modal -->
+    <div id="mnemonic-modal" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;">
+        <div class="card" style="max-width:500px;width:90%;">
+            <h3>Recovery Mnemonic</h3>
+            <p style="color:#888;margin-bottom:15px;font-size:13px">Write these words down and keep them safe. They can restore your wallet.</p>
+            <div class="wallet-info" id="mnemonic-primary" style="margin-bottom:10px"></div>
+            <div class="wallet-info" id="mnemonic-secondary"></div>
+            <button class="btn-secondary" style="margin-top:15px" onclick="closeMnemonic()">Close</button>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="password-modal" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;">
+        <div class="card" style="max-width:400px;width:90%;">
+            <h3>Change Password</h3>
+            <div id="pwd-alert"></div>
+            <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" id="pwd-current" placeholder="Current password">
+            </div>
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="pwd-new" placeholder="New password (min 6 chars)">
+            </div>
+            <div style="display:flex;gap:10px">
+                <button class="btn-primary" onclick="changePassword()">Change</button>
+                <button class="btn-secondary" onclick="closeChangePassword()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+let currentUser = null;
+let accountData = null;
+let statsInterval = null;
+
+// --- Utility ---
+function showMessage(text, isError) {
+    const el = document.getElementById('message');
+    el.textContent = text;
+    el.style.display = 'block';
+    el.style.background = isError ? 'rgba(255,0,0,0.9)' : 'rgba(0,200,100,0.9)';
+    el.style.color = '#fff';
+    setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function setAlert(id, text, isError) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!text) { el.innerHTML = ''; return; }
+    el.innerHTML = `<div class="alert ${isError ? 'alert-error' : 'alert-success'}">${text}</div>`;
+}
+
+async function api(url, opts) {
+    const res = await fetch(url, opts);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+}
+
+function truncAddr(addr) {
+    if (!addr || addr.length < 16) return addr || '-';
+    return addr.slice(0, 10) + '...' + addr.slice(-8);
+}
+
+// --- Auth ---
+async function login() {
+    const username = document.getElementById('auth-username').value.trim();
+    const password = document.getElementById('auth-password').value;
+    if (!username || !password) { setAlert('auth-alert', 'Enter username and password', true); return; }
+    try {
+        const data = await api('/api/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, password})
+        });
+        currentUser = {username: data.username, address: data.address};
+        enterApp();
+    } catch(e) {
+        setAlert('auth-alert', e.message, true);
+    }
+}
+
+async function register() {
+    const username = document.getElementById('auth-username').value.trim();
+    const password = document.getElementById('auth-password').value;
+    if (!username || !password) { setAlert('auth-alert', 'Enter username and password', true); return; }
+    if (username.length < 3) { setAlert('auth-alert', 'Username must be at least 3 characters', true); return; }
+    if (password.length < 6) { setAlert('auth-alert', 'Password must be at least 6 characters', true); return; }
+    try {
+        const data = await api('/api/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, password})
+        });
+        setAlert('auth-alert', 'Account created! Address: ' + data.address + '. Please login.', false);
+    } catch(e) {
+        setAlert('auth-alert', e.message, true);
+    }
+}
+
+async function logout() {
+    try { await api('/api/logout', {method: 'POST'}); } catch(e) {}
+    currentUser = null;
+    accountData = null;
+    if (statsInterval) clearInterval(statsInterval);
+    document.getElementById('app-screen').classList.add('hidden');
+    document.getElementById('auth-screen').classList.remove('hidden');
+    document.getElementById('auth-password').value = '';
+}
+
+async function checkSession() {
+    try {
+        const data = await api('/api/session');
+        currentUser = {username: data.username, address: data.address};
+        enterApp();
+    } catch(e) {
+        // Not logged in
+    }
+}
+
+function enterApp() {
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('app-screen').classList.remove('hidden');
+    document.getElementById('user-btn').textContent = currentUser.username;
+    loadDashboard();
+    statsInterval = setInterval(loadStats, 10000);
+}
+
+// --- Tabs ---
+function showTab(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    const tabs = document.querySelectorAll('.tab');
+    const names = ['dashboard','send','staking','history','dex','explorer'];
+    const idx = names.indexOf(name);
+    if (idx >= 0) tabs[idx].classList.add('active');
+
+    if (name === 'history') loadHistory();
+    if (name === 'dex') loadTokens();
+    if (name === 'dashboard') loadDashboard();
+}
+
+// --- User Menu ---
+function toggleUserMenu() {
+    document.getElementById('user-dropdown').classList.toggle('show');
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.user-menu')) {
+        document.getElementById('user-dropdown').classList.remove('show');
+    }
+});
+
+// --- Dashboard ---
+async function loadDashboard() {
+    loadStats();
+    loadAccount();
+}
+
+async function loadStats() {
+    try {
+        const data = await api('/api/stats');
+        document.getElementById('stat-height').textContent = data.height;
+        document.getElementById('stat-tps').textContent = (data.tps || 0).toFixed(2);
+        document.getElementById('stat-difficulty').textContent = data.difficulty;
+        document.getElementById('stat-price').textContent = (data.priceOracle || 0).toFixed(4);
+        document.getElementById('header-height').textContent = 'Block ' + data.height;
+        const dot = document.getElementById('sync-dot');
+        if (data.syncing) { dot.classList.remove('synced'); } else { dot.classList.add('synced'); }
+    } catch(e) {}
+}
+
+async function loadAccount() {
+    try {
+        const data = await api('/api/account');
+        accountData = data;
+        document.getElementById('dash-balance').textContent = (data.balance || 0).toFixed(8);
+        document.getElementById('dash-total').textContent = (data.totalHoldings || 0).toFixed(8);
+        document.getElementById('dash-staked').textContent = (data.stakedAmount || 0).toFixed(8);
+        document.getElementById('dash-rewards').textContent = (data.rewardsAmount || 0).toFixed(8);
+        document.getElementById('dash-locked').textContent = (data.lockedAmount || 0).toFixed(8);
+        document.getElementById('dash-address').textContent = data.address;
+        // Update staking panel too
+        document.getElementById('stk-staked').textContent = (data.stakedAmount || 0).toFixed(8);
+        document.getElementById('stk-rewards').textContent = (data.rewardsAmount || 0).toFixed(8);
+        const details = document.getElementById('stk-details');
+        details.innerHTML = '';
+        if (data.stakingDetails && data.stakingDetails.length > 0) {
+            data.stakingDetails.forEach(d => {
+                details.innerHTML += `<div class="staking-row"><span>${truncAddr(d.delegatedAddress)}</span><span>Staked: ${d.staked.toFixed(8)}</span><span>Rewards: ${d.rewards.toFixed(8)}</span></div>`;
+            });
+        }
+    } catch(e) {
+        console.error('loadAccount:', e);
+    }
+}
+
+function copyAddress() {
+    const addr = document.getElementById('dash-address').textContent;
+    if (addr && addr !== '-') {
+        navigator.clipboard.writeText(addr);
+        showMessage('Address copied!', false);
+    }
+}
+
+// --- Send ---
+async function sendTransaction() {
+    const recipient = document.getElementById('send-recipient').value.trim();
+    const amount = parseFloat(document.getElementById('send-amount').value);
+    const includePubKey = document.getElementById('send-pubkey').checked;
+    const usePrimary = document.getElementById('send-primary').checked;
+
+    if (!recipient) { setAlert('send-alert', 'Enter recipient', true); return; }
+    if (!amount || amount <= 0) { setAlert('send-alert', 'Enter valid amount', true); return; }
+    setAlert('send-alert', '');
+
+    try {
+        const data = await api('/api/send', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({recipient, amount, includePubKey, usePrimaryEncryption: usePrimary})
+        });
+        setAlert('send-alert', 'Transaction sent! Hash: ' + data.txHash, false);
+        document.getElementById('send-amount').value = '';
+        loadAccount();
+    } catch(e) {
+        setAlert('send-alert', e.message, true);
+    }
+}
+
+// --- Staking ---
+async function executeStaking() {
+    const action = document.getElementById('stk-action').value;
+    const delegatedAccount = document.getElementById('stk-delegated').value.trim();
+    const amount = parseFloat(document.getElementById('stk-amount').value);
+    const includePubKey = document.getElementById('stk-pubkey').checked;
+    const usePrimary = document.getElementById('stk-primary').checked;
+
+    if (!amount || amount <= 0) { setAlert('staking-alert', 'Enter valid amount', true); return; }
+    setAlert('staking-alert', '');
+
+    try {
+        const data = await api('/api/staking/execute', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action, delegatedAccount, amount, includePubKey, usePrimaryEncryption: usePrimary})
+        });
+        setAlert('staking-alert', 'Staking tx sent! Hash: ' + data.txHash, false);
+        loadAccount();
+    } catch(e) {
+        setAlert('staking-alert', e.message, true);
+    }
+}
+
+// --- History ---
+async function loadHistory() {
+    const body = document.getElementById('history-body');
+    const loading = document.getElementById('history-loading');
+    body.innerHTML = '';
+    loading.classList.remove('hidden');
+    try {
+        const data = await api('/api/history');
+        loading.classList.add('hidden');
+        if (!data.transactions || data.transactions.length === 0) {
+            body.innerHTML = '<tr><td colspan="5" style="color:#888;text-align:center">No transactions</td></tr>';
+            return;
+        }
+        data.transactions.forEach(tx => {
+            const isSent = tx.type === 'sent';
+            const addr = isSent ? tx.recipient : tx.sender;
+            body.innerHTML += `<tr>
+                <td class="${isSent ? 'tx-type-sent' : 'tx-type-received'}">${isSent ? 'Sent' : 'Received'}</td>
+                <td style="font-family:monospace;font-size:12px" title="${addr}">${truncAddr(addr)}</td>
+                <td>${(tx.amount || 0).toFixed(8)}</td>
+                <td>${tx.height || '-'}</td>
+                <td style="font-family:monospace;font-size:12px" title="${tx.hash}">${truncAddr(tx.hash)}</td>
+            </tr>`;
+        });
+    } catch(e) {
+        loading.classList.add('hidden');
+        body.innerHTML = '<tr><td colspan="5" style="color:#ff4757;text-align:center">' + e.message + '</td></tr>';
+    }
+}
+
+// --- DEX ---
+async function loadTokens() {
+    try {
+        const data = await api('/api/dex/tokens');
+        const el = document.getElementById('dex-tokens');
+        if (!data.tokens || Object.keys(data.tokens).length === 0) {
+            el.innerHTML = '<div style="color:#888">No tokens found</div>';
+            return;
+        }
+        let html = '<table class="tx-table"><thead><tr><th>Token</th><th>Address</th></tr></thead><tbody>';
+        for (const [addr, info] of Object.entries(data.tokens)) {
+            const name = typeof info === 'object' ? (info.name || info.symbol || addr) : info;
+            html += `<tr><td>${name}</td><td style="font-family:monospace;font-size:12px;cursor:pointer" onclick="document.getElementById('dex-trade-addr').value='${addr}';document.getElementById('dex-token-addr').value='${addr}';document.getElementById('dex-liq-addr').value='${addr}'" title="Click to select">${truncAddr(addr)}</td></tr>`;
+        }
+        html += '</tbody></table>';
+        el.innerHTML = html;
+    } catch(e) {
+        document.getElementById('dex-tokens').innerHTML = '<div style="color:#ff4757">' + e.message + '</div>';
+    }
+}
+
+async function loadDexInfo() {
+    const token = document.getElementById('dex-token-addr').value.trim();
+    if (!token) return;
+    try {
+        const data = await api('/api/dex/info?token=' + token);
+        const el = document.getElementById('dex-pool-info');
+        let html = '<div class="stats-grid">';
+        if (data.pool) {
+            html += `<div class="stat-item"><div class="stat-label">Token Pool</div><div class="stat-value">${(data.pool.tokenPool || 0).toFixed(8)}</div></div>`;
+            html += `<div class="stat-item"><div class="stat-label">QWD Pool</div><div class="stat-value">${(data.pool.coinPool || 0).toFixed(8)}</div></div>`;
+        }
+        if (data.holdings && data.holdings.tokenBalance !== undefined) {
+            html += `<div class="stat-item"><div class="stat-label">Your Token Balance</div><div class="stat-value highlight">${(data.holdings.tokenBalance || 0).toFixed(8)}</div></div>`;
+        }
+        html += '</div>';
+        el.innerHTML = html;
+    } catch(e) {
+        document.getElementById('dex-pool-info').innerHTML = '<div style="color:#ff4757">' + e.message + '</div>';
+    }
+}
+
+async function tradeDex() {
+    const tokenAddress = document.getElementById('dex-trade-addr').value.trim();
+    const action = document.getElementById('dex-action').value;
+    const amount = parseFloat(document.getElementById('dex-amount').value);
+    if (!tokenAddress) { setAlert('dex-alert', 'Enter token address', true); return; }
+    if (!amount || amount <= 0) { setAlert('dex-alert', 'Enter valid amount', true); return; }
+    setAlert('dex-alert', '');
+    try {
+        const data = await api('/api/dex/trade', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({tokenAddress, action, amount, usePrimaryEncryption: true})
+        });
+        setAlert('dex-alert', 'Trade executed! Hash: ' + data.txHash, false);
+    } catch(e) {
+        setAlert('dex-alert', e.message, true);
+    }
+}
+
+async function executeDex() {
+    const tokenAddress = document.getElementById('dex-liq-addr').value.trim();
+    const operation = document.getElementById('dex-liq-op').value;
+    const tokenAmount = parseFloat(document.getElementById('dex-liq-token').value) || 0;
+    const qwdAmount = parseFloat(document.getElementById('dex-liq-qwd').value) || 0;
+    if (!tokenAddress) { setAlert('dex-liq-alert', 'Enter token address', true); return; }
+    setAlert('dex-liq-alert', '');
+    try {
+        const data = await api('/api/dex/execute', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({tokenAddress, operation, tokenAmount, qwdAmount, usePrimaryEncryption: true})
+        });
+        setAlert('dex-liq-alert', 'DEX operation completed! Hash: ' + data.txHash, false);
+    } catch(e) {
+        setAlert('dex-liq-alert', e.message, true);
+    }
+}
+
+// --- Explorer ---
+async function searchExplorer() {
+    const query = document.getElementById('explorer-query').value.trim();
+    if (!query) return;
+    const el = document.getElementById('explorer-result');
+    el.innerHTML = '<div style="color:#888">Searching...</div>';
+    try {
+        const data = await api('/api/details?hash=' + encodeURIComponent(query));
+        let html = '<div class="card" style="margin-top:15px">';
+        html += `<h3>Result: ${data.type}</h3>`;
+        if (data.type === 'transaction') {
+            html += `<div style="color:#888;font-size:12px;margin-bottom:5px">Location: ${data.location || '-'}</div>`;
+            html += `<pre style="background:rgba(0,0,0,0.3);padding:15px;border-radius:6px;overflow-x:auto;white-space:pre-wrap;font-size:12px;color:#e0e0e0">${escapeHtml(typeof data.data === 'string' ? data.data : JSON.stringify(data.data, null, 2))}</pre>`;
+        } else if (data.type === 'account') {
+            html += `<div class="stats-grid">`;
+            html += `<div class="stat-item"><div class="stat-label">Address</div><div style="font-family:monospace;font-size:11px;word-break:break-all">${data.address || '-'}</div></div>`;
+            html += `<div class="stat-item"><div class="stat-label">Balance</div><div class="stat-value">${(data.balance || 0).toFixed(8)}</div></div>`;
+            html += `<div class="stat-item"><div class="stat-label">Sent</div><div class="stat-value">${data.sentCount || 0}</div></div>`;
+            html += `<div class="stat-item"><div class="stat-label">Received</div><div class="stat-value">${data.receivedCount || 0}</div></div>`;
+            html += `</div>`;
+            if (data.transactions && data.transactions.length > 0) {
+                html += `<table class="tx-table" style="margin-top:15px"><thead><tr><th>Type</th><th>Address</th><th>Amount</th><th>Height</th></tr></thead><tbody>`;
+                data.transactions.forEach(tx => {
+                    const isSent = tx.type === 'sent';
+                    const addr = isSent ? tx.recipient : tx.sender;
+                    html += `<tr><td class="${isSent ? 'tx-type-sent' : 'tx-type-received'}">${isSent ? 'Sent' : 'Received'}</td><td style="font-family:monospace;font-size:12px">${truncAddr(addr)}</td><td>${(tx.amount || 0).toFixed(8)}</td><td>${tx.height || '-'}</td></tr>`;
+                });
+                html += `</tbody></table>`;
+            }
+        } else if (data.type === 'block') {
+            html += `<pre style="background:rgba(0,0,0,0.3);padding:15px;border-radius:6px;overflow-x:auto;white-space:pre-wrap;font-size:12px;color:#e0e0e0">${escapeHtml(typeof data.data === 'string' ? data.data : JSON.stringify(data.data, null, 2))}</pre>`;
+        } else {
+            html += `<pre style="background:rgba(0,0,0,0.3);padding:15px;border-radius:6px;overflow-x:auto;white-space:pre-wrap;font-size:12px;color:#e0e0e0">${escapeHtml(JSON.stringify(data, null, 2))}</pre>`;
+        }
+        html += '</div>';
+        el.innerHTML = html;
+    } catch(e) {
+        el.innerHTML = `<div class="alert alert-error" style="margin-top:15px">${e.message}</div>`;
+    }
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// --- Settings ---
+async function showMnemonic() {
+    document.getElementById('user-dropdown').classList.remove('show');
+    try {
+        const data = await api('/api/wallet/mnemonic');
+        document.getElementById('mnemonic-primary').innerHTML = '<strong>Primary:</strong><br>' + (data.primaryMnemonic || data.primaryError || 'N/A');
+        document.getElementById('mnemonic-secondary').innerHTML = '<strong>Secondary:</strong><br>' + (data.secondaryMnemonic || data.secondaryError || 'N/A');
+        const modal = document.getElementById('mnemonic-modal');
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    } catch(e) {
+        showMessage(e.message, true);
+    }
+}
+
+function closeMnemonic() {
+    const modal = document.getElementById('mnemonic-modal');
+    modal.classList.add('hidden');
+    modal.style.display = '';
+}
+
+function showChangePassword() {
+    document.getElementById('user-dropdown').classList.remove('show');
+    const modal = document.getElementById('password-modal');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    setAlert('pwd-alert', '');
+}
+
+function closeChangePassword() {
+    const modal = document.getElementById('password-modal');
+    modal.classList.add('hidden');
+    modal.style.display = '';
+    document.getElementById('pwd-current').value = '';
+    document.getElementById('pwd-new').value = '';
+}
+
+async function changePassword() {
+    const currentPassword = document.getElementById('pwd-current').value;
+    const newPassword = document.getElementById('pwd-new').value;
+    if (!currentPassword || !newPassword) { setAlert('pwd-alert', 'Fill in both fields', true); return; }
+    if (newPassword.length < 6) { setAlert('pwd-alert', 'New password must be at least 6 characters', true); return; }
+    try {
+        await api('/api/wallet/change-password', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({currentPassword, newPassword})
+        });
+        setAlert('pwd-alert', 'Password changed successfully!', false);
+        setTimeout(closeChangePassword, 1500);
+    } catch(e) {
+        setAlert('pwd-alert', e.message, true);
+    }
+}
+
+// --- Handle Enter key in login ---
+document.getElementById('auth-password').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') login();
+});
+document.getElementById('explorer-query').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') searchExplorer();
+});
+
+// --- Init ---
+checkSession();
+</script>
+</body>
+</html>
