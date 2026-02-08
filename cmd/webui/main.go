@@ -117,7 +117,7 @@ func main() {
 	fmt.Printf("===========================================\n")
 	fmt.Printf("  Node IP: %s\n", ipStr.String())
 	fmt.Printf("  Node Account: %d\n", handlers.DelegatedAccount)
-	fmt.Printf("  Web UI: http://localhost:%s\n", port)
+	fmt.Printf("  Web UI: http://0.0.0.0:%s\n", port)
 	fmt.Printf("  Press Ctrl+C to stop\n")
 	fmt.Printf("===========================================\n\n")
 
