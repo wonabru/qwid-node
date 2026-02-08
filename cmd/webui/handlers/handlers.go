@@ -7,12 +7,15 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
 	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/blocks"
 	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/crypto"
 	"github.com/wonabru/qwid-node/crypto/oqs"
 	"github.com/wonabru/qwid-node/logger"
 	clientrpc "github.com/wonabru/qwid-node/rpc/client"
@@ -1401,6 +1404,109 @@ func CallSmartContract(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, map[string]string{
 		"success": "true",
 		"output":  hex.EncodeToString(reply),
+	})
+}
+
+func CompileSmartContract(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		jsonError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Code == "" {
+		jsonError(w, "No Solidity code provided", http.StatusBadRequest)
+		return
+	}
+
+	os.MkdirAll("smartContracts", 0755)
+
+	err := os.WriteFile("smartContracts/contract.sol", []byte(req.Code), 0644)
+	if err != nil {
+		jsonError(w, "Failed to write contract file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Compile bytecode
+	cmd := exec.Command("solc", "--evm-version", "paris", "--bin", "smartContracts/contract.sol")
+	var binOut bytes.Buffer
+	var binErr bytes.Buffer
+	cmd.Stdout = &binOut
+	cmd.Stderr = &binErr
+	err = cmd.Run()
+	if err != nil {
+		jsonError(w, "Solidity compiler error: "+binErr.String(), http.StatusBadRequest)
+		return
+	}
+
+	lines := strings.Split(binOut.String(), "\n")
+	bytecode := ""
+	for i := len(lines) - 1; i >= 0; i-- {
+		line := strings.TrimSpace(lines[i])
+		if len(line) > 0 {
+			bytecode = line
+			break
+		}
+	}
+
+	// Compile ABI
+	cmd = exec.Command("solc", "--evm-version", "paris", "--abi", "smartContracts/contract.sol")
+	var abiOut bytes.Buffer
+	var abiErr bytes.Buffer
+	cmd.Stdout = &abiOut
+	cmd.Stderr = &abiErr
+	err = cmd.Run()
+	if err != nil {
+		jsonResponse(w, map[string]string{
+			"bytecode": bytecode,
+			"abi":      "",
+			"warning":  "ABI generation failed: " + abiErr.String(),
+		})
+		return
+	}
+
+	abiLines := strings.Split(abiOut.String(), "\n")
+	abiStr := ""
+	for i := len(abiLines) - 1; i >= 0; i-- {
+		line := strings.TrimSpace(abiLines[i])
+		if len(line) > 0 {
+			abiStr = line
+			break
+		}
+	}
+
+	os.WriteFile("smartContracts/contract.abi", []byte(abiStr), 0644)
+
+	jsonResponse(w, map[string]string{
+		"bytecode": bytecode,
+		"abi":      abiStr,
+	})
+}
+
+func GetFunctionSelector(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		jsonError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Signature string `json:"signature"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	selector := crypto.Keccak256([]byte(req.Signature))[:4]
+	jsonResponse(w, map[string]string{
+		"selector": hex.EncodeToString(selector),
 	})
 }
 

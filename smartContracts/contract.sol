@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 contract Coin {
-   
+
     // The keyword "public" makes variables
     // accessible from other contracts
     address public minter;
@@ -11,9 +11,9 @@ contract Coin {
     string public constant symbol = "WNB";
     uint8 public constant decimals = 2;
 
-function balanceOf(address tokenOwner) public view returns (int64) {
-    return balances[tokenOwner];
-}
+    function balanceOf(address tokenOwner) public view returns (int64) {
+        return balances[tokenOwner];
+    }
 
     // Events allow clients to react to specific
     // contract changes you declare

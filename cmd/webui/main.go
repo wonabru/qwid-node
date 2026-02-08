@@ -102,6 +102,8 @@ func main() {
 	mux.HandleFunc("/api/pubkey-info", corsMiddleware(handlers.GetPubKeyInfo))
 	mux.HandleFunc("/api/escrow/modify", corsMiddleware(handlers.ModifyEscrow))
 	mux.HandleFunc("/api/smartcontract/call", corsMiddleware(handlers.CallSmartContract))
+	mux.HandleFunc("/api/smartcontract/compile", corsMiddleware(handlers.CompileSmartContract))
+	mux.HandleFunc("/api/smartcontract/selector", corsMiddleware(handlers.GetFunctionSelector))
 	mux.HandleFunc("/api/logs", corsMiddleware(handlers.GetLogs))
 	mux.HandleFunc("/api/logs/files", corsMiddleware(handlers.GetLogFiles))
 	mux.HandleFunc("/api/peers", corsMiddleware(handlers.GetPeers))

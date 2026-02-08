@@ -609,21 +609,102 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Input Data (hex)</label>
-                    <textarea id="scInputData" rows="3" style="width:100%;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-family:monospace;" placeholder="Function selector + encoded parameters"></textarea>
+                    <label>ABI</label>
+                    <textarea id="scABI" rows="3" style="width:100%;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-family:monospace;font-size:12px;" placeholder="Paste contract ABI JSON here"></textarea>
                 </div>
 
-                <button class="btn-primary" onclick="callSmartContract()">Call Contract (View)</button>
+                <button class="btn-secondary" onclick="parseABI()" style="margin-bottom:15px;">Update ABI</button>
 
-                <div class="form-group" style="margin-top:15px;">
+                <div class="form-group">
+                    <label>Function</label>
+                    <select id="scFunctionSelect" style="width:100%;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;" onchange="onFunctionSelected()">
+                        <option value="">-- Select Function --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Input Parameters (comma-separated)</label>
+                    <input type="text" id="scInputParams" placeholder="e.g. 0x1234...abc,100,&quot;hello&quot;">
+                </div>
+
+                <button class="btn-secondary" onclick="encodeInputData()" style="margin-bottom:15px;">Encode Input</button>
+
+                <div class="form-group">
+                    <label>Encoded Input Data (hex)</label>
+                    <textarea id="scInputData" rows="3" style="width:100%;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-family:monospace;font-size:12px;" placeholder="Function selector + encoded parameters"></textarea>
+                </div>
+
+                <div style="display:flex;gap:10px;margin-bottom:15px;">
+                    <button class="btn-primary" onclick="callSmartContract()">Call Contract (View)</button>
+                    <button class="btn-secondary" onclick="prepareContractTx()">Send to Contract</button>
+                </div>
+
+                <div class="form-group">
                     <label>Output</label>
-                    <textarea id="scOutput" rows="3" readonly style="width:100%;padding:12px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#0f0;font-family:monospace;"></textarea>
+                    <textarea id="scOutput" rows="3" readonly style="width:100%;padding:12px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#0f0;font-family:monospace;font-size:12px;"></textarea>
                 </div>
             </div>
 
             <div class="card">
-                <h3>Deploy Smart Contract</h3>
-                <p style="color:#888;margin-bottom:15px;">To deploy a contract, go to Send tab, set recipient to "0", and paste compiled bytecode in Smart Contract Data field.</p>
+                <h3>Compile &amp; Deploy Smart Contract</h3>
+
+                <div class="form-group">
+                    <label>Solidity Source Code</label>
+                    <textarea id="scSourceCode" rows="20" style="width:100%;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-family:monospace;font-size:12px;">// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.4;
+
+contract Coin {
+
+    // The keyword "public" makes variables
+    // accessible from other contracts
+    address public minter;
+    mapping (address => int64) public balances;
+    string public constant name = "WONABRU TOKEN";
+    string public constant symbol = "WNB";
+    uint8 public constant decimals = 2;
+
+    function balanceOf(address tokenOwner) public view returns (int64) {
+        return balances[tokenOwner];
+    }
+
+    // Events allow clients to react to specific
+    // contract changes you declare
+    event Sent(address from, address to, int64 amount);
+
+    // Constructor code is only run when the contract
+    // is created
+    constructor() {
+        minter = msg.sender;
+    }
+
+    // Sends an amount of newly created coins to an address
+    // Can only be called by the contract creator
+    function mint(address receiver, int64 amount) public {
+        require(msg.sender == minter, "only minter can mint");
+        balances[receiver] += amount;
+    }
+
+    // Sends an amount of existing coins
+    // from any caller to an address
+    function transfer(address receiver, int64 amount) public {
+        require(amount &lt;= balances[msg.sender], "insufficient balance");
+
+        balances[msg.sender] -= amount;
+        balances[receiver] += amount;
+        emit Sent(msg.sender, receiver, amount);
+    }
+}</textarea>
+                </div>
+
+                <button class="btn-primary" onclick="compileContract()" style="margin-bottom:15px;">Compile Contract</button>
+
+                <div class="form-group">
+                    <label>Compiled Bytecode</label>
+                    <textarea id="scBytecode" rows="3" style="width:100%;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;font-family:monospace;font-size:12px;" placeholder="Compiled bytecode will appear here (or paste pre-compiled bytecode)"></textarea>
+                </div>
+
+                <button class="btn-secondary" onclick="deployContract()">Deploy Contract</button>
+                <p style="color:#888;margin-top:10px;font-size:12px;">Deploy sets recipient to "0", amount to "0", and bytecode as Smart Contract Data in the Send tab.</p>
             </div>
         </div>
 
@@ -852,6 +933,15 @@
                 }
             });
         });
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            const tabBtn = document.querySelector('.tab[data-tab="' + tabName + '"]');
+            if (tabBtn) tabBtn.classList.add('active');
+            const panel = document.getElementById('panel-' + tabName);
+            if (panel) panel.classList.add('active');
+        }
 
         // Show message
         function showMessage(text, type = 'success') {
@@ -1469,6 +1559,103 @@
         }
 
         // Smart Contract functions
+        let scParsedABI = [];
+        let scFunctionSignatures = {};
+
+        function parseABI() {
+            const abiText = document.getElementById('scABI').value.trim();
+            if (!abiText) {
+                showMessage('Please paste ABI JSON first', 'error');
+                return;
+            }
+            try {
+                const abi = JSON.parse(abiText);
+                scParsedABI = abi;
+                const select = document.getElementById('scFunctionSelect');
+                select.innerHTML = '<option value="">-- Select Function --</option>';
+                scFunctionSignatures = {};
+
+                for (const item of abi) {
+                    if (item.type !== 'function' || !item.name) continue;
+                    const inputTypes = (item.inputs || []).map(i => i.type).join(',');
+                    const outputTypes = (item.outputs || []).map(o => o.type).join(',');
+                    const sig = item.name + '(' + inputTypes + ')';
+                    const display = sig + (outputTypes ? '=' + outputTypes : '');
+                    const inputNames = (item.inputs || []).map(i => i.type + ' ' + i.name).join(', ');
+
+                    scFunctionSignatures[display] = { signature: sig, inputs: item.inputs || [], inputNames: inputNames };
+                    const opt = document.createElement('option');
+                    opt.value = display;
+                    opt.textContent = display;
+                    select.appendChild(opt);
+                }
+                showMessage('ABI parsed: ' + Object.keys(scFunctionSignatures).length + ' functions found');
+            } catch (e) {
+                showMessage('Invalid ABI JSON: ' + e.message, 'error');
+            }
+        }
+
+        function onFunctionSelected() {
+            const selected = document.getElementById('scFunctionSelect').value;
+            if (selected && scFunctionSignatures[selected]) {
+                const info = scFunctionSignatures[selected];
+                document.getElementById('scInputParams').placeholder = info.inputNames || 'No parameters';
+            }
+        }
+
+        async function encodeInputData() {
+            const selected = document.getElementById('scFunctionSelect').value;
+            if (!selected || !scFunctionSignatures[selected]) {
+                showMessage('Please select a function first', 'error');
+                return;
+            }
+
+            const info = scFunctionSignatures[selected];
+            const paramsStr = document.getElementById('scInputParams').value.trim();
+
+            try {
+                const res = await api('/api/smartcontract/selector', 'POST', { signature: info.signature });
+                let encoded = res.selector;
+
+                if (paramsStr) {
+                    const params = paramsStr.split(',').map(s => s.trim());
+                    for (let i = 0; i < params.length; i++) {
+                        let p = params[i];
+                        if (p.startsWith('0x') && p.length === 42) {
+                            // address - left-pad to 32 bytes
+                            encoded += p.slice(2).toLowerCase().padStart(64, '0');
+                        } else if (p.startsWith('0x')) {
+                            // hex number
+                            encoded += p.slice(2).padStart(64, '0');
+                        } else if ((p.startsWith('"') && p.endsWith('"')) || (p.startsWith("'") && p.endsWith("'"))) {
+                            // string
+                            const str = p.slice(1, -1);
+                            const strHex = Array.from(new TextEncoder().encode(str)).map(b => b.toString(16).padStart(2, '0')).join('');
+                            const chunks = Math.ceil(strHex.length / 64) || 1;
+                            encoded += BigInt(chunks).toString(16).padStart(64, '0');
+                            encoded += BigInt(0).toString(16).padStart(64, '0');
+                            encoded += strHex.padEnd(chunks * 64, '0');
+                        } else {
+                            // decimal integer
+                            const num = BigInt(p);
+                            if (num < 0n) {
+                                // two's complement for negative
+                                const twos = (1n << 256n) + num;
+                                encoded += twos.toString(16).padStart(64, '0');
+                            } else {
+                                encoded += num.toString(16).padStart(64, '0');
+                            }
+                        }
+                    }
+                }
+
+                document.getElementById('scInputData').value = encoded;
+                showMessage('Input data encoded');
+            } catch (e) {
+                showMessage('Encoding failed: ' + e.message, 'error');
+            }
+        }
+
         async function callSmartContract() {
             const address = document.getElementById('scAddress').value;
             const inputData = document.getElementById('scInputData').value;
@@ -1490,6 +1677,61 @@
             } catch (e) {
                 showMessage('Contract call failed: ' + e.message, 'error');
             }
+        }
+
+        function prepareContractTx() {
+            const address = document.getElementById('scAddress').value;
+            const inputData = document.getElementById('scInputData').value;
+            if (!address || !inputData) {
+                showMessage('Please enter address and encode input data first', 'error');
+                return;
+            }
+            document.getElementById('recipient').value = address;
+            document.getElementById('amount').value = '0';
+            document.getElementById('smartContractData').value = inputData;
+            showTab('send');
+            showMessage('Contract call prepared in Send tab');
+        }
+
+        async function compileContract() {
+            const code = document.getElementById('scSourceCode').value;
+            if (!code.trim()) {
+                showMessage('Please enter Solidity source code', 'error');
+                return;
+            }
+
+            try {
+                const res = await api('/api/smartcontract/compile', 'POST', { code });
+                if (res.error) {
+                    showMessage(res.error, 'error');
+                    return;
+                }
+                document.getElementById('scBytecode').value = res.bytecode || '';
+                if (res.abi) {
+                    document.getElementById('scABI').value = res.abi;
+                    parseABI();
+                }
+                if (res.warning) {
+                    showMessage('Compiled with warning: ' + res.warning, 'error');
+                } else {
+                    showMessage('Contract compiled successfully');
+                }
+            } catch (e) {
+                showMessage('Compilation failed: ' + e.message, 'error');
+            }
+        }
+
+        function deployContract() {
+            const bytecode = document.getElementById('scBytecode').value.trim();
+            if (!bytecode) {
+                showMessage('No bytecode to deploy. Compile first or paste bytecode.', 'error');
+                return;
+            }
+            document.getElementById('recipient').value = '0';
+            document.getElementById('amount').value = '0';
+            document.getElementById('smartContractData').value = bytecode;
+            showTab('send');
+            showMessage('Deploy prepared in Send tab - click Send Transaction to deploy');
         }
 
         // DEX functions
