@@ -2,7 +2,6 @@ package transactionsDefinition
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -432,40 +431,3 @@ func EmptyTransaction() Transaction {
 	return tx
 }
 
-// storePubKeyImmediately stores the pubkey to DB right away during verification
-// so it's available for nonce verification from other nodes
-func storePubKeyImmediately(pk common.PubKey, senderAddr common.Address) {
-	zeroBytes := make([]byte, common.AddressLength)
-
-	if bytes.Equal(pk.Address.GetBytes(), zeroBytes) {
-		logger.GetLogger().Println("storePubKeyImmediately: Address has to be set")
-		return
-	}
-	// Ensure MainAddress is set
-	if bytes.Equal(pk.MainAddress.GetBytes(), zeroBytes) {
-		logger.GetLogger().Println("storePubKeyImmediately: MainAddress has to be set")
-		return
-	}
-	// Verify the pubkey matches the sender
-	if !bytes.Equal(pk.MainAddress.GetBytes(), senderAddr.GetBytes()) {
-		logger.GetLogger().Println("storePubKeyImmediately: main address mismatch, skipping")
-		return
-	}
-	// Store pubkey marshal to DB
-	pkm, err := json.Marshal(pk)
-	if err != nil {
-		logger.GetLogger().Println("storePubKeyImmediately: marshal error:", err)
-		return
-	}
-	err = database.MainDB.Put(append(common.PubKeyMarshalDBPrefix[:], pk.Address.GetBytes()...), pkm)
-	if err != nil {
-		logger.GetLogger().Println("storePubKeyImmediately: DB put error:", err)
-		return
-	}
-	// Also store in patricia trie so LoadPubKeyWithPrimary can find it
-	err = pubkeys.AddPubKeyToAddress(pk, pk.MainAddress)
-	if err != nil {
-		logger.GetLogger().Println("storePubKeyImmediately: patricia trie error:", err)
-	}
-	logger.GetLogger().Println("storePubKeyImmediately: stored pubkey for", pk.Address.GetHex())
-}
