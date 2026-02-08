@@ -1612,46 +1612,42 @@ contract Coin {
 
         async function encodeInputData() {
             const selected = document.getElementById('scFunctionSelect').value;
-            if (!selected || !scFunctionSignatures[selected]) {
+            if (!selected) {
                 showMessage('Please select a function first', 'error');
                 return;
             }
 
-            const info = scFunctionSignatures[selected];
+            // Extract function signature (part before '=') like Qt GUI does
+            const signature = selected.split('=')[0];
             const paramsStr = document.getElementById('scInputParams').value.trim();
 
             try {
-                const res = await api('/api/smartcontract/selector', 'POST', { signature: info.signature });
+                const res = await api('/api/smartcontract/selector', 'POST', { signature });
                 let encoded = res.selector;
 
                 if (paramsStr) {
                     const params = paramsStr.split(',').map(s => s.trim());
                     for (let i = 0; i < params.length; i++) {
                         let p = params[i];
-                        if (p.startsWith('0x') && p.length === 42) {
-                            // address - left-pad to 32 bytes
-                            encoded += p.slice(2).toLowerCase().padStart(64, '0');
+                        // Strip 0x prefix for address check
+                        const stripped = p.startsWith('0x') ? p.slice(2) : p;
+                        if (stripped.length === 40 && /^[0-9a-fA-F]+$/.test(stripped)) {
+                            // address (20 bytes) - left-pad to 32 bytes
+                            encoded += stripped.toLowerCase().padStart(64, '0');
                         } else if (p.startsWith('0x')) {
-                            // hex number
+                            // hex number - left-pad to 32 bytes
                             encoded += p.slice(2).padStart(64, '0');
                         } else if ((p.startsWith('"') && p.endsWith('"')) || (p.startsWith("'") && p.endsWith("'"))) {
-                            // string
+                            // string - encode like Qt: chunk count + zero + right-padded string
                             const str = p.slice(1, -1);
                             const strHex = Array.from(new TextEncoder().encode(str)).map(b => b.toString(16).padStart(2, '0')).join('');
                             const chunks = Math.ceil(strHex.length / 64) || 1;
-                            encoded += BigInt(chunks).toString(16).padStart(64, '0');
-                            encoded += BigInt(0).toString(16).padStart(64, '0');
+                            encoded += int64ToHex32(chunks);
+                            encoded += '0'.repeat(64);
                             encoded += strHex.padEnd(chunks * 64, '0');
                         } else {
-                            // decimal integer
-                            const num = BigInt(p);
-                            if (num < 0n) {
-                                // two's complement for negative
-                                const twos = (1n << 256n) + num;
-                                encoded += twos.toString(16).padStart(64, '0');
-                            } else {
-                                encoded += num.toString(16).padStart(64, '0');
-                            }
+                            // decimal integer (int64) - encode as big-endian uint64 in last 8 bytes of 32-byte slot
+                            encoded += int64ToHex32(parseInt(p, 10));
                         }
                     }
                 }
@@ -1661,6 +1657,20 @@ contract Coin {
             } catch (e) {
                 showMessage('Encoding failed: ' + e.message, 'error');
             }
+        }
+
+        // Encode int64 as 32-byte hex (big-endian uint64 in last 8 bytes, matching Go GetInt64ToBytesSC)
+        function int64ToHex32(value) {
+            const buf = new ArrayBuffer(8);
+            const view = new DataView(buf);
+            if (value < 0) {
+                // For negative: write as int64 big-endian (two's complement handled by DataView)
+                view.setBigInt64(0, BigInt(value), false);
+            } else {
+                view.setBigUint64(0, BigInt(value), false);
+            }
+            const hex8 = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+            return '0'.repeat(48) + hex8;
         }
 
         async function callSmartContract() {
@@ -1693,8 +1703,8 @@ contract Coin {
                 showMessage('Please enter address and encode input data first', 'error');
                 return;
             }
-            document.getElementById('recipient').value = address;
-            document.getElementById('amount').value = '0';
+            document.getElementById('recipientAddress').value = address;
+            document.getElementById('sendAmount').value = '0';
             document.getElementById('smartContractData').value = inputData;
             showTab('send');
             showMessage('Contract call prepared in Send tab');
