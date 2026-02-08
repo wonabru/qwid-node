@@ -1225,8 +1225,12 @@ contract Coin {
             const includePubKey = document.getElementById('includePubKey').checked;
             const usePrimaryEncryption = document.getElementById('usePrimaryEncryption').checked;
 
-            if (!recipient || amount <= 0) {
-                showMessage('Please enter recipient and amount', 'error');
+            if (!recipient) {
+                showMessage('Please enter recipient address', 'error');
+                return;
+            }
+            if (amount < 0) {
+                showMessage('Amount cannot be negative', 'error');
                 return;
             }
 
@@ -1727,8 +1731,8 @@ contract Coin {
                 showMessage('No bytecode to deploy. Compile first or paste bytecode.', 'error');
                 return;
             }
-            document.getElementById('recipient').value = '0';
-            document.getElementById('amount').value = '0';
+            document.getElementById('recipientAddress').value = '0';
+            document.getElementById('sendAmount').value = '0';
             document.getElementById('smartContractData').value = bytecode;
             showTab('send');
             showMessage('Deploy prepared in Send tab - click Send Transaction to deploy');
