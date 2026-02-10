@@ -11,6 +11,7 @@ import (
 
 	"github.com/therecipe/qt/widgets"
 	"github.com/wonabru/qwid-node/cmd/gui/qtwidgets"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"os"
 	"time"
@@ -39,12 +40,11 @@ func main() {
 		num = 1
 	}
 	go clientrpc.ConnectRPC("127.0.0.1")
-	//fmt.Print("Enter password: ")
-	//password, err := terminal.ReadPassword(0)
-	//if err != nil {
-	//	logger.GetLogger().Fatal(err)
-	//}
-	password := "a"
+	fmt.Print("Enter password: ")
+	password, err := terminal.ReadPassword(0)
+	if err != nil {
+		logger.GetLogger().Fatal(err)
+	}
 	sigName, sigName2, err := qtwidgets.SetCurrentEncryptions()
 	if err != nil {
 		widgets.QMessageBox_Information(nil, "Warning", "error with retrieving current encryption", widgets.QMessageBox__Ok, widgets.QMessageBox__Ok)
