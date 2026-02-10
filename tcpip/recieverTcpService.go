@@ -77,7 +77,7 @@ func init() {
 	// Assign the parsed IP to tcpip.MyIP
 	MyIP = [4]byte(ip4)
 
-	// Get NODE_IP environment variable
+	// Get NODE_IP_SELF_NONCE environment variable
 	ips = os.Getenv("NODE_IP_SELF_NONCE")
 	if ips == "" {
 		logger.GetLogger().Println("Warning: NODE_IP environment variable is not set")
