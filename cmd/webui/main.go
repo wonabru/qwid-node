@@ -48,30 +48,22 @@ func main() {
 	ipThis := tcpip.MyIP
 	ipStr := net.IPv4(ipThis[0], ipThis[1], ipThis[2], ipThis[3])
 
+	// Test which encryption the node is using and set accordingly
+	handlers.TestAndSetEncryption()
+
 	// Get encryption config from node via handleENCR - retry until node is ready
 	sigName, sigName2 := "", ""
-	encDone := make(chan struct{})
-	go func() {
-		for i := 0; i < 15; i++ {
-			var err error
-			sigName, sigName2, err = handlers.SetCurrentEncryptions()
-			if err == nil && sigName != "" && sigName2 != "" {
-				fmt.Printf("Encryption config loaded: %s (paused=%v), %s (paused=%v)\n",
-					sigName, common.IsPaused(), sigName2, common.IsPaused2())
-				break
-			}
-			fmt.Printf("Waiting for node encryption config (attempt %d/15): %v\n", i+1, err)
-			time.Sleep(2 * time.Second)
+
+	for i := 0; i < 2; i++ {
+		var err error
+		sigName, sigName2, err = handlers.SetCurrentEncryptions()
+		if err == nil && sigName != "" && sigName2 != "" {
+			fmt.Printf("Encryption config loaded: %s (paused=%v), %s (paused=%v)\n",
+				sigName, common.IsPaused(), sigName2, common.IsPaused2())
+			break
 		}
-		close(encDone)
-	}()
-	select {
-	case <-encDone:
-	case <-time.After(30 * time.Second):
-		fmt.Println("Warning: timeout retrieving encryption config from node, using defaults")
-	case <-stop:
-		fmt.Println("\nShutting down...")
-		os.Exit(0)
+		fmt.Printf("Waiting for node encryption config (attempt %d/15): %v\n", i+1, err)
+		time.Sleep(2 * time.Second)
 	}
 
 	w := wallet.EmptyWallet(0, sigName, sigName2)

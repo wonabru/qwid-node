@@ -8,7 +8,6 @@ import (
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/logger"
 	clientrpc "github.com/wonabru/qwid-node/rpc/client"
-	"github.com/wonabru/qwid-node/wallet"
 )
 
 func SignMessage(line []byte) []byte {
@@ -84,34 +83,21 @@ func SetCurrentEncryptions() (string, string, error) {
 // with the non-paused encryption. We verify the signature to determine
 // which encryption to use.
 func TestAndSetEncryption() {
-	if MainWallet == nil {
-		return
-	}
+
 	clientrpc.InRPC <- SignMessage([]byte("HELO"))
 	reply := <-clientrpc.OutRPC
 	if len(reply) < 3 || string(reply[:2]) != "Hi" {
 		logger.GetLogger().Println("HELO test: invalid response")
 		return
 	}
+	usePrimary := reply[2] == 0
 
-	sigBytes := reply[2:]
-	usePrimary := sigBytes[0] == 0
-	var pubKey []byte
 	if usePrimary {
-		pubKey = MainWallet.Account1.PublicKey.GetBytes()
+		common.SetEncryption(common.SigName(), common.PubKeyLength(false), common.PrivateKeyLength(), common.SignatureLength(false), false, true)
+		logger.GetLogger().Println("Encryption test: primary verified")
 	} else {
-		pubKey = MainWallet.Account2.PublicKey.GetBytes()
+		common.SetEncryption(common.SigName(), common.PubKeyLength(false), common.PrivateKeyLength(), common.SignatureLength(false), true, true)
+		logger.GetLogger().Println("Encryption test: secondary verified (primary paused)")
 	}
 
-	if wallet.Verify([]byte("Hi"), sigBytes, pubKey, common.SigName(), common.SigName2(), !usePrimary, false) {
-		if usePrimary {
-			common.SetEncryption(common.SigName(), common.PubKeyLength(false), common.PrivateKeyLength(), common.SignatureLength(false), false, false)
-			logger.GetLogger().Println("Encryption test: primary verified")
-		} else {
-			common.SetEncryption(common.SigName(), common.PubKeyLength(false), common.PrivateKeyLength(), common.SignatureLength(false), true, false)
-			logger.GetLogger().Println("Encryption test: secondary verified (primary paused)")
-		}
-	} else {
-		logger.GetLogger().Println("Encryption test: verification failed")
-	}
 }

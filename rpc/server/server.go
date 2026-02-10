@@ -48,11 +48,12 @@ func ListenRPC() {
 
 func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 	listenerMutex.Lock()
-
+	defer listenerMutex.Unlock()
 	if len(lineBeg) < 4 {
 		*reply = []byte("Error with message. Too small length calling server")
 		return nil
 	}
+
 	line, left, err := common.BytesWithLenToBytes(lineBeg)
 	if err != nil {
 		*reply = []byte("wrong query")
@@ -63,6 +64,7 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 		return nil
 	}
 	operation := string(line[0:4])
+
 	verificationNeeded := true
 	for _, noVerification := range common.ConnectionsWithoutVerification {
 		if bytes.Equal([]byte(operation), noVerification) {
@@ -94,7 +96,7 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 			return nil
 		}
 	}
-	listenerMutex.Unlock()
+
 	switch operation {
 	case "STAT":
 		handleSTAT(byt, reply)
@@ -204,18 +206,12 @@ func handleENCR(line []byte, reply *[]byte) {
 }
 
 func handleHELO(line []byte, reply *[]byte) {
-	w := wallet.GetActiveWallet()
-	if w == nil {
-		*reply = []byte{}
-		return
+	if common.IsPaused() {
+		*reply = []byte("Hi1")
+
+	} else {
+		*reply = []byte("Hi0")
 	}
-	primary := !common.IsPaused()
-	sig, err := w.Sign([]byte("Hi"), primary)
-	if err != nil {
-		*reply = []byte{}
-		return
-	}
-	*reply = append([]byte("Hi"), sig.GetBytes()...)
 }
 
 func handleMINE(line []byte, reply *[]byte) {
