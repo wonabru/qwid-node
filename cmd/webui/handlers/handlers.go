@@ -294,11 +294,6 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := MainWallet.StoreJSON(); err != nil {
-		jsonError(w, fmt.Sprintf("Failed to save wallet: %v", err), http.StatusInternalServerError)
-		return
-	}
-
 	jsonResponse(w, map[string]string{"success": "Password changed"})
 }
 

@@ -1,6 +1,12 @@
 package main
 
 import (
+	_ "net/http/pprof"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/wonabru/qwid-node/blocks"
 	"github.com/wonabru/qwid-node/database"
 	"github.com/wonabru/qwid-node/logger"
@@ -9,11 +15,7 @@ import (
 	"github.com/wonabru/qwid-node/statistics"
 	"github.com/wonabru/qwid-node/transactionsPool"
 	"github.com/wonabru/qwid-node/wallet"
-	_ "net/http/pprof"
-	"os"
-	"strconv"
-	"strings"
-	"time"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/common"
@@ -43,11 +45,10 @@ func main() {
 	// Now you can use log functions as usual
 	logger.GetLogger().Println("Application started")
 	logger.GetLogger().Println("Password:")
-	//password, err := terminal.ReadPassword(0)
-	//if err != nil {
-	//	logger.GetLogger().Fatal(err)
-	//}
-	password := "a"
+	password, err := terminal.ReadPassword(0)
+	if err != nil {
+		logger.GetLogger().Fatal(err)
+	}
 	// Initialize wallet
 	logger.GetLogger().Println("Initializing wallet...")
 	wallet.InitActiveWallet(0, string(password), common.SigName(), common.SigName2())
