@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/blocks"
@@ -46,17 +45,17 @@ type StatsResponse struct {
 }
 
 type AccountResponse struct {
-	Address          string          `json:"address"`
-	Balance          float64         `json:"balance"`
-	StakedAmount     float64         `json:"stakedAmount"`
-	LockedAmount     float64         `json:"lockedAmount"`
-	RewardsAmount    float64         `json:"rewardsAmount"`
-	TotalHoldings    float64         `json:"totalHoldings"`
-	StakingDetails   []StakingDetail `json:"stakingDetails"`
-	EscrowDelay      int64           `json:"escrowDelay"`
-	MultiSignNumber  uint8           `json:"multiSignNumber"`
-	SentCount        int             `json:"sentCount"`
-	ReceivedCount    int             `json:"receivedCount"`
+	Address         string          `json:"address"`
+	Balance         float64         `json:"balance"`
+	StakedAmount    float64         `json:"stakedAmount"`
+	LockedAmount    float64         `json:"lockedAmount"`
+	RewardsAmount   float64         `json:"rewardsAmount"`
+	TotalHoldings   float64         `json:"totalHoldings"`
+	StakingDetails  []StakingDetail `json:"stakingDetails"`
+	EscrowDelay     int64           `json:"escrowDelay"`
+	MultiSignNumber uint8           `json:"multiSignNumber"`
+	SentCount       int             `json:"sentCount"`
+	ReceivedCount   int             `json:"receivedCount"`
 }
 
 type StakingDetail struct {
@@ -73,91 +72,105 @@ type WalletInfoResponse struct {
 	SigName2  string `json:"sigName2"`
 }
 
-func SignMessage(line []byte) []byte {
-	operation := string(line[0:4])
-	verificationNeeded := true
-	for _, noVerification := range common.ConnectionsWithoutVerification {
-		if bytes.Equal([]byte(operation), noVerification) {
-			verificationNeeded = false
-			break
-		}
-	}
-	if verificationNeeded {
-		if MainWallet == nil || (!MainWallet.Check() || !MainWallet.Check2()) {
-			logger.GetLogger().Println("wallet not loaded yet")
-			return line
-		}
-		if common.IsPaused() == false {
-			line = common.BytesToLenAndBytes(line)
-			sign, err := MainWallet.Sign(line, true)
-			if err != nil {
-				logger.GetLogger().Println(err)
-				return line
-			}
-			line = append(line, sign.GetBytes()...)
-		} else {
-			line = common.BytesToLenAndBytes(line)
-			sign, err := MainWallet.Sign(line, false)
-			if err != nil {
-				logger.GetLogger().Println(err)
-				return line
-			}
-			line = append(line, sign.GetBytes()...)
-		}
-	} else {
-		line = common.BytesToLenAndBytes(line)
-	}
-	return line
-}
+// func SignMessage(line []byte) []byte {
+// 	operation := string(line[0:4])
+// 	verificationNeeded := true
+// 	for _, noVerification := range common.ConnectionsWithoutVerification {
+// 		if bytes.Equal([]byte(operation), noVerification) {
+// 			verificationNeeded = false
+// 			break
+// 		}
+// 	}
+// 	if verificationNeeded {
+// 		if MainWallet == nil || (!MainWallet.Check() || !MainWallet.Check2()) {
+// 			logger.GetLogger().Println("wallet not loaded yet")
+// 			return line
+// 		}
+// 		if common.IsPaused() == false {
+// 			// primary encryption used
+// 			line = common.BytesToLenAndBytes(line)
+// 			sign, err := MainWallet.Sign(line, true)
+// 			if err != nil {
+// 				logger.GetLogger().Println(err)
+// 				return line
+// 			}
+// 			line = append(line, sign.GetBytes()...)
+// 		} else {
+// 			// secondary encryption
+// 			line = common.BytesToLenAndBytes(line)
+// 			sign, err := MainWallet.Sign(line, false)
+// 			if err != nil {
+// 				logger.GetLogger().Println(err)
+// 				return line
+// 			}
+// 			line = append(line, sign.GetBytes()...)
+// 		}
+// 	} else {
+// 		line = common.BytesToLenAndBytes(line)
+// 	}
+// 	return line
+// }
 
-func SetCurrentEncryptions() (string, string, error) {
-	type result struct {
-		sig1, sig2 string
-		err        error
+// func SetCurrentEncryptions() (string, string, error) {
+// 	type result struct {
+// 		sig1, sig2 string
+// 		err        error
+// 	}
+// 	ch := make(chan result, 1)
+// 	go func() {
+// 		clientrpc.InRPC <- SignMessage([]byte("ENCR"))
+// 		reply := <-clientrpc.OutRPC
+// 		if bytes.Equal(reply, []byte("Timeout")) {
+// 			ch <- result{err: fmt.Errorf("timeout")}
+// 			return
+// 		}
+// 		enc1b, left, err := common.BytesWithLenToBytes(reply)
+// 		if err != nil {
+// 			ch <- result{err: err}
+// 			return
+// 		}
+// 		enc2b, _, err := common.BytesWithLenToBytes(left)
+// 		if err != nil {
+// 			ch <- result{err: err}
+// 			return
+// 		}
+// 		enc1, err := blocks.FromBytesToEncryptionConfig(enc1b, true)
+// 		if err != nil {
+// 			ch <- result{err: err}
+// 			return
+// 		}
+// 		common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, true)
+// 		enc2, err := blocks.FromBytesToEncryptionConfig(enc2b, false)
+// 		if err != nil {
+// 			ch <- result{err: err}
+// 			return
+// 		}
+// 		common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, enc2.IsPaused, false)
+// 		ch <- result{sig1: enc1.SigName, sig2: enc2.SigName}
+// 	}()
+// 	select {
+// 	case r := <-ch:
+// 		return r.sig1, r.sig2, r.err
+// 	case <-time.After(1 * time.Second):
+// 		// Fall back to already-configured encryption names
+// 		s1, s2 := common.SigName(), common.SigName2()
+// 		if s1 != "" && s2 != "" {
+// 			return s1, s2, nil
+// 		}
+// 		return "", "", fmt.Errorf("timeout retrieving encryption config")
+// 	}
+// }
+
+// walletReady checks if the wallet is loaded and the appropriate account
+// (based on encryption pause state) is available.
+func walletReady() bool {
+	if MainWallet == nil {
+		return false
 	}
-	ch := make(chan result, 1)
-	go func() {
-		clientrpc.InRPC <- SignMessage([]byte("ENCR"))
-		reply := <-clientrpc.OutRPC
-		if bytes.Equal(reply, []byte("Timeout")) {
-			ch <- result{err: fmt.Errorf("timeout")}
-			return
-		}
-		enc1b, left, err := common.BytesWithLenToBytes(reply)
-		if err != nil {
-			ch <- result{err: err}
-			return
-		}
-		enc2b, _, err := common.BytesWithLenToBytes(left)
-		if err != nil {
-			ch <- result{err: err}
-			return
-		}
-		enc1, err := blocks.FromBytesToEncryptionConfig(enc1b, true)
-		if err != nil {
-			ch <- result{err: err}
-			return
-		}
-		common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, true)
-		enc2, err := blocks.FromBytesToEncryptionConfig(enc2b, false)
-		if err != nil {
-			ch <- result{err: err}
-			return
-		}
-		common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, enc2.IsPaused, false)
-		ch <- result{sig1: enc1.SigName, sig2: enc2.SigName}
-	}()
-	select {
-	case r := <-ch:
-		return r.sig1, r.sig2, r.err
-	case <-time.After(5 * time.Second):
-		// Fall back to already-configured encryption names
-		s1, s2 := common.SigName(), common.SigName2()
-		if s1 != "" && s2 != "" {
-			return s1, s2, nil
-		}
-		return "", "", fmt.Errorf("timeout retrieving encryption config")
+	if !common.IsPaused() {
+		return MainWallet.Check()
 	}
+	return MainWallet.Check2()
 }
 
 func GetStats(w http.ResponseWriter, r *http.Request) {
@@ -194,7 +207,7 @@ func GetStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetWalletInfo(w http.ResponseWriter, r *http.Request) {
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonResponse(w, WalletInfoResponse{Loaded: false})
 		return
 	}
@@ -242,6 +255,7 @@ func LoadWallet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	MainWallet = loadedWallet
+	TestAndSetEncryption()
 
 	warnings := []string{}
 	if MainWallet.GetSigName(true) != common.SigName() {
@@ -294,21 +308,34 @@ func CreateWallet(w http.ResponseWriter, r *http.Request) {
 
 	acc, err := wallet.GenerateNewAccount(wl, wl.SigName)
 	if err != nil {
-		jsonError(w, fmt.Sprintf("Failed to generate primary account: %v", err), http.StatusInternalServerError)
-		return
+		if !common.IsPaused() {
+			jsonError(w, fmt.Sprintf("Failed to generate primary account: %v", err), http.StatusInternalServerError)
+			return
+		}
+		logger.GetLogger().Println("Warning: primary account generation failed (paused):", err)
+	} else {
+		wl.MainAddress = acc.Address
+		acc.PublicKey.MainAddress = wl.MainAddress
+		wl.Account1 = acc
+		copy(wl.Account1.EncryptedSecretKey, acc.EncryptedSecretKey)
 	}
-	wl.MainAddress = acc.Address
-	acc.PublicKey.MainAddress = wl.MainAddress
-	wl.Account1 = acc
-	copy(wl.Account1.EncryptedSecretKey, acc.EncryptedSecretKey)
 
 	acc, err = wallet.GenerateNewAccount(wl, wl.SigName2)
 	if err != nil {
-		jsonError(w, fmt.Sprintf("Failed to generate secondary account: %v", err), http.StatusInternalServerError)
-		return
+		if !common.IsPaused2() {
+			jsonError(w, fmt.Sprintf("Failed to generate secondary account: %v", err), http.StatusInternalServerError)
+			return
+		}
+		logger.GetLogger().Println("Warning: secondary account generation failed (paused):", err)
+	} else {
+		emptyAddr := common.EmptyAddress()
+		if bytes.Equal(wl.MainAddress.GetBytes(), emptyAddr.GetBytes()) {
+			wl.MainAddress = acc.Address
+		}
+		acc.PublicKey.MainAddress = wl.MainAddress
+		wl.Account2 = acc
+		copy(wl.Account2.EncryptedSecretKey, acc.EncryptedSecretKey)
 	}
-	wl.Account2 = acc
-	copy(wl.Account2.EncryptedSecretKey, acc.EncryptedSecretKey)
 
 	err = os.MkdirAll(wl.HomePath, 0755)
 	if err != nil {
@@ -323,6 +350,7 @@ func CreateWallet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	MainWallet = &wl
+	TestAndSetEncryption()
 
 	jsonResponse(w, map[string]interface{}{
 		"success": true,
@@ -336,7 +364,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -364,7 +392,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMnemonic(w http.ResponseWriter, r *http.Request) {
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -389,7 +417,7 @@ func GetMnemonic(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAccount(w http.ResponseWriter, r *http.Request) {
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -469,7 +497,7 @@ func SendTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -625,7 +653,7 @@ func SendTransaction(w http.ResponseWriter, r *http.Request) {
 		Hash:      common.Hash{},
 		Signature: common.Signature{},
 		Height:    0,
-		GasPrice:  int64(rand.Intn(0x0000000f)),
+		GasPrice:  int64(rand.Intn(0x0000000f)) + 1,
 		GasUsage:  0,
 	}
 
@@ -675,7 +703,7 @@ func CancelTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -720,7 +748,7 @@ func ExecuteStaking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -851,7 +879,7 @@ func ExecuteStaking(w http.ResponseWriter, r *http.Request) {
 		Hash:      common.Hash{},
 		Signature: common.Signature{},
 		Height:    0,
-		GasPrice:  int64(rand.Intn(0x0000000f)),
+		GasPrice:  int64(rand.Intn(0x0000000f)) + 1,
 		GasUsage:  0,
 	}
 
@@ -929,7 +957,7 @@ func GetPendingTransactions(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetHistory(w http.ResponseWriter, r *http.Request) {
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -1190,7 +1218,7 @@ func Trade(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPubKeyInfo(w http.ResponseWriter, r *http.Request) {
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -1236,7 +1264,7 @@ func Vote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -1311,7 +1339,7 @@ func ModifyEscrow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -1397,7 +1425,7 @@ func ModifyEscrow(w http.ResponseWriter, r *http.Request) {
 		Hash:      common.Hash{},
 		Signature: common.Signature{},
 		Height:    0,
-		GasPrice:  int64(rand.Intn(0x0000000f)),
+		GasPrice:  int64(rand.Intn(0x0000000f)) + 1,
 		GasUsage:  0,
 	}
 
@@ -1636,7 +1664,7 @@ func GetDexInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	holdings := map[string]interface{}{}
-	if MainWallet != nil && MainWallet.Check() {
+	if walletReady() {
 		// Get token balance
 		m = []byte("GTBL")
 		m = append(m, MainWallet.MainAddress.GetBytes()...)
@@ -1660,7 +1688,7 @@ func ExecuteDex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -1729,7 +1757,7 @@ func ExecuteDex(w http.ResponseWriter, r *http.Request) {
 		Hash:            common.Hash{},
 		Signature:       common.Signature{},
 		Height:          0,
-		GasPrice:        0,
+		GasPrice:        int64(rand.Intn(0x0000000f)) + 1,
 		GasUsage:        0,
 		ContractAddress: coinAddr,
 	}
@@ -1780,7 +1808,7 @@ func TradeDex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if MainWallet == nil || !MainWallet.Check() {
+	if !walletReady() {
 		jsonError(w, "Load wallet first", http.StatusBadRequest)
 		return
 	}
@@ -1843,7 +1871,7 @@ func TradeDex(w http.ResponseWriter, r *http.Request) {
 		Hash:            common.Hash{},
 		Signature:       common.Signature{},
 		Height:          0,
-		GasPrice:        0,
+		GasPrice:        int64(rand.Intn(0x0000000f)) + 1,
 		GasUsage:        0,
 		ContractAddress: coinAddr,
 	}

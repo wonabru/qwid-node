@@ -418,6 +418,26 @@ func (w *Wallet) StoreJSON() error {
 	return nil
 }
 
+// LoadJSONFromDir loads a wallet from a custom directory path.
+func LoadJSONFromDir(walletDir string, walletNumber uint8, password string, sigName, sigName2 string) (*Wallet, error) {
+	if len(password) == 0 {
+		return nil, fmt.Errorf("password cannot be empty")
+	}
+
+	walletFile := filepath.Join(walletDir, "wallet"+strconv.Itoa(int(walletNumber))+".json")
+	data, err := os.ReadFile(walletFile)
+	if err != nil {
+		return nil, err
+	}
+	var w Wallet
+	if err := json.Unmarshal(data, &w); err != nil {
+		return nil, err
+	}
+	w.HomePath = walletDir
+	w.WalletNumber = walletNumber
+	return loadWalletFromStruct(&w, walletDir, password, sigName, sigName2)
+}
+
 // LoadJSON if height >= 0 current wallet will be replaced by latest but not larger than height
 func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*Wallet, error) {
 	if len(password) == 0 {
@@ -425,43 +445,42 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 	}
 
 	ew := EmptyWallet(walletNumber, sigName, sigName2)
-
 	homePath := ew.HomePath
 
-	// Load wallet JSON file
 	walletFile := filepath.Join(homePath, "wallet"+strconv.Itoa(int(walletNumber))+".json")
 	data, err := os.ReadFile(walletFile)
 	if err != nil {
 		return nil, err
 	}
 	var w Wallet
-	// Unmarshal JSON data into wallet struct
 	if err := json.Unmarshal(data, &w); err != nil {
 		return nil, err
 	}
+	return loadWalletFromStruct(&w, homePath, password, sigName, sigName2)
+}
 
-	if w.SigName != sigName {
+func loadWalletFromStruct(w *Wallet, homePath, password, sigName, sigName2 string) (*Wallet, error) {
+	if !common.IsPaused() && w.SigName != sigName {
 		w.SigName = sigName
 		if a, ok := w.Accounts[sigName]; ok {
 			w.Account1 = a
 			copy(w.Account1.EncryptedSecretKey[:], a.EncryptedSecretKey[:])
 		} else {
-			acc, err := GenerateNewAccount(w, sigName)
+			acc, err := GenerateNewAccount(*w, sigName)
 			if err != nil {
 				return nil, err
 			}
-
 			w.Account1 = acc
 			copy(w.Account1.EncryptedSecretKey[:], acc.EncryptedSecretKey[:])
 		}
 	}
-	if w.SigName2 != sigName2 {
+	if !common.IsPaused2() && w.SigName2 != sigName2 {
 		w.SigName2 = sigName2
 		if a, ok := w.Accounts[sigName2]; ok {
 			w.Account2 = a
 			copy(w.Account2.EncryptedSecretKey[:], a.EncryptedSecretKey[:])
 		} else {
-			acc, err := GenerateNewAccount(w, sigName2)
+			acc, err := GenerateNewAccount(*w, sigName2)
 			if err != nil {
 				return nil, err
 			}
@@ -471,52 +490,73 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 	}
 
 	w.SetPassword(password)
-	ds, err := w.decrypt(w.Account1.EncryptedSecretKey)
-	if err != nil {
-		logger.GetLogger().Println(err)
-		return nil, err
-	}
-	var signer oqs.Signature
-	err = signer.Init(w.SigName, ds)
-	if err != nil {
-		return nil, err
-	}
-	ds = ds[:signer.Details().LengthSecretKey]
-	err = signer.Init(w.SigName, ds)
-	if err != nil {
-		return nil, err
-	}
-	w.Account1.signer = signer
-	// maybe one should limit amount of bytes to pass here
-	cnz := CountNonZeroBytes(ds)
-	logger.GetLogger().Println("cnz:", cnz)
 
-	err = w.Account1.secretKey.Init(ds, w.Account1.Address, true)
-	if err != nil {
-		return nil, err
+	// Try to init Account1 - always try, tolerate failure if encryption is paused
+	account1OK := false
+	if len(w.Account1.EncryptedSecretKey) > 0 {
+		ds, err := w.decrypt(w.Account1.EncryptedSecretKey)
+		if err == nil {
+			var signer oqs.Signature
+			err = signer.Init(w.SigName, ds)
+			if err == nil {
+				ds = ds[:signer.Details().LengthSecretKey]
+				err = signer.Init(w.SigName, ds)
+				if err == nil {
+					w.Account1.signer = signer
+					cnz := CountNonZeroBytes(ds)
+					logger.GetLogger().Println("cnz:", cnz)
+					err = w.Account1.secretKey.Init(ds, w.Account1.Address, true)
+					if err == nil {
+						account1OK = true
+					}
+				}
+			}
+		}
+		if !account1OK {
+			if !common.IsPaused() {
+				logger.GetLogger().Println("Account1 init failed:", err)
+				return nil, fmt.Errorf("Account1 init failed: %v", err)
+			}
+			logger.GetLogger().Println("Account1 init failed (1st encryption paused, OK):", err)
+		}
+	} else if !common.IsPaused() {
+		return nil, fmt.Errorf("Account1 encrypted secret key is empty")
 	}
 
-	ds, err = w.decrypt(w.Account2.EncryptedSecretKey)
-	if err != nil {
-		logger.GetLogger().Println(err)
-		return nil, err
+	// Try to init Account2 - always try, tolerate failure if encryption is paused
+	account2OK := false
+	if len(w.Account2.EncryptedSecretKey) > 0 {
+		ds, err := w.decrypt(w.Account2.EncryptedSecretKey)
+		if err == nil {
+			var signer2 oqs.Signature
+			err = signer2.Init(w.SigName2, ds)
+			if err == nil {
+				ds = ds[:signer2.Details().LengthSecretKey]
+				err = signer2.Init(w.SigName2, ds)
+				if err == nil {
+					w.Account2.signer = signer2
+					cnz := CountNonZeroBytes(ds)
+					logger.GetLogger().Println("cnz:", cnz)
+					err = w.Account2.secretKey.Init(ds, w.Account2.Address, false)
+					if err == nil {
+						account2OK = true
+					}
+				}
+			}
+		}
+		if !account2OK {
+			if !common.IsPaused2() {
+				logger.GetLogger().Println("Account2 init failed:", err)
+				return nil, fmt.Errorf("Account2 init failed: %v", err)
+			}
+			logger.GetLogger().Println("Account2 init failed (2nd encryption paused, OK):", err)
+		}
+	} else if !common.IsPaused2() {
+		return nil, fmt.Errorf("Account2 encrypted secret key is empty")
 	}
-	var signer2 oqs.Signature
-	err = signer2.Init(w.SigName2, ds)
-	if err != nil {
-		return nil, err
-	}
-	ds = ds[:signer2.Details().LengthSecretKey]
-	err = signer2.Init(w.SigName2, ds)
-	if err != nil {
-		return nil, err
-	}
-	w.Account2.signer = signer2
-	cnz = CountNonZeroBytes(ds)
-	logger.GetLogger().Println("cnz:", cnz)
-	err = w.Account2.secretKey.Init(ds, w.Account2.Address, false)
-	if err != nil {
-		return nil, err
+
+	if !account1OK && !account2OK {
+		return nil, fmt.Errorf("failed to load both accounts")
 	}
 
 	w.MainAddress.Primary = true
@@ -527,17 +567,25 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 	w.Account1.PublicKey.Primary = true
 	w.Account2.PublicKey.Primary = false
 
-	// Ensure MainAddress equals Account1.Address (they should be the same)
-	// If MainAddress is empty or doesn't match, set it from Account1.Address
+	// Ensure MainAddress is set correctly
 	zeroAddr := make([]byte, common.AddressLength)
+	account1HasAddress := !bytes.Equal(w.Account1.Address.GetBytes(), zeroAddr)
+	account2HasAddress := !bytes.Equal(w.Account2.Address.GetBytes(), zeroAddr)
+
 	if bytes.Equal(w.MainAddress.GetBytes(), zeroAddr) {
-		w.MainAddress = w.Account1.Address
-		logger.GetLogger().Println("MainAddress was empty, set from Account1.Address:", w.MainAddress.GetHex())
-	} else if !bytes.Equal(w.MainAddress.GetBytes(), w.Account1.Address.GetBytes()) {
+		// MainAddress is empty - set from whichever account has an address
+		if account1HasAddress {
+			w.MainAddress = w.Account1.Address
+			logger.GetLogger().Println("MainAddress was empty, set from Account1.Address:", w.MainAddress.GetHex())
+		} else if account2HasAddress {
+			w.MainAddress = w.Account2.Address
+			logger.GetLogger().Println("MainAddress was empty, set from Account2.Address:", w.MainAddress.GetHex())
+		}
+	} else if account1OK && account1HasAddress && !bytes.Equal(w.MainAddress.GetBytes(), w.Account1.Address.GetBytes()) {
+		// Only update MainAddress from Account1 if Account1 actually initialized
 		logger.GetLogger().Println("WARNING: MainAddress differs from Account1.Address!")
 		logger.GetLogger().Println("MainAddress:", w.MainAddress.GetHex())
 		logger.GetLogger().Println("Account1.Address:", w.Account1.Address.GetHex())
-		// Use Account1.Address as the canonical address
 		w.MainAddress = w.Account1.Address
 	}
 
@@ -552,10 +600,8 @@ func LoadJSON(walletNumber uint8, password string, sigName, sigName2 string) (*W
 
 	w.HomePath = homePath
 	w.StoreJSON()
-	//logger.GetLogger().Println("PubKey:", w.Account1.PublicKey.GetHex())
-	//logger.GetLogger().Println("PubKey2:", w.Account2.PublicKey.GetHex())
 	logger.GetLogger().Println("MainAddress:", w.MainAddress.GetHex())
-	return &w, err
+	return w, nil
 }
 
 func (w *Wallet) ChangePassword(password, newPassword string) error {
@@ -603,6 +649,45 @@ func (w *Wallet) ChangePassword(password, newPassword string) error {
 	}
 	_, err = LoadJSON(w2.WalletNumber, newPassword, w2.SigName, w2.SigName2)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// ChangePasswordInPlace updates the password on the wallet in-place and stores it.
+// Unlike ChangePassword, it does not call LoadJSON, so it works for wallets
+// loaded from custom directories (e.g. website users).
+func (w *Wallet) ChangePasswordInPlace(password, newPassword string) error {
+	if w.passwordBytes == nil {
+		return fmt.Errorf("you need load wallet first")
+	}
+	if !bytes.Equal(passwordToByte(password), w.passwordBytes) {
+		return fmt.Errorf("current password is not valid")
+	}
+
+	globalMutex.Lock()
+	defer globalMutex.Unlock()
+
+	w.password = newPassword
+	w.passwordBytes = passwordToByte(newPassword)
+
+	for k, v := range w.Accounts {
+		ds, err := w.decrypt(v.EncryptedSecretKey)
+		if err != nil {
+			logger.GetLogger().Println(err)
+			return err
+		}
+		se, err := w.encrypt(ds)
+		if err != nil {
+			logger.GetLogger().Println(err)
+			return err
+		}
+		copy(w.Accounts[k].EncryptedSecretKey, se)
+	}
+
+	err := w.StoreJSON()
+	if err != nil {
+		logger.GetLogger().Println("Can not store new wallet")
 		return err
 	}
 	return nil

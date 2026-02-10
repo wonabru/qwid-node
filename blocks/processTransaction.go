@@ -255,6 +255,12 @@ func ProcessTransaction(tx transactionsDefinition.Transaction, height int64) err
 				return fmt.Errorf("wrong amount in rewarding: ProcessTransaction")
 			}
 		}
+		if n >= 512 { // DEX operation - deduct gas fee from sender
+			err = AddBalance(address.ByteValue, -fee)
+			if err != nil {
+				return err
+			}
+		}
 	} else { // this is not delegated account so standard transaction
 
 		senderAcc, exist := account.GetAccountByAddressBytes(address.GetBytes())

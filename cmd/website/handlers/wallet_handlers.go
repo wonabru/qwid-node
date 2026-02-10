@@ -183,13 +183,8 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wl := sess.Wallet
-	if err := wl.ChangePassword(req.CurrentPassword, req.NewPassword); err != nil {
+	if err := wl.ChangePasswordInPlace(req.CurrentPassword, req.NewPassword); err != nil {
 		JsonError(w, "Wrong current password", http.StatusBadRequest)
-		return
-	}
-
-	if err := wl.StoreJSON(); err != nil {
-		JsonError(w, "Failed to save wallet", http.StatusInternalServerError)
 		return
 	}
 

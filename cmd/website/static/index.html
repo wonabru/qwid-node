@@ -204,6 +204,7 @@
             <button class="tab" onclick="showTab('staking')">Staking</button>
             <button class="tab" onclick="showTab('history')">History</button>
             <button class="tab" onclick="showTab('dex')">DEX</button>
+            <button class="tab" onclick="showTab('tokens')">Tokens</button>
             <button class="tab" onclick="showTab('explorer')">Explorer</button>
         </div>
 
@@ -412,6 +413,29 @@
                 </div>
             </div>
 
+            <!-- Tokens -->
+            <div id="panel-tokens" class="panel">
+                <div class="card">
+                    <h3>Create Token</h3>
+                    <p style="color:#888; margin-bottom:15px">Deploy a new standard token. 1,000,000 tokens will be minted to your address.</p>
+                    <div id="token-alert"></div>
+                    <div class="form-group">
+                        <label>Token Name</label>
+                        <input type="text" id="token-name" placeholder="e.g. My Token" maxlength="32">
+                    </div>
+                    <div class="form-group">
+                        <label>Token Symbol (Ticker)</label>
+                        <input type="text" id="token-symbol" placeholder="e.g. MTK" maxlength="10" style="text-transform:uppercase">
+                    </div>
+                    <button class="btn-primary" onclick="createToken()">Create Token</button>
+                </div>
+                <div class="card">
+                    <h3>Your Tokens</h3>
+                    <p style="color:#888; margin-bottom:15px">Tokens you created will appear in the DEX token list after the transaction is included in a block.</p>
+                    <div id="token-result"></div>
+                </div>
+            </div>
+
             <!-- Explorer -->
             <div id="panel-explorer" class="panel">
                 <div class="card">
@@ -452,6 +476,10 @@
             <div class="form-group">
                 <label>New Password</label>
                 <input type="password" id="pwd-new" placeholder="New password (min 6 chars)">
+            </div>
+            <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" id="pwd-confirm" placeholder="Retype new password">
             </div>
             <div style="display:flex;gap:10px">
                 <button class="btn-primary" onclick="changePassword()">Change</button>
@@ -564,7 +592,7 @@ function showTab(name) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.getElementById('panel-' + name).classList.add('active');
     const tabs = document.querySelectorAll('.tab');
-    const names = ['dashboard','send','staking','history','dex','explorer'];
+    const names = ['dashboard','send','staking','history','dex','tokens','explorer'];
     const idx = names.indexOf(name);
     if (idx >= 0) tabs[idx].classList.add('active');
 
@@ -743,8 +771,12 @@ async function loadDexInfo() {
         const el = document.getElementById('dex-pool-info');
         let html = '<div class="stats-grid">';
         if (data.pool) {
-            html += `<div class="stat-item"><div class="stat-label">Token Pool</div><div class="stat-value">${(data.pool.tokenPool || 0).toFixed(8)}</div></div>`;
-            html += `<div class="stat-item"><div class="stat-label">QWD Pool</div><div class="stat-value">${(data.pool.coinPool || 0).toFixed(8)}</div></div>`;
+            const tp = data.pool.tokenPool || 0;
+            const cp = data.pool.coinPool || 0;
+            const price = tp > 0 ? cp / tp : 0;
+            html += `<div class="stat-item"><div class="stat-label">Token Price</div><div class="stat-value highlight">${price > 0 ? price.toFixed(8) : 'N/A'} QWD</div></div>`;
+            html += `<div class="stat-item"><div class="stat-label">Token Pool</div><div class="stat-value">${tp.toFixed(8)}</div></div>`;
+            html += `<div class="stat-item"><div class="stat-label">QWD Pool</div><div class="stat-value">${cp.toFixed(8)}</div></div>`;
         }
         if (data.holdings && data.holdings.tokenBalance !== undefined) {
             html += `<div class="stat-item"><div class="stat-label">Your Token Balance</div><div class="stat-value highlight">${(data.holdings.tokenBalance || 0).toFixed(8)}</div></div>`;
@@ -791,6 +823,35 @@ async function executeDex() {
         setAlert('dex-liq-alert', 'DEX operation completed! Hash: ' + data.txHash, false);
     } catch(e) {
         setAlert('dex-liq-alert', e.message, true);
+    }
+}
+
+// --- Tokens ---
+async function createToken() {
+    const name = document.getElementById('token-name').value.trim();
+    const symbol = document.getElementById('token-symbol').value.trim().toUpperCase();
+    if (!name) { setAlert('token-alert', 'Enter a token name', true); return; }
+    if (!symbol) { setAlert('token-alert', 'Enter a token symbol', true); return; }
+    if (name.length > 32) { setAlert('token-alert', 'Token name max 32 characters', true); return; }
+    if (symbol.length > 10) { setAlert('token-alert', 'Token symbol max 10 characters', true); return; }
+    setAlert('token-alert', 'Compiling and deploying token...', false);
+    try {
+        const data = await api('/api/token/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name, symbol})
+        });
+        setAlert('token-alert', data.message, false);
+        const el = document.getElementById('token-result');
+        const prev = el.innerHTML;
+        el.innerHTML = `<div class="card" style="margin-top:10px;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2)">
+            <div style="font-weight:600;color:#00d4ff">${escapeHtml(name)} (${escapeHtml(symbol)})</div>
+            <div style="font-size:12px;color:#888;margin-top:5px">Supply: 1,000,000 | Decimals: 8</div>
+            <div style="font-size:11px;color:#888;margin-top:5px;font-family:monospace">TX: ${data.txHash}</div>
+            <div style="font-size:11px;color:#666;margin-top:3px">Waiting for block inclusion...</div>
+        </div>` + prev;
+    } catch(e) {
+        setAlert('token-alert', e.message, true);
     }
 }
 
@@ -876,12 +937,15 @@ function closeChangePassword() {
     modal.style.display = '';
     document.getElementById('pwd-current').value = '';
     document.getElementById('pwd-new').value = '';
+    document.getElementById('pwd-confirm').value = '';
 }
 
 async function changePassword() {
     const currentPassword = document.getElementById('pwd-current').value;
     const newPassword = document.getElementById('pwd-new').value;
-    if (!currentPassword || !newPassword) { setAlert('pwd-alert', 'Fill in both fields', true); return; }
+    const confirmPassword = document.getElementById('pwd-confirm').value;
+    if (!currentPassword || !newPassword || !confirmPassword) { setAlert('pwd-alert', 'Fill in all fields', true); return; }
+    if (newPassword !== confirmPassword) { setAlert('pwd-alert', 'New passwords do not match', true); return; }
     if (newPassword.length < 6) { setAlert('pwd-alert', 'New password must be at least 6 characters', true); return; }
     try {
         await api('/api/wallet/change-password', {

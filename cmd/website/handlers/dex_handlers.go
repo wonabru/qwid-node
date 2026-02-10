@@ -153,7 +153,7 @@ func TradeDex(w http.ResponseWriter, r *http.Request) {
 		Hash:            common.Hash{},
 		Signature:       common.Signature{},
 		Height:          0,
-		GasPrice:        0,
+		GasPrice:        int64(rand.Intn(0x0000000f)) + 1,
 		GasUsage:        0,
 		ContractAddress: coinAddr,
 	}
@@ -179,7 +179,8 @@ func TradeDex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tx.Sign(wl, req.UsePrimaryEncryption); err != nil {
+	primary := !common.IsPaused()
+	if err := tx.Sign(wl, primary); err != nil {
 		JsonError(w, fmt.Sprintf("Failed to sign transaction: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -278,7 +279,7 @@ func ExecuteDex(w http.ResponseWriter, r *http.Request) {
 		Hash:            common.Hash{},
 		Signature:       common.Signature{},
 		Height:          0,
-		GasPrice:        0,
+		GasPrice:        int64(rand.Intn(0x0000000f)) + 1,
 		GasUsage:        0,
 		ContractAddress: coinAddr,
 	}
@@ -304,7 +305,8 @@ func ExecuteDex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tx.Sign(wl, req.UsePrimaryEncryption); err != nil {
+	primary := !common.IsPaused()
+	if err := tx.Sign(wl, primary); err != nil {
 		JsonError(w, fmt.Sprintf("Failed to sign transaction: %v", err), http.StatusInternalServerError)
 		return
 	}

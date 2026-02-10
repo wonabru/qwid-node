@@ -1,13 +1,21 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/wonabru/qwid-node/common"
+	"github.com/wonabru/qwid-node/logger"
+	clientrpc "github.com/wonabru/qwid-node/rpc/client"
+	"github.com/wonabru/qwid-node/services/transactionServices"
+	"github.com/wonabru/qwid-node/statistics"
+	"github.com/wonabru/qwid-node/transactionsDefinition"
 	"github.com/wonabru/qwid-node/wallet"
 )
 
@@ -110,21 +118,35 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	acc, err := wallet.GenerateNewAccount(wl, wl.SigName)
 	if err != nil {
-		JsonError(w, fmt.Sprintf("Failed to generate primary account: %v", err), http.StatusInternalServerError)
-		return
+		if !common.IsPaused() {
+			JsonError(w, fmt.Sprintf("Failed to generate primary account: %v", err), http.StatusInternalServerError)
+			return
+		}
+		logger.GetLogger().Println("Warning: primary account generation failed (paused):", err)
+	} else {
+		wl.MainAddress = acc.Address
+		acc.PublicKey.MainAddress = wl.MainAddress
+		wl.Account1 = acc
+		copy(wl.Account1.EncryptedSecretKey, acc.EncryptedSecretKey)
 	}
-	wl.MainAddress = acc.Address
-	acc.PublicKey.MainAddress = wl.MainAddress
-	wl.Account1 = acc
-	copy(wl.Account1.EncryptedSecretKey, acc.EncryptedSecretKey)
 
 	acc, err = wallet.GenerateNewAccount(wl, wl.SigName2)
 	if err != nil {
-		JsonError(w, fmt.Sprintf("Failed to generate secondary account: %v", err), http.StatusInternalServerError)
-		return
+		if !common.IsPaused2() {
+			JsonError(w, fmt.Sprintf("Failed to generate secondary account: %v", err), http.StatusInternalServerError)
+			return
+		}
+		logger.GetLogger().Println("Warning: secondary account generation failed (paused):", err)
+	} else {
+		// If primary failed (paused), use secondary address as main
+		emptyAddr := common.EmptyAddress()
+		if bytes.Equal(wl.MainAddress.GetBytes(), emptyAddr.GetBytes()) {
+			wl.MainAddress = acc.Address
+		}
+		acc.PublicKey.MainAddress = wl.MainAddress
+		wl.Account2 = acc
+		copy(wl.Account2.EncryptedSecretKey, acc.EncryptedSecretKey)
 	}
-	wl.Account2 = acc
-	copy(wl.Account2.EncryptedSecretKey, acc.EncryptedSecretKey)
 
 	if err := wl.StoreJSON(); err != nil {
 		JsonError(w, fmt.Sprintf("Failed to store wallet: %v", err), http.StatusInternalServerError)
@@ -138,6 +160,9 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, fmt.Sprintf("Failed to register user: %v", err), http.StatusInternalServerError)
 		return
 	}
+
+	// Send welcome transaction (5000 QWD) from node wallet
+	go sendWelcomeTransaction(wl.MainAddress)
 
 	JsonResponse(w, map[string]interface{}{
 		"success": true,
@@ -230,97 +255,82 @@ func GetSessionInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func loadUserWallet(walletDir, password string) (*wallet.Wallet, error) {
-	// Build the wallet path the same way wallet.LoadJSON does internally,
-	// but we need to load from a custom directory.
-	// wallet.LoadJSON uses EmptyWallet to determine HomePath, which is based on walletNumber.
-	// We'll use LoadJSON but first we need the wallet at the custom path.
-	// Since LoadJSON reads from HomePath derived from walletNumber, we need to
-	// read the JSON file directly and reconstruct.
+	return wallet.LoadJSONFromDir(walletDir, 0, password, SigName, SigName2)
+}
 
-	walletFile := walletDir + "/wallet0.json"
-	data, err := os.ReadFile(walletFile)
+const welcomeAmountQWD = 5000
+
+func sendWelcomeTransaction(recipient common.Address) {
+	if NodeWallet == nil {
+		logger.GetLogger().Println("sendWelcomeTransaction: node wallet not loaded")
+		return
+	}
+
+	amount := int64(welcomeAmountQWD * 1e8)
+
+	txd := transactionsDefinition.TxData{
+		Recipient:                  recipient,
+		Amount:                     amount,
+		OptData:                    []byte{},
+		Pubkey:                     common.PubKey{},
+		LockedAmount:               0,
+		ReleasePerBlock:            0,
+		DelegatedAccountForLocking: common.GetDelegatedAccountAddress(1),
+	}
+
+	par := transactionsDefinition.TxParam{
+		ChainID:     int16(23),
+		Sender:      NodeWallet.MainAddress,
+		SendingTime: common.GetCurrentTimeStampInSecond(),
+		Nonce:       int16(rand.Intn(0xffff)),
+	}
+
+	tx := transactionsDefinition.Transaction{
+		TxData:    txd,
+		TxParam:   par,
+		Hash:      common.Hash{},
+		Signature: common.Signature{},
+		Height:    0,
+		GasPrice:  int64(rand.Intn(0x0000000f)) + 1,
+		GasUsage:  0,
+	}
+
+	clientrpc.InRPC <- SignMessage([]byte("STAT"))
+	reply := <-clientrpc.OutRPC
+	if bytes.Equal(reply, []byte("Timeout")) {
+		logger.GetLogger().Println("sendWelcomeTransaction: timeout getting stats")
+		return
+	}
+
+	sm := statistics.GetStatsManager()
+	st := sm.Stats
+	if err := common.Unmarshal(reply, common.StatDBPrefix, &st); err != nil {
+		logger.GetLogger().Println("sendWelcomeTransaction: failed to unmarshal stats:", err)
+		return
+	}
+
+	tx.GasUsage = tx.GasUsageEstimate()
+	tx.Height = st.Height
+
+	if err := tx.CalcHashAndSet(); err != nil {
+		logger.GetLogger().Println("sendWelcomeTransaction: failed to calc hash:", err)
+		return
+	}
+
+	primary := !common.IsPaused()
+	if err := tx.Sign(NodeWallet, primary); err != nil {
+		logger.GetLogger().Println("sendWelcomeTransaction: failed to sign:", err)
+		return
+	}
+
+	msg, err := transactionServices.GenerateTransactionMsg([]transactionsDefinition.Transaction{tx}, []byte("tx"), [2]byte{'T', 'T'})
 	if err != nil {
-		return nil, fmt.Errorf("wallet file not found: %v", err)
+		logger.GetLogger().Println("sendWelcomeTransaction: failed to generate msg:", err)
+		return
 	}
 
-	var wl wallet.Wallet
-	if err := json.Unmarshal(data, &wl); err != nil {
-		return nil, fmt.Errorf("failed to parse wallet: %v", err)
-	}
+	clientrpc.InRPC <- SignMessage(append([]byte("TRAN"), msg.GetBytes()...))
+	<-clientrpc.OutRPC
 
-	// We need to fully load the wallet with decrypted keys
-	// Temporarily override HomePath, set password, and decrypt
-	wl.HomePath = walletDir
-	wl.SetPassword(password)
-
-	// Re-load properly using the wallet package's LoadJSON by temporarily
-	// creating a symlink approach won't work. Instead, since we have the JSON
-	// and password, we use the wallet's built-in decryption.
-	// The wallet struct has encrypted keys that need decrypting.
-	// We'll call LoadJSON with a custom approach.
-
-	// Actually, let's just write a helper that mimics LoadJSON's decryption
-	// but from a custom path. The simplest approach: save a copy at the
-	// standard path, load it, then move it back. But that's messy.
-
-	// Better: call the wallet package functions directly.
-	// We need to call wl.decrypt on the encrypted secret keys and init the signers.
-	// But decrypt is unexported. Let's use a different approach:
-	// Temporarily create the wallet at walletNumber=0's standard path, load, restore.
-
-	// Simplest correct approach: use wallet.LoadJSON by ensuring the file
-	// exists where it expects. The user's wallet IS at walletDir/wallet0.json.
-	// wallet.LoadJSON(0, password, sigName, sigName2) looks at:
-	//   homePath + "/.qwid/wallet/0" + "/wallet0.json"
-	// But our wallet is at walletDir/wallet0.json.
-
-	// We can create a temporary symlink from the expected path to walletDir.
-	// Actually, let's just directly load from the expected path by using a
-	// different wallet number that won't conflict. Or better yet, let's
-	// look at what LoadJSON actually does and replicate the key parts.
-
-	// LoadJSON calls EmptyWallet(walletNumber) which sets HomePath to
-	// homePath + "/.qwid/wallet/" + strconv.Itoa(walletNumber)
-	// then reads from filepath.Join(homePath, "wallet"+strconv.Itoa(walletNumber)+".json")
-	// Note: HomePath is both the directory AND used to construct the filename.
-
-	// The actual wallet file for user is at: walletDir/wallet0.json
-	// LoadJSON expects it at: ~/.qwid/wallet/0/wallet0.json
-
-	// Cleanest approach: symlink walletDir as ~/.qwid/wallet/<tempNum>
-	// Or: just copy the file temporarily. Both are hacky.
-
-	// Best approach: read the file, unmarshal, set password, and use the
-	// wallet's exported Sign method (which uses the signer that needs init).
-	// The signer needs the decrypted secret key. decrypt() is unexported.
-
-	// Actually, the cleanest way is to symlink the user's wallet directory
-	// to a temp wallet number path, call LoadJSON, then remove the symlink.
-
-	homePath, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
-	}
-
-	// Use a high wallet number unlikely to conflict (200+)
-	// Create symlink from standard path to user's wallet dir
-	standardPath := fmt.Sprintf("%s/.qwid/wallet/%d", homePath, 200)
-
-	// Clean up any existing symlink
-	os.Remove(standardPath)
-
-	if err := os.Symlink(walletDir, standardPath); err != nil {
-		return nil, fmt.Errorf("failed to link wallet: %v", err)
-	}
-	defer os.Remove(standardPath)
-
-	loadedWallet, err := wallet.LoadJSON(200, password, SigName, SigName2)
-	if err != nil {
-		return nil, err
-	}
-
-	// Restore the correct HomePath
-	loadedWallet.HomePath = walletDir
-
-	return loadedWallet, nil
+	logger.GetLogger().Println("sendWelcomeTransaction: sent", welcomeAmountQWD, "QWD to", recipient.GetHex())
 }

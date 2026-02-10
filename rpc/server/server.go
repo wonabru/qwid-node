@@ -136,6 +136,8 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 		handlePEER(byt, reply)
 	case "PUBA":
 		handlePUBA(byt, reply)
+	case "HELO":
+		handleHELO(byt, reply)
 	default:
 		*reply = []byte("Invalid operation")
 	}
@@ -199,6 +201,21 @@ func handleENCR(line []byte, reply *[]byte) {
 	}
 	enb = append(enb, common.BytesToLenAndBytes(enb2)...)
 	*reply = enb
+}
+
+func handleHELO(line []byte, reply *[]byte) {
+	w := wallet.GetActiveWallet()
+	if w == nil {
+		*reply = []byte{}
+		return
+	}
+	primary := !common.IsPaused()
+	sig, err := w.Sign([]byte("Hi"), primary)
+	if err != nil {
+		*reply = []byte{}
+		return
+	}
+	*reply = append([]byte("Hi"), sig.GetBytes()...)
 }
 
 func handleMINE(line []byte, reply *[]byte) {

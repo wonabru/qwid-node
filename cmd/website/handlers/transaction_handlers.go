@@ -290,7 +290,7 @@ func SendTransaction(w http.ResponseWriter, r *http.Request) {
 		Hash:      common.Hash{},
 		Signature: common.Signature{},
 		Height:    0,
-		GasPrice:  int64(rand.Intn(0x0000000f)),
+		GasPrice:  int64(rand.Intn(0x0000000f)) + 1,
 		GasUsage:  0,
 	}
 

@@ -1,17 +1,10 @@
 package handlers
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/wonabru/qwid-node/blocks"
-	"github.com/wonabru/qwid-node/common"
-	"github.com/wonabru/qwid-node/logger"
-	clientrpc "github.com/wonabru/qwid-node/rpc/client"
 	"github.com/wonabru/qwid-node/wallet"
 )
 
@@ -35,91 +28,93 @@ var SigName string
 var SigName2 string
 var WebsiteBasePath string
 
-func SignMessage(line []byte) []byte {
-	operation := string(line[0:4])
-	verificationNeeded := true
-	for _, noVerification := range common.ConnectionsWithoutVerification {
-		if bytes.Equal([]byte(operation), noVerification) {
-			verificationNeeded = false
-			break
-		}
-	}
-	if verificationNeeded {
-		if NodeWallet == nil || (!NodeWallet.Check() || !NodeWallet.Check2()) {
-			logger.GetLogger().Println("node wallet not loaded yet")
-			return line
-		}
-		if !common.IsPaused() {
-			line = common.BytesToLenAndBytes(line)
-			sign, err := NodeWallet.Sign(line, true)
-			if err != nil {
-				logger.GetLogger().Println(err)
-				return line
-			}
-			line = append(line, sign.GetBytes()...)
-		} else {
-			line = common.BytesToLenAndBytes(line)
-			sign, err := NodeWallet.Sign(line, false)
-			if err != nil {
-				logger.GetLogger().Println(err)
-				return line
-			}
-			line = append(line, sign.GetBytes()...)
-		}
-	} else {
-		line = common.BytesToLenAndBytes(line)
-	}
-	return line
-}
+// func SignMessage(line []byte) []byte {
+// 	operation := string(line[0:4])
+// 	verificationNeeded := true
+// 	for _, noVerification := range common.ConnectionsWithoutVerification {
+// 		if bytes.Equal([]byte(operation), noVerification) {
+// 			verificationNeeded = false
+// 			break
+// 		}
+// 	}
+// 	if verificationNeeded {
+// 		if NodeWallet == nil || (!NodeWallet.Check() || !NodeWallet.Check2()) {
+// 			logger.GetLogger().Println("node wallet not loaded yet")
+// 			return line
+// 		}
+// 		if common.IsPaused() == false {
+// 			// primary encryption used
+// 			line = common.BytesToLenAndBytes(line)
+// 			sign, err := NodeWallet.Sign(line, true)
+// 			if err != nil {
+// 				logger.GetLogger().Println(err)
+// 				return line
+// 			}
+// 			line = append(line, sign.GetBytes()...)
+// 		} else {
+// 			// secondary encryption
+// 			line = common.BytesToLenAndBytes(line)
+// 			sign, err := NodeWallet.Sign(line, false)
+// 			if err != nil {
+// 				logger.GetLogger().Println(err)
+// 				return line
+// 			}
+// 			line = append(line, sign.GetBytes()...)
+// 		}
+// 	} else {
+// 		line = common.BytesToLenAndBytes(line)
+// 	}
+// 	return line
+// }
 
-func SetCurrentEncryptions() (string, string, error) {
-	type result struct {
-		sig1, sig2 string
-		err        error
-	}
-	ch := make(chan result, 1)
-	go func() {
-		clientrpc.InRPC <- SignMessage([]byte("ENCR"))
-		reply := <-clientrpc.OutRPC
-		if bytes.Equal(reply, []byte("Timeout")) {
-			ch <- result{err: fmt.Errorf("timeout")}
-			return
-		}
-		enc1b, left, err := common.BytesWithLenToBytes(reply)
-		if err != nil {
-			ch <- result{err: err}
-			return
-		}
-		enc2b, _, err := common.BytesWithLenToBytes(left)
-		if err != nil {
-			ch <- result{err: err}
-			return
-		}
-		enc1, err := blocks.FromBytesToEncryptionConfig(enc1b, true)
-		if err != nil {
-			ch <- result{err: err}
-			return
-		}
-		common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, true)
-		enc2, err := blocks.FromBytesToEncryptionConfig(enc2b, false)
-		if err != nil {
-			ch <- result{err: err}
-			return
-		}
-		common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, enc2.IsPaused, false)
-		ch <- result{sig1: enc1.SigName, sig2: enc2.SigName}
-	}()
-	select {
-	case r := <-ch:
-		return r.sig1, r.sig2, r.err
-	case <-time.After(5 * time.Second):
-		s1, s2 := common.SigName(), common.SigName2()
-		if s1 != "" && s2 != "" {
-			return s1, s2, nil
-		}
-		return "", "", fmt.Errorf("timeout retrieving encryption config")
-	}
-}
+// func SetCurrentEncryptions() (string, string, error) {
+// 	type result struct {
+// 		sig1, sig2 string
+// 		err        error
+// 	}
+// 	ch := make(chan result, 1)
+// 	go func() {
+// 		clientrpc.InRPC <- SignMessage([]byte("ENCR"))
+// 		reply := <-clientrpc.OutRPC
+// 		if bytes.Equal(reply, []byte("Timeout")) {
+// 			ch <- result{err: fmt.Errorf("timeout")}
+// 			return
+// 		}
+// 		enc1b, left, err := common.BytesWithLenToBytes(reply)
+// 		if err != nil {
+// 			ch <- result{err: err}
+// 			return
+// 		}
+// 		enc2b, _, err := common.BytesWithLenToBytes(left)
+// 		if err != nil {
+// 			ch <- result{err: err}
+// 			return
+// 		}
+// 		enc1, err := blocks.FromBytesToEncryptionConfig(enc1b, true)
+// 		if err != nil {
+// 			ch <- result{err: err}
+// 			return
+// 		}
+// 		common.SetEncryption(enc1.SigName, enc1.PubKeyLength, enc1.PrivateKeyLength, enc1.SignatureLength, enc1.IsPaused, true)
+// 		enc2, err := blocks.FromBytesToEncryptionConfig(enc2b, false)
+// 		if err != nil {
+// 			ch <- result{err: err}
+// 			return
+// 		}
+// 		common.SetEncryption(enc2.SigName, enc2.PubKeyLength, enc2.PrivateKeyLength, enc2.SignatureLength, enc2.IsPaused, false)
+// 		ch <- result{sig1: enc1.SigName, sig2: enc2.SigName}
+// 	}()
+// 	select {
+// 	case r := <-ch:
+// 		return r.sig1, r.sig2, r.err
+// 	case <-time.After(5 * time.Second):
+// 		s1, s2 := common.SigName(), common.SigName2()
+// 		if s1 != "" && s2 != "" {
+// 			return s1, s2, nil
+// 		}
+// 		return "", "", fmt.Errorf("timeout retrieving encryption config")
+// 	}
+// }
 
 func CorsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
