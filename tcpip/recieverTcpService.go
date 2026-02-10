@@ -44,6 +44,7 @@ var Ports = map[[2]byte]int{
 }
 
 var MyIP [4]byte
+var MyIPSelfNonce [4]byte
 var InternalIP [4]byte
 
 func init() {
@@ -76,12 +77,34 @@ func init() {
 	// Assign the parsed IP to tcpip.MyIP
 	MyIP = [4]byte(ip4)
 
+	// Get NODE_IP environment variable
+	ips = os.Getenv("NODE_IP_SELF_NONCE")
+	if ips == "" {
+		logger.GetLogger().Println("Warning: NODE_IP environment variable is not set")
+		MyIPSelfNonce = [4]byte(MyIP)
+	} else {
+
+		// Parse the IP address
+		ip := net.ParseIP(ips)
+		if ip == nil {
+			logger.GetLogger().Fatalf("Failed to parse NODE_IP '%s' as an IP address", ips)
+		}
+
+		ip4 := ip.To4()
+		if ip4 == nil {
+			logger.GetLogger().Fatalf("Failed to parse NODE_IP '%s' as 4 byte format", ips)
+		}
+		// Assign the parsed IP to tcpip.MyIP
+		MyIPSelfNonce = [4]byte(ip4)
+	}
+
 	AddWhiteListIPs(MyIP)
+	AddWhiteListIPs(MyIPSelfNonce)
 	AddWhiteListIPs([4]byte{0, 0, 0, 0})
 	// Rest of your application logic here...
 	logger.GetLogger().Printf("Successfully set NODE_IP to %d.%d.%d.%d", int(MyIP[0]), int(MyIP[1]), int(MyIP[2]), int(MyIP[3]))
 	validPeersConnected[MyIP] = 100
-
+	validPeersConnected[MyIPSelfNonce] = 100
 	// Get WHITELIST_IP environment variable
 	ips = os.Getenv("WHITELIST_IP")
 	if ips == "" {

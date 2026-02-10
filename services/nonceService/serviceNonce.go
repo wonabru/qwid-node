@@ -180,7 +180,7 @@ func sendNonceMsgInLoopSelf() {
 	var topic = [2]byte{'S', 'S'}
 	// Q:
 	for {
-		ret := sendNonceMsgSelf(tcpip.MyIP, topic)
+		ret := sendNonceMsgSelf(tcpip.MyIPSelfNonce, topic)
 
 		if !ret {
 			time.Sleep(3 * time.Second)
@@ -341,7 +341,7 @@ func StartSubscribingNonceMsgSelf() {
 	recvChanExit := make(chan []byte, 100) // Use a buffered channel
 	quit := false
 	var ip [4]byte
-	go tcpip.StartNewConnection(tcpip.MyIP, recvChanSelf, tcpip.SelfNonceTopic)
+	go tcpip.StartNewConnection(tcpip.MyIPSelfNonce, recvChanSelf, tcpip.SelfNonceTopic)
 
 	for !services.QUIT.Load() && !quit {
 		select {
