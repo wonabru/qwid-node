@@ -408,12 +408,15 @@ func ProcessTransactionsMultiSign(tx transactionsDefinition.Transaction, height 
 func ProcessTransactionsEscrow(height int64, tree *transactionsPool.MerkleTree) error {
 
 	txs := transactionsPool.PoolTxEscrow.PeekTransactions(common.MaxTransactionInPool, height)
+	logger.GetLogger().Printf("ProcessTransactionsEscrow: height=%d, escrow pool returned %d transactions", height, len(txs))
 
-	for _, tx := range txs {
+	for i, tx := range txs {
 
 		amount := tx.TxData.Amount
 		address := tx.GetSenderAddress()
 		addressRecipient := tx.TxData.Recipient
+		logger.GetLogger().Printf("  escrow tx[%d]: hash=%s, sender=%s, recipient=%s, amount=%d, txHeight=%d, escrowDelay=%d",
+			i, tx.Hash.GetHex()[:16], address.GetHex()[:16], addressRecipient.GetHex()[:16], amount, tx.GetHeight(), tx.TxData.EscrowTransactionsDelay)
 		var err error
 		var n int
 		if tx.GetLockedAmount() > 0 {
@@ -425,19 +428,25 @@ func ProcessTransactionsEscrow(height int64, tree *transactionsPool.MerkleTree) 
 			n, err = account.IntDelegatedAccountFromAddress(addressRecipient)
 		}
 		if err == nil { // delegated account any transfer should be processed for staking unstaking and reward withdrawal
+			logger.GetLogger().Printf("  escrow tx[%d]: delegated account (n=%d), skipping", i, n)
 			return nil
 		} else { // this is not delegated account so standard transaction
 			senderAcc, exist := account.GetAccountByAddressBytes(address.GetBytes())
 			if !exist {
 				return fmt.Errorf("no account found: Escrow")
 			}
+			logger.GetLogger().Printf("  escrow tx[%d]: senderAcc.TransactionDelay=%d, txHeight+delay=%d, currentHeight=%d",
+				i, senderAcc.TransactionDelay, tx.GetHeight()+senderAcc.TransactionDelay, height)
 			if senderAcc.TransactionDelay > 0 && tx.GetHeight()+senderAcc.TransactionDelay > height && bytes.Equal(tx.TxParam.MultiSignTx.GetBytes(), ZerosHash) {
+				logger.GetLogger().Printf("  escrow tx[%d]: NOT READY, need to wait %d more blocks", i, tx.GetHeight()+senderAcc.TransactionDelay-height)
 				return fmt.Errorf("transaction should not be executed %v", tx.Hash.GetHex())
 			} else if senderAcc.MultiSignNumber > 0 && bytes.Equal(tx.TxParam.MultiSignTx.GetBytes(), ZerosHash) {
+				logger.GetLogger().Printf("  escrow tx[%d]: moving to multisign pool", i)
 				if transactionsPool.PoolTxMultiSign.AddTransaction(tx, tx.Hash) {
 					transactionsPool.PoolTxEscrow.RemoveTransactionByHash(tx.Hash.GetBytes())
 				}
 			} else {
+				logger.GetLogger().Printf("  escrow tx[%d]: EXECUTING (delay passed or no delay)", i)
 				if bytes.Equal(tx.TxParam.MultiSignTx.GetBytes(), ZerosHash) == false {
 					transactionsPool.PoolTxMultiSign.AddTransaction(tx, tx.TxParam.MultiSignTx)
 				}
@@ -454,6 +463,7 @@ func ProcessTransactionsEscrow(height int64, tree *transactionsPool.MerkleTree) 
 				if err != nil {
 					return err
 				}
+				logger.GetLogger().Printf("  escrow tx[%d]: balance transferred %d from %s to %s", i, amount, address.GetHex()[:16], addressRecipient.GetHex()[:16])
 			}
 		}
 	}

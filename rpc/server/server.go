@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net"
 	"net/rpc"
 	"strconv"
@@ -552,8 +553,8 @@ func handlePEND(byt []byte, reply *[]byte) {
 		})
 	}
 
-	// Get from escrow pool
-	escrowTxs := transactionsPool.PoolTxEscrow.PeekTransactions(50, 0)
+	// Get from escrow pool (use max height to return all pending escrow txs)
+	escrowTxs := transactionsPool.PoolTxEscrow.PeekTransactions(50, math.MaxInt64)
 	for _, tx := range escrowTxs {
 		pendingTxs = append(pendingTxs, PendingTx{
 			Hash:      tx.Hash.GetHex(),
@@ -566,7 +567,7 @@ func handlePEND(byt []byte, reply *[]byte) {
 	}
 
 	// Get from multi-sig pool
-	multiTxs := transactionsPool.PoolTxMultiSign.PeekTransactions(50, 0)
+	multiTxs := transactionsPool.PoolTxMultiSign.PeekTransactions(50, math.MaxInt64)
 	for _, tx := range multiTxs {
 		pendingTxs = append(pendingTxs, PendingTx{
 			Hash:      tx.Hash.GetHex(),
