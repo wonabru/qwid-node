@@ -299,10 +299,10 @@ func ProcessBlockTransfers(block Block, reward int64, tree *transactionsPool.Mer
 			return err
 		}
 
-		if poolTx.Height > block.GetHeader().Height {
-			transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height, tree)
-			return fmt.Errorf("transaction height is wrong: ProcessBlockTransfers")
-		}
+		// if poolTx.Height > block.GetHeader().Height {
+		// 	transactionsPool.RemoveBadTransactionByHash(poolTx.Hash.GetBytes(), block.GetHeader().Height, tree)
+		// 	return fmt.Errorf("transaction height is wrong: ProcessBlockTransfers")
+		// }
 
 		err = ProcessTransaction(poolTx, block.GetHeader().Height)
 		if err != nil {

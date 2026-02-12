@@ -268,11 +268,12 @@ func ProcessTransaction(tx transactionsDefinition.Transaction, height int64) err
 			return fmt.Errorf("no account found")
 		}
 		if senderAcc.TransactionDelay > 0 && tx.GetHeight()+senderAcc.TransactionDelay > height && bytes.Equal(tx.TxParam.MultiSignTx.GetBytes(), ZerosHash) {
+			tx.Height = height
 			transactionsPool.PoolTxEscrow.AddTransaction(tx, tx.Hash)
 
 		} else if senderAcc.MultiSignNumber > 0 && bytes.Equal(tx.TxParam.MultiSignTx.GetBytes(), ZerosHash) {
 			//TODO MultiSignNumber
-
+			tx.Height = height
 			transactionsPool.PoolTxMultiSign.AddTransaction(tx, tx.Hash)
 		} else {
 			if bytes.Equal(tx.TxParam.MultiSignTx.GetBytes(), ZerosHash) == false {

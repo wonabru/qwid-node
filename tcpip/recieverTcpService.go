@@ -80,19 +80,19 @@ func init() {
 	// Get NODE_IP_SELF_NONCE environment variable
 	ips = os.Getenv("NODE_IP_SELF_NONCE")
 	if ips == "" {
-		logger.GetLogger().Println("Warning: NODE_IP environment variable is not set")
+		logger.GetLogger().Println("Warning: NODE_IP_SELF_NONCE environment variable is not set")
 		MyIPSelfNonce = [4]byte(MyIP)
 	} else {
 
 		// Parse the IP address
 		ip := net.ParseIP(ips)
 		if ip == nil {
-			logger.GetLogger().Fatalf("Failed to parse NODE_IP '%s' as an IP address", ips)
+			logger.GetLogger().Fatalf("Failed to parse NODE_IP_SELF_NONCE '%s' as an IP address", ips)
 		}
 
 		ip4 := ip.To4()
 		if ip4 == nil {
-			logger.GetLogger().Fatalf("Failed to parse NODE_IP '%s' as 4 byte format", ips)
+			logger.GetLogger().Fatalf("Failed to parse NODE_IP_SELF_NONCE '%s' as 4 byte format", ips)
 		}
 		// Assign the parsed IP to tcpip.MyIP
 		MyIPSelfNonce = [4]byte(ip4)

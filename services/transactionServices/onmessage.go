@@ -68,7 +68,18 @@ func OnMessage(addr [4]byte, m []byte) {
 					continue
 				}
 
+				// Route to appropriate pool based on sender's account settings
+				// senderAddr := t.GetSenderAddress()
+				// senderAcc, senderExist := account.GetAccountByAddressBytes(senderAddr.GetBytes())
+				// var isAdded bool
+				// if senderExist && senderAcc.TransactionDelay > 0 {
+				// 	t.TxData.EscrowTransactionsDelay = senderAcc.TransactionDelay
+				// 	isAdded = transactionsPool.PoolTxEscrow.AddTransaction(t, t.Hash)
+				// } else if senderExist && senderAcc.MultiSignNumber > 0 {
+				// 	isAdded = transactionsPool.PoolTxMultiSign.AddTransaction(t, t.Hash)
+				// } else {
 				isAdded := transactionsPool.PoolsTx.AddTransaction(t, t.Hash)
+				// }
 				if isAdded {
 					err := t.StoreToDBPoolTx(common.TransactionPoolHashesDBPrefix[:])
 					if err != nil {
