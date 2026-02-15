@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QWID Explorer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        a { color: #00d4ff; text-decoration: none; cursor: pointer; }
+        a:hover { text-decoration: underline; }
+        .header {
+            background: rgba(0,0,0,0.3);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header h1 { color: #00d4ff; font-size: 24px; white-space: nowrap; }
+        .header h1 span { color: #888; font-size: 14px; font-weight: normal; margin-left: 8px; }
+        .search-box {
+            display: flex;
+            flex: 1;
+            max-width: 500px;
+            min-width: 200px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-right: none;
+            border-radius: 6px 0 0 6px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-box input:focus { border-color: #00d4ff; }
+        .search-box input::placeholder { color: #666; }
+        .search-box button {
+            padding: 10px 18px;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 0 6px 6px 0;
+            background: rgba(0,212,255,0.15);
+            color: #00d4ff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .search-box button:hover { background: rgba(0,212,255,0.25); }
+        .nav {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav a {
+            padding: 12px 20px;
+            color: #888;
+            font-size: 14px;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav a:hover { background: rgba(255,255,255,0.05); color: #fff; text-decoration: none; }
+        .nav a.active { color: #00d4ff; border-bottom-color: #00d4ff; background: rgba(0,212,255,0.1); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .card h3 { color: #00d4ff; margin-bottom: 15px; font-size: 16px; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        .stat-item {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .stat-label { font-size: 12px; color: #888; margin-bottom: 5px; }
+        .stat-value { font-size: 20px; font-weight: bold; color: #fff; }
+        .stat-value.accent { color: #00d4ff; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #888;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+        }
+        tr:hover { background: rgba(255,255,255,0.03); }
+        .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; }
+        .truncate { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-sent { background: rgba(255,71,87,0.2); color: #ff4757; }
+        .badge-received { background: rgba(46,213,115,0.2); color: #2ed573; }
+        .badge-confirmed { background: rgba(46,213,115,0.2); color: #2ed573; }
+        .badge-pool { background: rgba(255,165,0,0.2); color: orange; }
+        .detail-row {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .detail-label {
+            width: 200px;
+            flex-shrink: 0;
+            color: #888;
+            font-size: 14px;
+        }
+        .detail-value {
+            flex: 1;
+            word-break: break-all;
+            font-size: 14px;
+        }
+        .pagination {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .pagination button {
+            padding: 8px 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.3);
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .pagination button:hover { background: rgba(0,212,255,0.15); color: #00d4ff; }
+        .pagination button:disabled { opacity: 0.3; cursor: default; }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        .error-msg {
+            text-align: center;
+            padding: 40px;
+            color: #ff4757;
+        }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag {
+            background: rgba(0,212,255,0.1);
+            border: 1px solid rgba(0,212,255,0.2);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        @media (max-width: 768px) {
+            .detail-row { flex-direction: column; }
+            .detail-label { width: 100%; margin-bottom: 4px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .truncate { max-width: 120px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><a href="#/" style="color:#00d4ff;text-decoration:none">QWID Explorer</a><span>Blockchain Explorer</span></h1>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search by block height, tx hash, or address..." onkeydown="if(event.key==='Enter')doSearch()">
+            <button onclick="doSearch()">Search</button>
+        </div>
+    </div>
+    <div class="nav">
+        <a href="#/" id="nav-dashboard">Dashboard</a>
+        <a href="#/blocks" id="nav-blocks">Blocks</a>
+        <a href="#/validators" id="nav-validators">Validators</a>
+    </div>
+
+    <div class="container" id="content">
+        <div class="loading">Loading...</div>
+    </div>
+
+    <script>
+    const API = '';
+    let refreshTimer = null;
+
+    function formatTime(ts) {
+        if (!ts) return '-';
+        const d = new Date(ts * 1000);
+        return d.toLocaleString();
+    }
+
+    function timeAgo(ts) {
+        if (!ts) return '-';
+        const s = Math.floor(Date.now()/1000) - ts;
+        if (s < 60) return s + 's ago';
+        if (s < 3600) return Math.floor(s/60) + 'm ago';
+        if (s < 86400) return Math.floor(s/3600) + 'h ago';
+        return Math.floor(s/86400) + 'd ago';
+    }
+
+    function truncHash(h, n) {
+        if (!h) return '-';
+        n = n || 8;
+        return h.substring(0, n) + '...' + h.substring(h.length - n);
+    }
+
+    function formatAmount(a) {
+        if (a === undefined || a === null) return '0';
+        return Number(a).toFixed(8).replace(/\.?0+$/, '') || '0';
+    }
+
+    function locationBadge(loc) {
+        if (!loc) return '';
+        if (loc === 'confirmed_db') return '<span class="badge badge-confirmed">Confirmed</span>';
+        if (loc.startsWith('pool') || loc.startsWith('memory')) return '<span class="badge badge-pool">Pending</span>';
+        return '<span class="badge">' + loc + '</span>';
+    }
+
+    async function api(path) {
+        const resp = await fetch(API + path);
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({error: 'Request failed'}));
+            throw new Error(err.error || 'Request failed');
+        }
+        return resp.json();
+    }
+
+    function navigate(hash) {
+        window.location.hash = hash;
+    }
+
+    function doSearch() {
+        const q = document.getElementById('searchInput').value.trim();
+        if (!q) return;
+        navigate('#/search/' + encodeURIComponent(q));
+    }
+
+    // --- Views ---
+
+    async function renderDashboard() {
+        const c = document.getElementById('content');
+        c.innerHTML = '<div class="loading">Loading dashboard...</div>';
+        try {
+            const [stats, blocksData] = await Promise.all([
+                api('/api/stats'),
+                api('/api/blocks?count=10')
+            ]);
+
+            c.innerHTML = `
+                <div class="card">
+                    <h3>Network Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Block Height</div>
+                            <div class="stat-value accent">${stats.height || 0}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Max Height</div>
+                            <div class="stat-value">${stats.heightMax || 0}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Transactions</div>
+                            <div class="stat-value">${stats.transactions || 0}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">TPS</div>
+                            <div class="stat-value">${(stats.tps || 0).toFixed(2)}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Difficulty</div>
+                            <div class="stat-value">${stats.difficulty || 0}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Pending TXs</div>
+                            <div class="stat-value">${stats.transactionsPending || 0}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Price Oracle</div>
+                            <div class="stat-value">${(stats.priceOracle || 0).toFixed(4)}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Syncing</div>
+                            <div class="stat-value">${stats.syncing ? 'Yes' : 'No'}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Supply</div>
+                            <div class="stat-value">${stats.supply ? formatAmount(stats.supply) : '-'}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total Staked</div>
+                            <div class="stat-value accent">${stats.totalStaked ? formatAmount(stats.totalStaked) : '-'}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Active Validators</div>
+                            <div class="stat-value">${stats.activeValidators || 0}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Latest Blocks</h3>
+                    <div style="overflow-x:auto">
+                    <table>
+                        <tr><th>Height</th><th>Hash</th><th>TXs</th><th>Fee</th><th>Time</th></tr>
+                        ${(blocksData.blocks || []).map(b => `
+                            <tr>
+                                <td><a onclick="navigate('#/block/${b.height}')">${b.height}</a></td>
+                                <td class="mono"><a class="truncate" onclick="navigate('#/block/${b.height}')">${truncHash(b.hash, 10)}</a></td>
+                                <td>${b.txCount || 0}</td>
+                                <td>${formatAmount(b.blockFee)}</td>
+                                <td>${timeAgo(b.timestamp)}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                    </div>
+                    <div style="text-align:center;margin-top:15px">
+                        <a href="#/blocks">View all blocks</a>
+                    </div>
+                </div>
+            `;
+        } catch(e) {
+            c.innerHTML = '<div class="error-msg">Failed to load: ' + e.message + '</div>';
+        }
+    }
+
+    let blocksPage = null;
+    async function renderBlocks() {
+        const c = document.getElementById('content');
+        c.innerHTML = '<div class="loading">Loading blocks...</div>';
+        try {
+            let url = '/api/blocks?count=20';
+            if (blocksPage !== null) url += '&from=' + blocksPage;
+            const data = await api(url);
+            const blocks = data.blocks || [];
+            const fromHeight = data.fromHeight;
+
+            c.innerHTML = `
+                <div class="card">
+                    <h3>Blocks</h3>
+                    <div style="overflow-x:auto">
+                    <table>
+                        <tr><th>Height</th><th>Hash</th><th>TXs</th><th>Fee</th><th>Time</th></tr>
+                        ${blocks.map(b => `
+                            <tr>
+                                <td><a onclick="navigate('#/block/${b.height}')">${b.height}</a></td>
+                                <td class="mono"><a class="truncate" onclick="navigate('#/block/${b.height}')">${truncHash(b.hash, 10)}</a></td>
+                                <td>${b.txCount || 0}</td>
+                                <td>${formatAmount(b.blockFee)}</td>
+                                <td>${timeAgo(b.timestamp)}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                    </div>
+                    <div class="pagination">
+                        <button onclick="blocksPage=${fromHeight + 20};renderBlocks()" ${fromHeight + 20 > (data.fromHeight + 20) ? 'disabled' : ''}>Newer</button>
+                        <button onclick="blocksPage=null;renderBlocks()">Latest</button>
+                        <button onclick="blocksPage=${fromHeight - 20};renderBlocks()" ${fromHeight - 20 < 0 ? 'disabled' : ''}>Older</button>
+                    </div>
+                </div>
+            `;
+        } catch(e) {
+            c.innerHTML = '<div class="error-msg">Failed to load: ' + e.message + '</div>';
+        }
+    }
+
+    async function renderBlock(height) {
+        const c = document.getElementById('content');
+        c.innerHTML = '<div class="loading">Loading block...</div>';
+        try {
+            const b = await api('/api/block?height=' + height);
+            const h = parseInt(height);
+
+            c.innerHTML = `
+                <div class="card">
+                    <h3>Block #${b.height}</h3>
+                    <div class="detail-row"><div class="detail-label">Height</div><div class="detail-value">${b.height}</div></div>
+                    <div class="detail-row"><div class="detail-label">Block Hash</div><div class="detail-value mono">${b.hash}</div></div>
+                    <div class="detail-row"><div class="detail-label">Previous Hash</div><div class="detail-value mono">${b.height > 0 ? '<a onclick="navigate(\'#/block/' + (h-1) + '\')">' + b.previousHash + '</a>' : b.previousHash}</div></div>
+                    <div class="detail-row"><div class="detail-label">Timestamp</div><div class="detail-value">${formatTime(b.timestamp)}</div></div>
+                    <div class="detail-row"><div class="detail-label">Difficulty</div><div class="detail-value">${b.difficulty}</div></div>
+                    <div class="detail-row"><div class="detail-label">Operator Account</div><div class="detail-value mono"><a onclick="navigate('#/account/${b.operatorAccount}')">${b.operatorAccount}</a></div></div>
+                    <div class="detail-row"><div class="detail-label">Delegated Account</div><div class="detail-value mono"><a onclick="navigate('#/account/${b.delegatedAccount}')">${b.delegatedAccount}</a></div></div>
+                    <div class="detail-row"><div class="detail-label">Merkle Root</div><div class="detail-value mono">${b.merkleRoot}</div></div>
+                    <div class="detail-row"><div class="detail-label">Supply</div><div class="detail-value">${formatAmount(b.supply)} QWD</div></div>
+                    <div class="detail-row"><div class="detail-label">Block Fee</div><div class="detail-value">${formatAmount(b.blockFee)} QWD</div></div>
+                    <div class="detail-row"><div class="detail-label">Reward %</div><div class="detail-value">${(b.rewardPercentage / 10).toFixed(1)}%</div></div>
+                    <div class="detail-row"><div class="detail-label">Price Oracle</div><div class="detail-value">${formatAmount(b.priceOracle)}</div></div>
+                    <div class="detail-row"><div class="detail-label">Random Oracle</div><div class="detail-value">${b.randOracle}</div></div>
+                    <div class="detail-row"><div class="detail-label">Transactions</div><div class="detail-value">${b.txCount}</div></div>
+                </div>
+                ${b.txCount > 0 ? `
+                <div class="card">
+                    <h3>Transactions (${b.txCount})</h3>
+                    <div class="tag-list">
+                        ${(b.txHashes || []).map(h => `<a class="tag mono" onclick="navigate('#/tx/${h}')">${truncHash(h, 8)}</a>`).join('')}
+                    </div>
+                </div>` : ''}
+                <div class="pagination">
+                    <button onclick="navigate('#/block/${h-1}')" ${h <= 0 ? 'disabled' : ''}>Previous Block</button>
+                    <button onclick="navigate('#/block/${h+1}')">Next Block</button>
+                </div>
+            `;
+        } catch(e) {
+            c.innerHTML = '<div class="error-msg">Block not found: ' + e.message + '</div>';
+        }
+    }
+
+    async function renderTx(hash) {
+        const c = document.getElementById('content');
+        c.innerHTML = '<div class="loading">Loading transaction...</div>';
+        try {
+            const tx = await api('/api/tx?hash=' + hash);
+
+            let extra = '';
+            if (tx.optData) {
+                extra += `<div class="detail-row"><div class="detail-label">Contract Data</div><div class="detail-value mono" style="word-break:break-all">${tx.optData}</div></div>`;
+            }
+            if (tx.lockedAmount !== undefined) {
+                extra += `<div class="detail-row"><div class="detail-label">Locked Amount</div><div class="detail-value">${formatAmount(tx.lockedAmount)} QWD</div></div>`;
+                extra += `<div class="detail-row"><div class="detail-label">Release/Block</div><div class="detail-value">${formatAmount(tx.releasePerBlock)} QWD</div></div>`;
+                extra += `<div class="detail-row"><div class="detail-label">Locking Account</div><div class="detail-value mono"><a onclick="navigate('#/account/${tx.delegatedAccountForLocking}')">${tx.delegatedAccountForLocking}</a></div></div>`;
+            }
+            if (tx.escrowDelay) {
+                extra += `<div class="detail-row"><div class="detail-label">Escrow Delay</div><div class="detail-value">${tx.escrowDelay} blocks</div></div>`;
+            }
+            if (tx.contractAddress) {
+                extra += `<div class="detail-row"><div class="detail-label">Contract Address</div><div class="detail-value mono"><a onclick="navigate('#/account/${tx.contractAddress}')">${tx.contractAddress}</a></div></div>`;
+            }
+
+            c.innerHTML = `
+                <div class="card">
+                    <h3>Transaction Details</h3>
+                    <div class="detail-row"><div class="detail-label">Hash</div><div class="detail-value mono">${tx.hash}</div></div>
+                    <div class="detail-row"><div class="detail-label">Status</div><div class="detail-value">${locationBadge(tx.location)}</div></div>
+                    <div class="detail-row"><div class="detail-label">Block Height</div><div class="detail-value"><a onclick="navigate('#/block/${tx.height}')">${tx.height}</a></div></div>
+                    <div class="detail-row"><div class="detail-label">Timestamp</div><div class="detail-value">${formatTime(tx.timestamp)}</div></div>
+                    <div class="detail-row"><div class="detail-label">Sender</div><div class="detail-value mono"><a onclick="navigate('#/account/${tx.sender}')">${tx.sender}</a></div></div>
+                    <div class="detail-row"><div class="detail-label">Recipient</div><div class="detail-value mono"><a onclick="navigate('#/account/${tx.recipient}')">${tx.recipient}</a></div></div>
+                    <div class="detail-row"><div class="detail-label">Amount</div><div class="detail-value">${formatAmount(tx.amount)} QWD</div></div>
+                    <div class="detail-row"><div class="detail-label">Gas Price</div><div class="detail-value">${tx.gasPrice}</div></div>
+                    <div class="detail-row"><div class="detail-label">Gas Usage</div><div class="detail-value">${tx.gasUsage}</div></div>
+                    <div class="detail-row"><div class="detail-label">Nonce</div><div class="detail-value">${tx.nonce}</div></div>
+                    <div class="detail-row"><div class="detail-label">Chain ID</div><div class="detail-value">${tx.chainId}</div></div>
+                    ${extra}
+                </div>
+            `;
+        } catch(e) {
+            c.innerHTML = '<div class="error-msg">Transaction not found: ' + e.message + '</div>';
+        }
+    }
+
+    async function renderAccount(addr) {
+        const c = document.getElementById('content');
+        c.innerHTML = '<div class="loading">Loading account...</div>';
+        try {
+            const acc = await api('/api/account?address=' + addr);
+
+            let stakingHtml = '';
+            if (acc.stakingDetails && acc.stakingDetails.length > 0) {
+                stakingHtml = `
+                    <div class="card">
+                        <h3>Staking Details</h3>
+                        <table>
+                            <tr><th>Delegated Account</th><th>Staked</th><th>Rewards</th></tr>
+                            ${acc.stakingDetails.map(s => `
+                                <tr>
+                                    <td class="mono"><a onclick="navigate('#/account/${s.delegatedAddress}')">${truncHash(s.delegatedAddress, 8)}</a></td>
+                                    <td>${formatAmount(s.staked)} QWD</td>
+                                    <td>${formatAmount(s.rewards)} QWD</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
+                `;
+            }
+
+            let txHtml = '';
+            if (acc.transactions && acc.transactions.length > 0) {
+                txHtml = `
+                    <div class="card">
+                        <h3>Recent Transactions</h3>
+                        <div style="overflow-x:auto">
+                        <table>
+                            <tr><th>Type</th><th>Hash</th><th>Counterparty</th><th>Amount</th><th>Height</th><th>Time</th></tr>
+                            ${acc.transactions.map(tx => {
+                                const isSent = tx.type === 'sent';
+                                const counterparty = isSent ? tx.recipient : tx.sender;
+                                return `<tr>
+                                    <td><span class="badge ${isSent ? 'badge-sent' : 'badge-received'}">${tx.type}</span></td>
+                                    <td class="mono"><a class="truncate" onclick="navigate('#/tx/${tx.hash}')">${truncHash(tx.hash, 6)}</a></td>
+                                    <td class="mono"><a class="truncate" onclick="navigate('#/account/${counterparty}')">${truncHash(counterparty, 6)}</a></td>
+                                    <td>${formatAmount(tx.amount)} QWD</td>
+                                    <td><a onclick="navigate('#/block/${tx.height}')">${tx.height}</a></td>
+                                    <td>${tx.timestamp ? timeAgo(tx.timestamp) : '-'}</td>
+                                </tr>`;
+                            }).join('')}
+                        </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            c.innerHTML = `
+                <div class="card">
+                    <h3>Account Details</h3>
+                    <div class="detail-row"><div class="detail-label">Address</div><div class="detail-value mono">${acc.address}</div></div>
+                    <div class="detail-row"><div class="detail-label">Balance</div><div class="detail-value">${formatAmount(acc.balance)} QWD</div></div>
+                    <div class="detail-row"><div class="detail-label">Staked</div><div class="detail-value">${formatAmount(acc.stakedAmount)} QWD</div></div>
+                    <div class="detail-row"><div class="detail-label">Locked</div><div class="detail-value">${formatAmount(acc.lockedAmount)} QWD</div></div>
+                    <div class="detail-row"><div class="detail-label">Rewards</div><div class="detail-value">${formatAmount(acc.rewardsAmount)} QWD</div></div>
+                    <div class="detail-row"><div class="detail-label">Total Holdings</div><div class="detail-value accent" style="font-weight:bold">${formatAmount(acc.totalHoldings)} QWD</div></div>
+                    <div class="detail-row"><div class="detail-label">Escrow Delay</div><div class="detail-value">${acc.escrowDelay || 0} blocks</div></div>
+                    <div class="detail-row"><div class="detail-label">Multi-Sig</div><div class="detail-value">${acc.multiSignNumber || 0}</div></div>
+                    <div class="detail-row"><div class="detail-label">Sent TXs</div><div class="detail-value">${acc.sentCount || 0}</div></div>
+                    <div class="detail-row"><div class="detail-label">Received TXs</div><div class="detail-value">${acc.receivedCount || 0}</div></div>
+                </div>
+                ${stakingHtml}
+                ${txHtml}
+            `;
+        } catch(e) {
+            c.innerHTML = '<div class="error-msg">Account not found: ' + e.message + '</div>';
+        }
+    }
+
+    async function renderValidators() {
+        const c = document.getElementById('content');
+        c.innerHTML = '<div class="loading">Loading validators...</div>';
+        try {
+            const [vals, blockStats] = await Promise.all([
+                api('/api/validators'),
+                api('/api/validators/blocks?count=100')
+            ]);
+
+            const producerMap = {};
+            (blockStats.producers || []).forEach(p => {
+                producerMap[p.operatorAddress] = p;
+            });
+
+            const validators = (vals.validators || []).map(v => {
+                const bp = producerMap[v.operatorAddress] || {};
+                return { ...v, blocksProduced: bp.blocksProduced || 0, lastBlockTime: bp.lastBlockTime || 0 };
+            });
+            validators.sort((a, b) => b.totalStaked - a.totalStaked);
+
+            c.innerHTML = `
+                <div class="card">
+                    <h3>Staking Overview</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Total Staked</div>
+                            <div class="stat-value accent">${formatAmount(vals.totalStaked)} QWD</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Active Validators</div>
+                            <div class="stat-value">${validators.length}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total Supply</div>
+                            <div class="stat-value">${blockStats.supply ? formatAmount(blockStats.supply) + ' QWD' : '-'}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Blocks Scanned</div>
+                            <div class="stat-value">${blockStats.blocksScanned || 0}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Validators</h3>
+                    <div style="overflow-x:auto">
+                    <table>
+                        <tr><th>ID</th><th>Operator</th><th>Total Staked</th><th>Stakers</th><th>Blocks (last ${blockStats.blocksScanned || 100})</th><th>Last Block</th><th>Status</th></tr>
+                        ${validators.map(v => `
+                            <tr>
+                                <td>${v.id}</td>
+                                <td class="mono"><a class="truncate" onclick="navigate('#/account/${v.operatorAddress}')">${truncHash(v.operatorAddress, 8)}</a></td>
+                                <td>${formatAmount(v.totalStaked)} QWD</td>
+                                <td>${v.stakerCount}</td>
+                                <td>${v.blocksProduced}</td>
+                                <td>${v.lastBlockTime ? timeAgo(v.lastBlockTime) : '-'}</td>
+                                <td><span class="badge ${v.isOperational ? 'badge-confirmed' : 'badge-pool'}">${v.isOperational ? 'Active' : 'Inactive'}</span></td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                    </div>
+                </div>
+            `;
+        } catch(e) {
+            c.innerHTML = '<div class="error-msg">Failed to load validators: ' + e.message + '</div>';
+        }
+    }
+
+    async function renderSearch(query) {
+        const c = document.getElementById('content');
+        c.innerHTML = '<div class="loading">Searching...</div>';
+        try {
+            const data = await api('/api/search?q=' + encodeURIComponent(query));
+            switch(data.type) {
+                case 'block':
+                    navigate('#/block/' + data.result.height);
+                    return;
+                case 'transaction':
+                    navigate('#/tx/' + data.result.hash);
+                    return;
+                case 'account':
+                    navigate('#/account/' + data.result.address);
+                    return;
+            }
+            c.innerHTML = '<div class="error-msg">No results found for "' + query + '"</div>';
+        } catch(e) {
+            c.innerHTML = '<div class="error-msg">Not found: ' + e.message + '</div>';
+        }
+    }
+
+    // --- Router ---
+
+    function setActiveNav(id) {
+        document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+    }
+
+    function route() {
+        if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+
+        const hash = window.location.hash || '#/';
+        const parts = hash.split('/').filter(Boolean);
+        const path = parts[0] || '#';
+        const param = parts.slice(1).join('/');
+
+        if (hash === '#/' || hash === '#' || hash === '') {
+            setActiveNav('nav-dashboard');
+            renderDashboard();
+            refreshTimer = setInterval(renderDashboard, 10000);
+        } else if (path === '#' && param === 'blocks') {
+            setActiveNav('nav-blocks');
+            blocksPage = null;
+            renderBlocks();
+        } else if (path === '#' && param === 'validators') {
+            setActiveNav('nav-validators');
+            renderValidators();
+        } else if (path === '#' && parts[1] === 'block') {
+            setActiveNav('');
+            renderBlock(parts[2]);
+        } else if (path === '#' && parts[1] === 'tx') {
+            setActiveNav('');
+            renderTx(parts[2]);
+        } else if (path === '#' && parts[1] === 'account') {
+            setActiveNav('');
+            renderAccount(parts[2]);
+        } else if (path === '#' && parts[1] === 'search') {
+            setActiveNav('');
+            renderSearch(decodeURIComponent(parts[2]));
+        } else {
+            setActiveNav('nav-dashboard');
+            renderDashboard();
+            refreshTimer = setInterval(renderDashboard, 10000);
+        }
+    }
+
+    window.addEventListener('hashchange', route);
+    window.addEventListener('load', route);
+    </script>
+</body>
+</html>

@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QWID Foundation - Blockchain Beyond Quantum</title>
+<meta name="description" content="QWID Foundation - A quantum computer-resistant blockchain network built to power the next generation of cryptocurrency and decentralized finance. PQC compliant, fast, 100% decentralized.">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f0f23;--bg2:#1a1a2e;--bg3:#16213e;--accent:#00d4ff;--accent2:#0a84ff;--card:rgba(0,0,0,0.3);--card-border:rgba(0,212,255,0.1);--text:#e0e0e0;--text-dim:#8892b0;--white:#fff;--radius:12px;--transition:0.3s ease}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none;transition:color var(--transition)}
+a:hover{color:var(--white)}
+h1,h2,h3{color:var(--white);font-weight:700}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;background:rgba(15,15,35,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--card-border);transition:background var(--transition)}
+.nav-logo{font-size:1.5rem;font-weight:800;color:var(--accent);letter-spacing:2px;display:flex;align-items:baseline;gap:6px}
+.nav-logo-sub{font-size:0.65rem;font-weight:400;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase}
+.nav-links{display:flex;gap:2rem;align-items:center}
+.nav-links a{color:var(--text-dim);font-size:0.9rem;font-weight:500;transition:color var(--transition)}
+.nav-links a:hover{color:var(--accent)}
+.nav-cta{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)!important;padding:0.5rem 1.2rem;border-radius:6px;font-weight:600;font-size:0.85rem}
+.nav-cta:hover{opacity:0.9;color:var(--bg)!important}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px}
+.hamburger span{display:block;width:24px;height:2px;background:var(--text);transition:var(--transition)}
+@media(max-width:768px){
+  .nav-links{position:fixed;top:0;right:-100%;width:70%;height:100vh;flex-direction:column;background:var(--bg2);padding:5rem 2rem;gap:1.5rem;transition:right var(--transition);border-left:1px solid var(--card-border)}
+  .nav-links.open{right:0}
+  .hamburger{display:flex;z-index:1001}
+  .hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+  .hamburger.open span:nth-child(2){opacity:0}
+  .hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:6rem 2rem 4rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 40%,var(--bg3) 70%,var(--bg) 100%);z-index:0}
+.hero::after{content:'';position:absolute;inset:0;background:
+  radial-gradient(circle at 20% 50%,rgba(0,212,255,0.08) 0%,transparent 50%),
+  radial-gradient(circle at 80% 20%,rgba(10,132,255,0.06) 0%,transparent 50%),
+  radial-gradient(circle at 60% 80%,rgba(0,212,255,0.04) 0%,transparent 50%);
+  z-index:0;animation:heroGlow 8s ease-in-out infinite alternate}
+@keyframes heroGlow{0%{opacity:0.6}100%{opacity:1}}
+.hero-grid{position:absolute;inset:0;z-index:0;background-image:
+  linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);
+  background-size:60px 60px;animation:gridMove 20s linear infinite}
+@keyframes gridMove{0%{transform:translate(0,0)}100%{transform:translate(60px,60px)}}
+.hero-content{position:relative;z-index:1;max-width:800px}
+.hero h1{font-size:clamp(2.2rem,5vw,3.8rem);margin-bottom:1.2rem;line-height:1.15}
+.hero h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-tagline{font-size:clamp(1.1rem,2.5vw,1.5rem);color:var(--accent);font-weight:600;letter-spacing:3px;text-transform:uppercase;margin-bottom:0.8rem}
+.hero-motto{font-size:0.95rem;color:var(--text-dim);font-style:italic;letter-spacing:1px;margin-bottom:1.5rem;opacity:0.7}
+.hero p{font-size:clamp(1rem,2vw,1.2rem);color:var(--text-dim);max-width:600px;margin:0 auto 2.5rem;line-height:1.7}
+.hero-buttons{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.8rem 2rem;border-radius:8px;font-weight:600;font-size:1rem;transition:all var(--transition);border:none;cursor:pointer}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,212,255,0.3);color:var(--bg)}
+.btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent)}
+.btn-outline:hover{background:rgba(0,212,255,0.1);transform:translateY(-2px);color:var(--accent)}
+
+/* STATS BAR */
+.stats-bar{background:linear-gradient(135deg,var(--bg2),var(--bg3));border-top:1px solid var(--card-border);border-bottom:1px solid var(--card-border);padding:1.5rem 2rem;display:flex;justify-content:center;gap:3rem;flex-wrap:wrap;position:relative}
+.stats-bar::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.stat-item{text-align:center;min-width:120px}
+.stat-value{font-size:1.5rem;font-weight:700;color:var(--white);font-variant-numeric:tabular-nums}
+.stat-label{font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px;margin-top:0.25rem}
+.live-indicator{display:inline-flex;align-items:center;gap:6px;font-size:0.7rem;color:var(--accent);text-transform:uppercase;letter-spacing:2px;font-weight:600;position:absolute;top:0.5rem;right:1.5rem}
+.live-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
+@media(max-width:768px){.stats-bar{gap:1.5rem;padding:1.2rem 1rem}.stat-value{font-size:1.2rem}}
+
+/* SECTION SHARED */
+.section{padding:6rem 2rem}
+.section-inner{max-width:1200px;margin:0 auto}
+.section-title{text-align:center;font-size:clamp(1.8rem,3vw,2.5rem);margin-bottom:0.75rem}
+.section-subtitle{text-align:center;color:var(--text-dim);max-width:600px;margin:0 auto 3.5rem;font-size:1.05rem}
+
+/* INTRO / WHAT IS QWID */
+.intro-section{background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 100%)}
+.intro-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.intro-text h2{text-align:left;margin-bottom:1rem}
+.intro-text p{color:var(--text-dim);font-size:1.05rem;line-height:1.8;margin-bottom:1.2rem}
+.intro-text p strong{color:var(--white)}
+.intro-pills{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:1.5rem}
+.intro-pill{background:var(--card);border:1px solid var(--card-border);border-radius:20px;padding:0.4rem 1rem;font-size:0.8rem;color:var(--accent);font-weight:500}
+.intro-highlight{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:2rem;text-align:center}
+.intro-highlight blockquote{font-size:1.1rem;color:var(--text);line-height:1.8;font-style:italic;border-left:3px solid var(--accent);padding-left:1.5rem;text-align:left}
+.intro-highlight blockquote strong{color:var(--accent);font-style:normal}
+@media(max-width:768px){.intro-grid{grid-template-columns:1fr}}
+
+/* FEATURES */
+.features-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem}
+.feature-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:2rem;transition:all var(--transition)}
+.feature-card:hover{transform:translateY(-4px);border-color:rgba(0,212,255,0.3);box-shadow:0 8px 40px rgba(0,212,255,0.08)}
+.feature-icon{width:48px;height:48px;margin-bottom:1.2rem;color:var(--accent)}
+.feature-card h3{font-size:1.15rem;margin-bottom:0.6rem}
+.feature-card p{color:var(--text-dim);font-size:0.92rem;line-height:1.6}
+@media(max-width:1024px){.features-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.features-grid{grid-template-columns:1fr}}
+
+/* HOW IT WORKS */
+.steps{display:flex;gap:2rem;align-items:flex-start;position:relative}
+.steps::before{content:'';position:absolute;top:36px;left:calc(16.66%);right:calc(16.66%);height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:0.3}
+.step{flex:1;text-align:center;position:relative;z-index:1}
+.step-number{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;font-size:1.5rem;font-weight:800;color:var(--bg)}
+.step h3{font-size:1.1rem;margin-bottom:0.5rem}
+.step p{color:var(--text-dim);font-size:0.9rem;max-width:260px;margin:0 auto}
+@media(max-width:768px){.steps{flex-direction:column;align-items:center}.steps::before{top:0;bottom:0;left:36px;right:auto;width:2px;height:auto}.step{display:flex;gap:1.5rem;text-align:left;width:100%;max-width:400px}.step-number{flex-shrink:0;width:56px;height:56px;font-size:1.2rem;margin:0}.step p{max-width:none}}
+
+/* TOKENOMICS */
+.tokenomics-wrap{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.token-metrics{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.metric{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:1.2rem;text-align:center}
+.metric-value{font-size:1.2rem;font-weight:700;color:var(--accent)}
+.metric-label{font-size:0.78rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-top:0.3rem}
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:1.5rem}
+.donut{width:240px;height:240px;border-radius:50%;background:conic-gradient(var(--accent) 0deg 36deg,rgba(0,212,255,0.15) 36deg 360deg);position:relative;box-shadow:0 0 60px rgba(0,212,255,0.1)}
+.donut::after{content:'';position:absolute;inset:30%;border-radius:50%;background:var(--bg2)}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1}
+.donut-center .pct{font-size:2rem;font-weight:800;color:var(--white)}
+.donut-center .lbl{font-size:0.75rem;color:var(--text-dim)}
+.donut-legend{display:flex;gap:1.5rem;font-size:0.85rem;color:var(--text-dim)}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+.legend-dot.initial{background:var(--accent)}
+.legend-dot.remaining{background:rgba(0,212,255,0.15)}
+@media(max-width:768px){.tokenomics-wrap{grid-template-columns:1fr}.donut-wrap{order:-1}}
+
+/* ROADMAP */
+.timeline{position:relative;max-width:700px;margin:0 auto;padding-left:40px}
+.timeline::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--accent),var(--accent2),rgba(0,212,255,0.2))}
+.timeline-item{position:relative;margin-bottom:2.5rem}
+.timeline-dot{position:absolute;left:-33px;top:4px;width:14px;height:14px;border-radius:50%;border:2px solid var(--accent);background:var(--bg)}
+.timeline-item.completed .timeline-dot{background:var(--accent)}
+.timeline-item.in-progress .timeline-dot{background:var(--accent);box-shadow:0 0 12px var(--accent);animation:pulse 2s infinite}
+.timeline-badge{display:inline-block;font-size:0.7rem;padding:0.2rem 0.6rem;border-radius:4px;text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:0.5rem}
+.timeline-item.completed .timeline-badge{background:rgba(0,212,255,0.15);color:var(--accent)}
+.timeline-item.in-progress .timeline-badge{background:rgba(0,212,255,0.25);color:var(--accent)}
+.timeline-item.upcoming .timeline-badge{background:rgba(136,146,176,0.15);color:var(--text-dim)}
+.timeline-item h3{font-size:1.1rem;margin-bottom:0.4rem}
+.timeline-item p{color:var(--text-dim);font-size:0.9rem}
+
+/* FAQ */
+.faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:1000px;margin:0 auto}
+.faq-category{margin-bottom:0.5rem}
+.faq-category-title{font-size:0.75rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin:2rem 0 1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--card-border)}
+.faq-category-title:first-child{margin-top:0}
+.faq-item{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden;transition:border-color var(--transition)}
+.faq-item:hover{border-color:rgba(0,212,255,0.25)}
+.faq-q{padding:1rem 1.2rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;font-weight:600;color:var(--white);font-size:0.95rem;line-height:1.4;user-select:none}
+.faq-q::after{content:'+';font-size:1.3rem;color:var(--accent);flex-shrink:0;transition:transform var(--transition)}
+.faq-item.open .faq-q::after{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height 0.4s ease,padding 0.3s ease}
+.faq-item.open .faq-a{max-height:500px}
+.faq-a-inner{padding:0 1.2rem 1.2rem;color:var(--text-dim);font-size:0.9rem;line-height:1.7}
+@media(max-width:768px){.faq-grid{grid-template-columns:1fr}}
+
+/* FOOTER */
+.footer{background:var(--bg2);border-top:1px solid var(--card-border);padding:4rem 2rem 2rem}
+.footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2rem}
+.footer-brand .nav-logo{font-size:1.3rem;display:flex;align-items:baseline;gap:6px}
+.footer-brand p{color:var(--text-dim);font-size:0.85rem;margin-top:0.5rem;max-width:340px}
+.footer-col h4{font-size:0.85rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--white);margin-bottom:1rem}
+.footer-col a{display:block;color:var(--text-dim);font-size:0.9rem;margin-bottom:0.6rem}
+.footer-col a:hover{color:var(--accent)}
+.footer-bottom{max-width:1200px;margin:2.5rem auto 0;padding-top:1.5rem;border-top:1px solid var(--card-border);display:flex;justify-content:space-between;font-size:0.8rem;color:var(--text-dim)}
+@media(max-width:768px){.footer-inner{grid-template-columns:1fr 1fr;gap:1.5rem}.footer-bottom{flex-direction:column;gap:0.5rem;text-align:center}}
+
+/* SCROLL REVEAL */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity 0.6s ease,transform 0.6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="#" class="nav-logo">QWID<span class="nav-logo-sub">Foundation</span></a>
+  <div class="nav-links" id="navLinks">
+    <a href="#features">Features</a>
+    <a href="#how-it-works">How It Works</a>
+    <a href="#tokenomics">Tokenomics</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="#faq">FAQ</a>
+    <a href="http://46.205.244.17:9999" target="_blank">Explorer</a>
+    <a href="#get-started" class="nav-cta">Get Started</a>
+  </div>
+  <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content reveal">
+    <div class="hero-tagline">Blockchain Beyond Quantum</div>
+    <h1>A Groundbreaking <span>Quantum Advancement</span> in Blockchain Technology</h1>
+    <div class="hero-motto">Securitas fundamentum perpetuitatis</div>
+    <p>A quantum computer-resistant blockchain network, built to power the next generation of cryptocurrency and decentralized finance. PQC compliant, environmentally friendly, 100% decentralized.</p>
+    <div class="hero-buttons">
+      <a href="#get-started" class="btn btn-primary">Get Started</a>
+      <a href="http://46.205.244.17:9999" target="_blank" class="btn btn-outline">Explore Network</a>
+      <a href="GreenPaper_1.0.pdf" target="_blank" class="btn btn-outline">White Paper</a>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE STATS BAR -->
+<section class="stats-bar" id="statsBar">
+  <span class="live-indicator"><span class="live-dot"></span>Live</span>
+  <div class="stat-item">
+    <div class="stat-value" id="statHeight">&mdash;</div>
+    <div class="stat-label">Block Height</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-value" id="statTps">&mdash;</div>
+    <div class="stat-label">TPS</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-value" id="statSupply">&mdash;</div>
+    <div class="stat-label">Supply (QWD)</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-value" id="statStaked">&mdash;</div>
+    <div class="stat-label">Total Staked</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-value" id="statValidators">&mdash;</div>
+    <div class="stat-label">Validators</div>
+  </div>
+</section>
+
+<!-- WHAT IS QWID -->
+<section class="section intro-section">
+  <div class="section-inner">
+    <div class="intro-grid reveal">
+      <div class="intro-text">
+        <h2>Building a Blockchain for the Future of DeFi</h2>
+        <p>In just a few years, Quantum Computing will become a genuine security risk for modern blockchains. The widely used encryption standard in current blockchains, asymmetric cryptography, will be vulnerable to attacks because of the advanced computational capabilities of quantum computers. <strong>QWID was developed to safeguard against this danger.</strong></p>
+        <p>QWID utilizes a post-quantum cryptographic standard, which is mathematically demonstrated to withstand attacks from sophisticated quantum computers. The innovative dual-chain structure provides a decentralized PQC network without sacrificing security, scalability, or transaction speed.</p>
+        <div class="intro-pills">
+          <span class="intro-pill">PQC Compliant</span>
+          <span class="intro-pill">Advanced Consensus</span>
+          <span class="intro-pill">Environmentally Friendly</span>
+          <span class="intro-pill">Fast &amp; Secure</span>
+          <span class="intro-pill">100% Decentralized</span>
+          <span class="intro-pill">Low Gas Fees</span>
+        </div>
+      </div>
+      <div class="intro-highlight">
+        <blockquote>Developers have the option to transfer existing smart contracts to take advantage of QWID's enhanced speed and security, or utilize the <strong>PRICE</strong> and <strong>RAND</strong> oracles to safeguard and expand their dApps in a future-proof DeFi ecosystem.</blockquote>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-inner">
+    <h2 class="section-title reveal">Built for the Future</h2>
+    <p class="section-subtitle reveal">Cutting-edge security, scalable performance, and a complete DeFi toolkit &mdash; all quantum-safe from day one.</p>
+    <div class="features-grid">
+
+      <div class="feature-card reveal">
+        <svg class="feature-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="8" y="8" width="32" height="32" rx="4"/>
+          <path d="M18 20l4 4 8-8"/>
+          <path d="M16 32h16"/>
+          <circle cx="38" cy="10" r="5" fill="currentColor" opacity="0.3"/>
+        </svg>
+        <h3>Cutting-Edge PQC Security</h3>
+        <p>QWID utilizes a post-quantum cryptographic standard mathematically demonstrated to withstand attacks from quantum computers. Every transaction is dual-signed with Falcon-512 and MAYO-5.</p>
+      </div>
+
+      <div class="feature-card reveal">
+        <svg class="feature-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="24" cy="24" r="16"/>
+          <path d="M24 14v10l7 7"/>
+          <circle cx="24" cy="24" r="3" fill="currentColor"/>
+        </svg>
+        <h3>Novel Consensus: Proof-of-Synergy</h3>
+        <p>An innovative consensus model delivering 10-second block times with energy-efficient, environmentally friendly validation &mdash; combining staking with collaborative network participation.</p>
+      </div>
+
+      <div class="feature-card reveal">
+        <svg class="feature-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="14" width="36" height="24" rx="3"/>
+          <path d="M14 22h6M14 28h10"/>
+          <path d="M32 22v8" stroke-dasharray="2 2"/>
+          <path d="M6 14l18-8 18 8"/>
+        </svg>
+        <h3>DeFi &amp; Smart Contracts</h3>
+        <p>Full EVM compatibility for frictionless DeFi and GameFi development. Deploy existing Solidity contracts with up to 13.7M gas per block in a quantum-safe environment.</p>
+      </div>
+
+      <div class="feature-card reveal">
+        <svg class="feature-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 36l8-12 8 8 8-16 8 10"/>
+          <path d="M8 40h32"/>
+          <circle cx="16" cy="24" r="2" fill="currentColor"/>
+          <circle cx="24" cy="32" r="2" fill="currentColor"/>
+          <circle cx="32" cy="16" r="2" fill="currentColor"/>
+        </svg>
+        <h3>Scalable and Fast</h3>
+        <p>The dual-chain architecture processes up to 5,000 transactions per block without sacrificing security or decentralization. Low gas fees and high throughput by design.</p>
+      </div>
+
+      <div class="feature-card reveal">
+        <svg class="feature-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="24" cy="16" r="8"/>
+          <path d="M12 40c0-6.627 5.373-12 12-12s12 5.373 12 12"/>
+          <path d="M30 14l6-6M34 8l2 6-6 2"/>
+        </svg>
+        <h3>Staking &amp; On-Chain DEX</h3>
+        <p>Built-in staking with a minimum of just 1,000 QWD for users. Native on-chain decentralized exchange for seamless, quantum-safe token trading with low fees.</p>
+      </div>
+
+      <div class="feature-card reveal">
+        <svg class="feature-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="24" cy="24" r="16"/>
+          <path d="M18 24h12M24 18v12"/>
+          <circle cx="24" cy="24" r="4" fill="currentColor" opacity="0.3"/>
+          <path d="M14 14l4 4M34 14l-4 4M14 34l4-4M34 34l-4-4"/>
+        </svg>
+        <h3>PRICE &amp; RAND Oracles</h3>
+        <p>Feeless on-chain oracles providing real-world price data and verifiable randomness, enabling smart contracts to securely access external information every ~1 minute.</p>
+      </div>
+
+      <div class="feature-card reveal">
+        <svg class="feature-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="10" y="8" width="28" height="32" rx="3"/>
+          <path d="M18 18h12M18 24h12M18 30h8"/>
+          <path d="M16 18l2 2 4-4" opacity="0.5"/>
+        </svg>
+        <h3>Governance Voting</h3>
+        <p>On-chain governance voting every 60 blocks (~10 minutes) gives validators and stakers direct influence over network parameters and protocol upgrades.</p>
+      </div>
+
+      <div class="feature-card reveal">
+        <svg class="feature-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M24 6v6M24 36v6M6 24h6M36 24h6"/>
+          <circle cx="24" cy="24" r="12"/>
+          <path d="M20 20l8 8M28 20l-8 8"/>
+        </svg>
+        <h3>Deflationary &amp; Provably Scarce</h3>
+        <p>Fixed maximum supply of 230M QWD with deflationary tokenomics. Native payments token QWID is provably scarce with transparent on-chain emission.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how-it-works" style="background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%)">
+  <div class="section-inner">
+    <h2 class="section-title reveal">How It Works</h2>
+    <p class="section-subtitle reveal">Get up and running on the QWID network in three simple steps.</p>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div>
+          <h3>Create a Wallet</h3>
+          <p>Generate quantum-resistant dual keypairs (Falcon-512 + MAYO-5) with a single command. Your keys, your coins.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div>
+          <h3>Stake or Transact</h3>
+          <p>Send QWD, deploy smart contracts, stake tokens to earn rewards, or trade on the built-in DEX.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div>
+          <h3>Explore the Chain</h3>
+          <p>Track blocks, transactions, and accounts in real time using the blockchain explorer.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOKENOMICS -->
+<section class="section" id="tokenomics">
+  <div class="section-inner">
+    <h2 class="section-title reveal">Tokenomics</h2>
+    <p class="section-subtitle reveal">Deflationary and provably scarce. Designed for long-term sustainability with a fixed maximum supply and transparent on-chain emission.</p>
+    <div class="tokenomics-wrap reveal">
+      <div class="token-metrics">
+        <div class="metric">
+          <div class="metric-value">230,000,000</div>
+          <div class="metric-label">Max Supply (QWD)</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">23,000,000</div>
+          <div class="metric-label">Initial Supply</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">10s</div>
+          <div class="metric-label">Block Time</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">23</div>
+          <div class="metric-label">Chain ID</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">8</div>
+          <div class="metric-label">Decimals</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">1,000,000</div>
+          <div class="metric-label">Min Node Stake</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">1,000</div>
+          <div class="metric-label">Min User Stake</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">5,000</div>
+          <div class="metric-label">Max TXs / Block</div>
+        </div>
+      </div>
+      <div class="donut-wrap">
+        <div class="donut">
+          <div class="donut-center">
+            <span class="pct">10%</span>
+            <span class="lbl">Initial Supply</span>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="legend-item"><span class="legend-dot initial"></span> Initial (23M)</div>
+          <div class="legend-item"><span class="legend-dot remaining"></span> Mining Rewards (207M)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section class="section" id="roadmap" style="background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%)">
+  <div class="section-inner">
+    <h2 class="section-title reveal">Roadmap</h2>
+    <p class="section-subtitle reveal">Building the quantum-safe financial infrastructure, one milestone at a time.</p>
+    <div class="timeline reveal">
+
+      <div class="timeline-item completed">
+        <div class="timeline-dot"></div>
+        <span class="timeline-badge">Q1 2023 &middot; Completed</span>
+        <h3>Phase 0 &mdash; R&amp;D and F&amp;F Funding</h3>
+        <p>Team formed, design and properties of QWID formalized. Core research into post-quantum cryptography and consensus mechanisms.</p>
+      </div>
+
+      <div class="timeline-item completed">
+        <div class="timeline-dot"></div>
+        <span class="timeline-badge">Q2 2023 &middot; Completed</span>
+        <h3>Phase 1 &mdash; Initial Implementation</h3>
+        <p>Development begins. Dual-chain architecture, PQC cryptography (Falcon-512 &amp; MAYO-5), and homomorphic hashing implemented.</p>
+      </div>
+
+      <div class="timeline-item completed">
+        <div class="timeline-dot"></div>
+        <span class="timeline-badge">Q2 2024 &middot; Completed</span>
+        <h3>Phase 2 &mdash; Smart Contracts &amp; DEX</h3>
+        <p>EVM-compatible virtual machine for smart contract evaluation created. On-chain decentralized exchange within the QWID protocol implemented.</p>
+      </div>
+
+      <div class="timeline-item completed">
+        <div class="timeline-dot"></div>
+        <span class="timeline-badge">Q4 2024 &middot; Completed</span>
+        <h3>Phase 3 &mdash; Next Funding Round</h3>
+        <p>New funding acquired to accelerate development and expand the team for the next stages of the project.</p>
+      </div>
+
+      <div class="timeline-item completed">
+        <div class="timeline-dot"></div>
+        <span class="timeline-badge">Q1 2025 &middot; Completed</span>
+        <h3>Phase 4 &mdash; Oracles &amp; Blockchain Explorer</h3>
+        <p>RAND and PRICE oracle protocols enabling smart contracts to access real-world data. Launch of the web blockchain explorer alongside initial QWID deployment.</p>
+      </div>
+
+      <div class="timeline-item completed">
+        <div class="timeline-dot"></div>
+        <span class="timeline-badge">Q2 2025 &middot; Completed</span>
+        <h3>Phase 5 &mdash; Wallet &amp; DeFi</h3>
+        <p>Proprietary wallet software with MetaMask and TrustWallet compatibility. Distribution of Web3 libraries for QWID interaction.</p>
+      </div>
+
+      <div class="timeline-item in-progress">
+        <div class="timeline-dot"></div>
+        <span class="timeline-badge">2026 &middot; In Progress</span>
+        <h3>Public Testnet</h3>
+        <p>Live public testnet running with full feature set &mdash; proof-of-synergy consensus, EVM smart contracts, staking, DEX, and oracles. Open for community testing and validation.</p>
+      </div>
+
+      <div class="timeline-item upcoming">
+        <div class="timeline-dot"></div>
+        <span class="timeline-badge">2026 &middot; Upcoming</span>
+        <h3>Genesis Block &mdash; Mainnet Launch</h3>
+        <p>Initialization of the blockchain &mdash; generation of the Genesis Block. Initial coin distribution begins.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="section-inner">
+    <h2 class="section-title reveal">Frequently Asked Questions</h2>
+    <p class="section-subtitle reveal">Everything you need to know about QWID, post-quantum cryptography, staking, and the network.</p>
+    <div class="faq-grid reveal">
+
+      <div>
+        <div class="faq-category-title">QWID Technology</div>
+
+        <div class="faq-item">
+          <div class="faq-q">What is the QWID?</div>
+          <div class="faq-a"><div class="faq-a-inner">QWID is the world's first truly post-quantum blockchain, resistant to quantum computer attacks. It uses Proof-of-Synergy consensus and dual-blockchain architecture to address scalability issues inherent in post-quantum cryptography.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">Why does QWID have two blockchains?</div>
+          <div class="faq-a"><div class="faq-a-inner">Post-quantum cryptography requires large public keys. Implementing this into networks like Ethereum would reduce block validation rates by 14x. The solution divides QWID into a primary chain for transactions and a secondary chain for storing public keys.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">Does QWID support smart contracts?</div>
+          <div class="faq-a"><div class="faq-a-inner">Yes. QWID hosts a quantum-resistant decentralized virtual machine supporting smart contracts. QWID's virtual machine is EVM-compatible with Ethereum technology, enabling developer migration and new contract development.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">What is the QWID RAND Oracle?</div>
+          <div class="faq-a"><div class="faq-a-inner">The RAND Oracle generates verifiably random numbers within smart contracts, replacing expensive third-party oracles. It provides per-block random numbers aggregated from network nodes at no cost for DeFi and GameFi applications.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">What is the QWID PRICE Oracle?</div>
+          <div class="faq-a"><div class="faq-a-inner">The PRICE Oracle provides decentralized access to QWD token USD exchange rates within smart contracts. Network incentives encourage nodes to submit pricing data, with the median price determining the rate. Included per-block on the main chain at no charge.</div></div>
+        </div>
+
+        <div class="faq-category-title">Quantum Computing &amp; PQC</div>
+
+        <div class="faq-item">
+          <div class="faq-q">What does PQC mean?</div>
+          <div class="faq-a"><div class="faq-a-inner">PQC means Post-Quantum Cryptography &mdash; cryptography that is resistant to quantum computer algorithms like Shor's or Grover's. QWID uses NIST-approved post-quantum standards to ensure long-term security.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">What is Shor's algorithm and how does it break current encryption?</div>
+          <div class="faq-a"><div class="faq-a-inner">Shor's algorithm is a quantum computer algorithm for finding the prime factors of an integer, developed by mathematician Peter Shor. All standard non-PQC asymmetric cryptography used in Bitcoin and Ethereum can be broken by this algorithm with sufficient qubits.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">What encryption standard does QWID use?</div>
+          <div class="faq-a"><div class="faq-a-inner">QWID leverages dual post-quantum signatures &mdash; Falcon-512 and MAYO-5 &mdash; both selected from NIST post-quantum cryptography finalists. Every transaction is signed with both algorithms, providing dual-layer protection with security equivalent to 128-bit AES encryption.</div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="faq-category-title">QWID Coin &amp; Tokenomics</div>
+
+        <div class="faq-item">
+          <div class="faq-q">What is the maximum supply of QWD?</div>
+          <div class="faq-a"><div class="faq-a-inner">The total supply of QWD coin is 230,000,000 QWD. It is deflationary with a fixed total supply like Bitcoin. Block rewards diminish roughly once per day by a factor of 0.999.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">How much QWD is premined prior to mainnet launch?</div>
+          <div class="faq-a"><div class="faq-a-inner">The mineable coin supply is 207,000,000 QWD. Pre-mined coins equal 10% of total supply: 23,000,000 QWD.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">How are block rewards calculated?</div>
+          <div class="faq-a"><div class="faq-a-inner">Block reward = 1317.70833 &times; 0.999<sup>n</sup> where n equals the rough number of days from inception (one day is about 8,640 blocks). Rewards distribute proportionally to each staker's contribution.</div></div>
+        </div>
+
+        <div class="faq-category-title">Staking &amp; Validation</div>
+
+        <div class="faq-item">
+          <div class="faq-q">What is the Proof-of-Synergy consensus model?</div>
+          <div class="faq-a"><div class="faq-a-inner">A consensus mechanism defining how distributed nodes reach agreement about which transactions appear on the chain. QWID combines elements of Proof-of-Work, Proof-of-Stake, and Proof-of-Authority for environmental friendliness, DDoS resistance, and decentralization.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">What are delegated accounts?</div>
+          <div class="faq-a"><div class="faq-a-inner">256 delegate accounts are created when the blockchain is initiated. Those interested in staking deposit QWD to these accounts. The top 128 delegate accounts in terms of QWD holding act as nodes and validators.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">What is the minimum stake I can delegate?</div>
+          <div class="faq-a"><div class="faq-a-inner">Users can deposit QWD in any of the 256 delegated accounts, as long as they deposit a minimum of 1,000 QWD. Withdrawals can occur anytime without fixed deposit periods. Deposits and withdrawals require 36 confirmations (~6 minutes) to become valid.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">How many QWD do I need to operate my own node?</div>
+          <div class="faq-a"><div class="faq-a-inner">You need 1,000,000 QWD to create and operate your own node. You can also operate a node with less if other stakers join and collectively reach the threshold. Node operators set fees ranging from 0&ndash;50% of node rewards to cover operational expenses.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">Are validators rewarded for validating blocks?</div>
+          <div class="faq-a"><div class="faq-a-inner">Only users staking coins to delegated accounts (nodes) that create valid blocks receive rewards, proportional to their staked amounts. The maximum number of reward-receiving nodes is limited to 128.</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- GET STARTED -->
+<section class="section" id="get-started" style="text-align:center">
+  <div class="section-inner reveal">
+    <h2 class="section-title">Ready to Go Beyond Quantum?</h2>
+    <p class="section-subtitle">The public testnet is live. Generate a wallet, run a node, deploy smart contracts, or explore the chain &mdash; all quantum-safe from day one.</p>
+    <div class="hero-buttons" style="justify-content:center">
+      <a href="https://github.com/wonabru/qwid-node" target="_blank" class="btn btn-primary">View on GitHub</a>
+      <a href="http://46.205.244.17:9999" target="_blank" class="btn btn-outline">Open Explorer</a>
+      <a href="#faq" class="btn btn-outline">View FAQs</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="nav-logo">QWID<span class="nav-logo-sub">Foundation</span></div>
+      <p>The QWID Foundation is dedicated to preparing for the threat that quantum computers will pose to blockchain technology &mdash; developing a secure, fast, 100% trustless and environmentally kind solution.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Explore</h4>
+      <a href="http://46.205.244.17:9999" target="_blank">Explorer</a>
+      <a href="https://github.com/wonabru/qwid-node" target="_blank">GitHub</a>
+    </div>
+    <div class="footer-col">
+      <h4>Developers</h4>
+      <a href="https://github.com/wonabru/qwid-node#readme" target="_blank">Documentation</a>
+      <a href="http://46.205.244.17:9999" target="_blank">API</a>
+    </div>
+    <div class="footer-col">
+      <h4>Network</h4>
+      <a href="#">Chain ID: 23</a>
+      <a href="#">Block Time: 10s</a>
+      <a href="#">Post-Quantum</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 QWID Foundation. All rights reserved.</span>
+    <span>Quantum-Secure, Warp-Speed, Immutable, Decentralized</span>
+  </div>
+</footer>
+
+<script>
+// ===== CONFIGURATION =====
+// Set to explorer URL if hosted separately, e.g. "http://localhost:8090"
+// Leave empty to use same origin
+const API_BASE = "http://46.205.244.17:9999";
+
+// ===== LIVE STATS =====
+function formatNumber(n) {
+  if (n === null || n === undefined) return "\u2014";
+  if (typeof n === "number") {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + "M";
+    if (n >= 1e3) return n.toLocaleString();
+  }
+  return String(n);
+}
+
+async function fetchStats() {
+  try {
+    const res = await fetch(API_BASE + "/api/stats");
+    if (!res.ok) throw new Error(res.status);
+    const d = await res.json();
+    document.getElementById("statHeight").textContent = formatNumber(d.height);
+    document.getElementById("statTps").textContent = d.tps != null ? Number(d.tps).toFixed(1) : "\u2014";
+    document.getElementById("statSupply").textContent = d.supply != null ? formatNumber(Math.round(d.supply)) : "\u2014";
+    document.getElementById("statStaked").textContent = d.totalStaked != null ? formatNumber(Math.round(d.totalStaked)) : "\u2014";
+    document.getElementById("statValidators").textContent = d.activeValidators != null ? d.activeValidators : "\u2014";
+  } catch (e) {
+    // Leave dashes on error
+  }
+}
+
+fetchStats();
+setInterval(fetchStats, 15000);
+
+// ===== MOBILE NAV =====
+const hamburger = document.getElementById("hamburger");
+const navLinks = document.getElementById("navLinks");
+
+hamburger.addEventListener("click", function () {
+  hamburger.classList.toggle("open");
+  navLinks.classList.toggle("open");
+});
+
+navLinks.querySelectorAll("a").forEach(function (link) {
+  link.addEventListener("click", function () {
+    hamburger.classList.remove("open");
+    navLinks.classList.remove("open");
+  });
+});
+
+// ===== SCROLL REVEAL =====
+const observer = new IntersectionObserver(function (entries) {
+  entries.forEach(function (entry) {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("visible");
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll(".reveal").forEach(function (el) {
+  observer.observe(el);
+});
+
+// ===== FAQ ACCORDION =====
+document.querySelectorAll(".faq-q").forEach(function (q) {
+  q.addEventListener("click", function () {
+    var item = q.parentElement;
+    var wasOpen = item.classList.contains("open");
+    item.classList.toggle("open");
+    if (!wasOpen) {
+      var a = item.querySelector(".faq-a");
+      a.style.maxHeight = a.scrollHeight + "px";
+    } else {
+      item.querySelector(".faq-a").style.maxHeight = "0";
+    }
+  });
+});
+</script>
+</body>
+</html>
