@@ -1,6 +1,7 @@
 # Node go QWID
 
-Works for Ubuntu 24.04 (gcc 11) and go1.23.6
+Works for Ubuntu 24.04 (gcc 11) and go1.23.6+
+
 Only one network interface should be with external public IP
 
 Install prerequisites
