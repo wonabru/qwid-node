@@ -35,7 +35,7 @@ Install OQS library:
 Compile OQS with `-DBUILD_SHARED_LIBS=ON` and install
     
     mkdir build && cd build
-    cmake -S liboqs -GNinja -DBUILD_SHARED_LIBS=ON ..    
+    cmake -S liboqs -GNinja -DOQS_BUILD_ONLY_LIB=ON -DBUILD_SHARED_LIBS=ON ..    
     ninja
     sudo ninja install
     cd ~/
