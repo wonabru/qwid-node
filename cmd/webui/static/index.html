@@ -923,7 +923,7 @@ contract Coin {
     </div>
 
     <script>
-        const API_BASE = '';
+        const API_BASE = window.location.pathname.replace(/\/+$/, '');
         let walletLoaded = false;
 
         // Tab switching
@@ -1037,6 +1037,9 @@ contract Coin {
                     showMessage(res.error, 'error');
                 } else {
                     showMessage('Password changed successfully!');
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
                 }
             } catch (e) {
                 showMessage('Failed to change password: ' + e.message, 'error');

@@ -200,7 +200,7 @@
     </div>
 
     <script>
-    const API = '';
+    const API = window.location.pathname.replace(/\/+$/, '');
     let refreshTimer = null;
 
     function formatTime(ts) {

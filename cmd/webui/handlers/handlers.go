@@ -289,8 +289,13 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(req.NewPassword) < 1 {
+		jsonError(w, "New password cannot be empty", http.StatusBadRequest)
+		return
+	}
+
 	if err := MainWallet.ChangePassword(req.CurrentPassword, req.NewPassword); err != nil {
-		jsonError(w, "Wrong current password", http.StatusBadRequest)
+		jsonError(w, fmt.Sprintf("Password change failed: %v", err), http.StatusBadRequest)
 		return
 	}
 

@@ -642,15 +642,43 @@ func (w *Wallet) ChangePassword(password, newPassword string) error {
 		}
 		copy(w2.Accounts[k].EncryptedSecretKey, se)
 	}
+
+	// Re-encrypt Account1 and Account2 with the new password
+	if len(w2.Account1.EncryptedSecretKey) > 0 {
+		ds, err := w.decrypt(w.Account1.EncryptedSecretKey)
+		if err != nil {
+			return fmt.Errorf("failed to decrypt Account1: %v", err)
+		}
+		se, err := w2.encrypt(ds)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt Account1: %v", err)
+		}
+		w2.Account1.EncryptedSecretKey = se
+	}
+	if len(w2.Account2.EncryptedSecretKey) > 0 {
+		ds, err := w.decrypt(w.Account2.EncryptedSecretKey)
+		if err != nil {
+			return fmt.Errorf("failed to decrypt Account2: %v", err)
+		}
+		se, err := w2.encrypt(ds)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt Account2: %v", err)
+		}
+		w2.Account2.EncryptedSecretKey = se
+	}
 	err := w2.StoreJSON()
 	if err != nil {
 		logger.GetLogger().Println("Can not store new wallet")
 		return err
 	}
-	_, err = LoadJSON(w2.WalletNumber, newPassword, w2.SigName, w2.SigName2)
+	loaded, err := LoadJSON(w2.WalletNumber, newPassword, w2.SigName, w2.SigName2)
 	if err != nil {
 		return err
 	}
+	w.password = loaded.password
+	w.passwordBytes = loaded.passwordBytes
+	w.Iv = loaded.Iv
+	w.Accounts = loaded.Accounts
 	return nil
 }
 
@@ -668,22 +696,60 @@ func (w *Wallet) ChangePasswordInPlace(password, newPassword string) error {
 	globalMutex.Lock()
 	defer globalMutex.Unlock()
 
-	w.password = newPassword
-	w.passwordBytes = passwordToByte(newPassword)
+	oldPasswordBytes := w.passwordBytes
+	newPasswordBytes := passwordToByte(newPassword)
 
+	// Temporarily keep old password for decryption
 	for k, v := range w.Accounts {
 		ds, err := w.decrypt(v.EncryptedSecretKey)
 		if err != nil {
 			logger.GetLogger().Println(err)
 			return err
 		}
+		w.passwordBytes = newPasswordBytes
 		se, err := w.encrypt(ds)
 		if err != nil {
+			w.passwordBytes = oldPasswordBytes
 			logger.GetLogger().Println(err)
 			return err
 		}
+		w.passwordBytes = oldPasswordBytes
 		copy(w.Accounts[k].EncryptedSecretKey, se)
 	}
+
+	// Re-encrypt Account1 and Account2
+	if len(w.Account1.EncryptedSecretKey) > 0 {
+		ds, err := w.decrypt(w.Account1.EncryptedSecretKey)
+		if err != nil {
+			return fmt.Errorf("failed to decrypt Account1: %v", err)
+		}
+		w.passwordBytes = newPasswordBytes
+		se, err := w.encrypt(ds)
+		if err != nil {
+			w.passwordBytes = oldPasswordBytes
+			return fmt.Errorf("failed to encrypt Account1: %v", err)
+		}
+		w.passwordBytes = oldPasswordBytes
+		w.Account1.EncryptedSecretKey = se
+	}
+	if len(w.Account2.EncryptedSecretKey) > 0 {
+		ds, err := w.decrypt(w.Account2.EncryptedSecretKey)
+		if err != nil {
+			return fmt.Errorf("failed to decrypt Account2: %v", err)
+		}
+		w.passwordBytes = newPasswordBytes
+		se, err := w.encrypt(ds)
+		if err != nil {
+			w.passwordBytes = oldPasswordBytes
+			return fmt.Errorf("failed to encrypt Account2: %v", err)
+		}
+		w.passwordBytes = oldPasswordBytes
+		w.Account2.EncryptedSecretKey = se
+	}
+
+	// Now update to new password
+	w.password = newPassword
+	w.passwordBytes = newPasswordBytes
 
 	err := w.StoreJSON()
 	if err != nil {
