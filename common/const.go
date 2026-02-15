@@ -44,7 +44,7 @@ var (
 	MaxMessageSizeBytes            int32   = 151126018           // should be adjusted to maximal message sent
 	DefaultWalletHomePath                  = "/.qwid/wallet/"
 	DefaultBlockchainHomePath              = "/.qwid/db/blockchain/"
-	ConnectionsWithoutVerification         = [][]byte{[]byte("TRAN"), []byte("STAT"), []byte("ENCR"), []byte("DETS"), []byte("STAK"), []byte("ADEX"), []byte("PUBA"), []byte("HELO")}
+	ConnectionsWithoutVerification         = [][]byte{[]byte("TRAN"), []byte("STAT"), []byte("ENCR"), []byte("DETS"), []byte("STAK"), []byte("ADEX"), []byte("PUBA"), []byte("HELO"), []byte("VALS")}
 	CurrentHeightOfNetwork         int64   = 23
 )
 

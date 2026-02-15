@@ -141,6 +141,8 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 		handlePUBA(byt, reply)
 	case "HELO":
 		handleHELO(byt, reply)
+	case "VALS":
+		handleVALS(byt, reply)
 	default:
 		*reply = []byte("Invalid operation")
 	}
@@ -658,6 +660,73 @@ func handlePUBA(line []byte, reply *[]byte) {
 	result, err := json.Marshal(resp)
 	if err != nil {
 		*reply = []byte("{\"error\":\"failed to marshal pubkey info\"}")
+		return
+	}
+	*reply = result
+}
+
+func handleVALS(line []byte, reply *[]byte) {
+	type ValidatorInfo struct {
+		ID               int     `json:"id"`
+		DelegatedAddress string  `json:"delegatedAddress"`
+		OperatorAddress  string  `json:"operatorAddress"`
+		TotalStaked      float64 `json:"totalStaked"`
+		StakerCount      int     `json:"stakerCount"`
+		IsOperational    bool    `json:"isOperational"`
+	}
+	type VALSResponse struct {
+		TotalStaked float64         `json:"totalStaked"`
+		Validators  []ValidatorInfo `json:"validators"`
+	}
+
+	totalStaked := account.GetStakedInAllDelegatedAccounts()
+
+	validators := []ValidatorInfo{}
+	account.StakingRWMutex.RLock()
+	for i := 1; i < 256; i++ {
+		stakers := account.StakingAccounts[i].AllStakingAccounts
+		if len(stakers) == 0 {
+			continue
+		}
+		sum := int64(0)
+		activeStakers := 0
+		var operatorAddr [common.AddressLength]byte
+		hasOperator := false
+		for _, sa := range stakers {
+			if sa.StakedBalance > 0 {
+				sum += sa.StakedBalance
+				activeStakers++
+			}
+			if sa.OperationalAccount && sa.StakedBalance > 0 {
+				if !hasOperator || sa.StakedBalance > 0 {
+					copy(operatorAddr[:], sa.Address[:])
+					hasOperator = true
+				}
+			}
+		}
+		if sum == 0 {
+			continue
+		}
+		da := common.GetDelegatedAccountAddress(int16(i))
+		validators = append(validators, ValidatorInfo{
+			ID:               i,
+			DelegatedAddress: da.GetHex(),
+			OperatorAddress:  hex.EncodeToString(operatorAddr[:]),
+			TotalStaked:      account.Int64toFloat64(sum),
+			StakerCount:      activeStakers,
+			IsOperational:    hasOperator,
+		})
+	}
+	account.StakingRWMutex.RUnlock()
+
+	resp := VALSResponse{
+		TotalStaked: account.Int64toFloat64(totalStaked),
+		Validators:  validators,
+	}
+
+	result, err := json.Marshal(resp)
+	if err != nil {
+		*reply = []byte("{\"error\":\"failed to marshal validators\"}")
 		return
 	}
 	*reply = result
