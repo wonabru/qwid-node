@@ -7,14 +7,16 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"github.com/wonabru/qwid-node/logger"
 	"os"
 	"path/filepath"
 	"strconv"
 
-	"github.com/wonabru/bip39"
+	"github.com/wonabru/qwid-node/logger"
+
 	"io"
 	"sync"
+
+	"github.com/wonabru/bip39"
 
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/crypto/oqs"
@@ -398,6 +400,15 @@ func (w *Wallet) StoreJSON() error {
 
 	w.Account2.EncryptedSecretKey = make([]byte, len(se))
 	copy(w.Account2.EncryptedSecretKey, se)
+
+	for k, v := range w.Accounts {
+		se, err := w.encrypt(v.secretKey.GetBytes())
+		if err != nil {
+			logger.GetLogger().Println(err)
+			return err
+		}
+		copy(w.Accounts[k].EncryptedSecretKey, se)
+	}
 
 	// Marshal the wallet to JSON
 	wm, err := json.MarshalIndent(&w, "", "    ")

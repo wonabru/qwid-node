@@ -60,12 +60,12 @@ func main() {
 	fmt.Printf("  QWID Blockchain Explorer\n")
 	fmt.Printf("===========================================\n")
 	fmt.Printf("  Node IP: %s\n", ip)
-	fmt.Printf("  Explorer: http://0.0.0.0:%s\n", port)
+	fmt.Printf("  Explorer: http://127.0.0.1:%s\n", port)
 	fmt.Printf("  Press Ctrl+C to stop\n")
 	fmt.Printf("===========================================\n\n")
 
 	server := &http.Server{
-		Addr:    ":" + port,
+		Addr:    "127.0.0.1:" + port,
 		Handler: mux,
 	}
 
