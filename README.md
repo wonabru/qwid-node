@@ -167,11 +167,11 @@ Press Ctrl+C to stop the web server.
 
 Run Public Wallet Website (multi-user):
 
-    go run cmd/website/main.go <node_ip> <port> <wallet_num> <wallet_password>
+    go run cmd/website/main.go <node_ip> <port> <wallet_num>
 
 Examples:
 
-    go run cmd/website/main.go 127.0.0.1 9090 0 mypassword
+    go run cmd/website/main.go 127.0.0.1 9090 0
 
 Then open http://localhost:9090 in a web browser. Users register with username+password and each gets their own wallet.
 
