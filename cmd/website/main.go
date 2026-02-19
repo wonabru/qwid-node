@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"embed"
 	"fmt"
@@ -10,8 +11,11 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
+
+	"golang.org/x/term"
 
 	"github.com/wonabru/qwid-node/cmd/website/handlers"
 	"github.com/wonabru/qwid-node/common"
@@ -25,8 +29,8 @@ import (
 var staticFiles embed.FS
 
 func main() {
-	if len(os.Args) < 5 {
-		fmt.Println("Usage: go run cmd/website/main.go <node_ip> <port> <wallet_num> <wallet_password>")
+	if len(os.Args) < 4 {
+		fmt.Println("Usage: go run cmd/website/main.go <node_ip> <port> <wallet_num>")
 		os.Exit(1)
 	}
 
@@ -37,7 +41,28 @@ func main() {
 		fmt.Println("Invalid wallet number (0-255)")
 		os.Exit(1)
 	}
-	walletPassword := os.Args[4]
+
+	fmt.Print("Enter wallet password: ")
+	var walletPassword string
+	if term.IsTerminal(int(os.Stdin.Fd())) {
+		passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
+		if err != nil {
+			fmt.Println("\nFailed to read password:", err)
+			os.Exit(1)
+		}
+		walletPassword = string(passwordBytes)
+		fmt.Println() // newline after hidden input
+	} else {
+		scanner := bufio.NewScanner(os.Stdin)
+		if scanner.Scan() {
+			walletPassword = strings.TrimSpace(scanner.Text())
+		}
+	}
+
+	if walletPassword == "" {
+		fmt.Println("Password cannot be empty")
+		os.Exit(1)
+	}
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)

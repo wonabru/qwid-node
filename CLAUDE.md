@@ -30,9 +30,9 @@ go run cmd/webui/main.go                    # localhost:8080
 go run cmd/webui/main.go <node_ip>          # custom node IP
 go run cmd/webui/main.go <node_ip> <port>   # custom node IP and port
 
-# Run Public Wallet Website (multi-user)
-go run cmd/website/main.go <node_ip> <port> <wallet_num> <wallet_password>
-go run cmd/website/main.go 127.0.0.1 9090 0 mypassword
+# Run Public Wallet Website (multi-user, prompts for password)
+go run cmd/website/main.go <node_ip> <port> <wallet_num>
+go run cmd/website/main.go 127.0.0.1 9090 0
 
 # Run tests
 go test ./...
