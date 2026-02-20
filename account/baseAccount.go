@@ -40,7 +40,10 @@ func CanBeModifiedAccount(address []byte) bool {
 
 func (a *Account) ModifyAccountToEscrow(transactionDelay int64) error {
 	if a.TransactionDelay > 0 {
-		return fmt.Errorf("account is just escrow and cannot be modified")
+		return fmt.Errorf("account is already escrow and cannot be modified")
+	}
+	if a.MultiSignNumber > 0 {
+		return fmt.Errorf("account is multisign and cannot be converted to escrow")
 	}
 	if transactionDelay == 0 {
 		return fmt.Errorf("transaction delay in escrow must be larger than 0")
@@ -57,7 +60,10 @@ func (a *Account) ModifyAccountToEscrow(transactionDelay int64) error {
 
 func (a *Account) ModifyAccountToMultiSign(numApprovals uint8, addresses []common.Address) error {
 	if a.MultiSignNumber > 0 {
-		return fmt.Errorf("account is just MultiSign and cannot be modified")
+		return fmt.Errorf("account is already multisign and cannot be modified")
+	}
+	if a.TransactionDelay > 0 {
+		return fmt.Errorf("account is escrow and cannot be converted to multisign")
 	}
 	if int(numApprovals) == 0 {
 		return fmt.Errorf("MultiSign must have at least 1 Approval account")

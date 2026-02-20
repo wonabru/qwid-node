@@ -142,6 +142,10 @@ func CheckStakingTransaction(tx transactionsDefinition.Transaction, sumAmount in
 
 func ProcessMultiSignAndEscrow(tx transactionsDefinition.Transaction) error {
 
+	if tx.TxData.EscrowTransactionsDelay > 0 && tx.TxData.MultiSignNumber > 0 {
+		return fmt.Errorf("account cannot be both escrow and multisign")
+	}
+
 	acc := account.SetAccountByAddressBytes(tx.TxData.Recipient.ByteValue[:])
 
 	// modify escrow parameters
