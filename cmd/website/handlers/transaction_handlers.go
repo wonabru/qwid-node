@@ -255,6 +255,13 @@ func SendTransaction(w http.ResponseWriter, r *http.Request) {
 		JsonError(w, "Amount cannot be negative", http.StatusBadRequest)
 		return
 	}
+
+	// Reject regular transfers to delegated accounts — use staking API instead
+	if n, err := account.IntDelegatedAccountFromAddress(ar); err == nil && n > 0 {
+		JsonError(w, "Cannot send regular transfer to delegated account. Use staking operations instead.", http.StatusBadRequest)
+		return
+	}
+
 	am := int64(req.Amount * 1e8)
 
 	pk := common.PubKey{}

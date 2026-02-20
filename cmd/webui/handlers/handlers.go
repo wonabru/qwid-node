@@ -450,6 +450,15 @@ func SendTransaction(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Reject regular transfers to delegated accounts — use staking operations instead
+	if n, err := account.IntDelegatedAccountFromAddress(ar); err == nil && n > 0 {
+		isStakingOp := req.LockedAmount > 0 || req.Amount < 0 || len(req.SmartContractData) > 0 || req.MultiSigTxHash != ""
+		if !isStakingOp {
+			jsonError(w, "Cannot send regular transfer to delegated account. Use staking operations instead.", http.StatusBadRequest)
+			return
+		}
+	}
+
 	// Validate and convert amounts
 	if req.Amount < 0 {
 		jsonError(w, "Amount cannot be negative", http.StatusBadRequest)

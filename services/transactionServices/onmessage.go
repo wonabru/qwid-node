@@ -1,6 +1,7 @@
 package transactionServices
 
 import (
+	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/common"
 	"github.com/wonabru/qwid-node/logger"
 	"github.com/wonabru/qwid-node/message"
@@ -78,6 +79,13 @@ func OnMessage(addr [4]byte, m []byte) {
 				// } else if senderExist && senderAcc.MultiSignNumber > 0 {
 				// 	isAdded = transactionsPool.PoolTxMultiSign.AddTransaction(t, t.Hash)
 				// } else {
+					// Reject non-staking transactions to delegated accounts
+				if n, err := account.IntDelegatedAccountFromAddress(t.TxData.Recipient); err == nil && n > 0 && n < 256 {
+					if t.TxData.Amount > 0 && t.TxData.Amount < common.MinStakingUser && t.GetLockedAmount() == 0 {
+						logger.GetLogger().Println("Rejected: transfer to delegated account below minimum staking amount")
+						continue
+					}
+				}
 				isAdded := transactionsPool.PoolsTx.AddTransaction(t, t.Hash)
 				// }
 				if isAdded {
