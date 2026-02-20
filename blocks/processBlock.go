@@ -376,6 +376,9 @@ func EvaluateSmartContracts(bl *Block) bool {
 	if ok, logs, addresses, codes, _ := EvaluateSCForBlock(*bl); ok {
 		StateMutex.Lock()
 		State.SetSnapShotNum(height, State.Snapshot())
+		for _, a := range addresses {
+			State.RecordContractCreation(height, a.ByteValue)
+		}
 		StateMutex.Unlock()
 		for th, a := range addresses {
 

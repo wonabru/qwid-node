@@ -26,6 +26,7 @@ type StateAccount struct {
 	SnapShotNum         int                                                                 `json:"snapShotNum"`
 	SnapShotPreimage    map[int]map[[common.AddressLength]byte]common.Hash                  `json:"snapShotPreimage"`
 	HeightToSnapShotNum map[int64]int                                                       `json:"HeightToSnapShotNum"` // suppose int should be replaced by int64
+	ContractsByHeight   map[int64][][common.AddressLength]byte                              `json:"contractsByHeight"`
 }
 
 func CreateStateDB() StateAccount {
@@ -41,6 +42,7 @@ func CreateStateDB() StateAccount {
 	sa.SnapShotNum = 0
 	sa.SnapShotPreimage = map[int]map[[common.AddressLength]byte]common.Hash{}
 	sa.HeightToSnapShotNum = map[int64]int{}
+	sa.ContractsByHeight = map[int64][][common.AddressLength]byte{}
 	return sa
 }
 
@@ -51,6 +53,23 @@ func (sa *StateAccount) SetSnapShotNum(height int64, snapNum int) {
 func (sa *StateAccount) GetSnapShotNum(height int64) (int, bool) {
 	sn, ok := sa.HeightToSnapShotNum[height]
 	return sn, ok
+}
+
+func (sa *StateAccount) RecordContractCreation(height int64, addr [common.AddressLength]byte) {
+	sa.ContractsByHeight[height] = append(sa.ContractsByHeight[height], addr)
+}
+
+func (sa *StateAccount) CleanupContractsAfterHeight(height int64) {
+	for h, contracts := range sa.ContractsByHeight {
+		if h > height {
+			for _, addr := range contracts {
+				delete(sa.Nonces, addr)
+				delete(sa.Codes, addr)
+				delete(sa.CodeHashes, addr)
+			}
+			delete(sa.ContractsByHeight, h)
+		}
+	}
 }
 
 func (sa *StateAccount) CreateAccount(a common.Address) {

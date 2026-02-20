@@ -46,6 +46,7 @@ func RevertVMToBlockHeight(height int64) bool {
 	}
 
 	blocks.State.RevertToSnapshot(lastNum)
+	blocks.State.CleanupContractsAfterHeight(height)
 	return true
 }
 
