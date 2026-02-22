@@ -31,6 +31,7 @@ var MainWallet *wallet.Wallet
 func main() {
 	var num int
 	var err error
+	var ip string
 	if len(os.Args) > 1 {
 		num, err = strconv.Atoi(os.Args[1])
 		if err != nil {
@@ -39,7 +40,12 @@ func main() {
 	} else {
 		num = 1
 	}
-	go clientrpc.ConnectRPC("127.0.0.1")
+	if len(os.Args) > 2 {
+		ip = os.Args[2]
+	} else {
+		ip = "127.0.0.1"
+	}
+	go clientrpc.ConnectRPC(ip)
 	fmt.Print("Enter password: ")
 	password, err := terminal.ReadPassword(0)
 	if err != nil {
