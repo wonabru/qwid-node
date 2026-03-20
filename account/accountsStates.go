@@ -92,6 +92,9 @@ func (at AccountsType) Marshal() []byte {
 
 // Unmarshal decodes AccountsType from a binary format.
 func (at *AccountsType) Unmarshal(data []byte) error {
+	if len(data) < 16 {
+		return fmt.Errorf("not enough data to unmarshal accounts: need at least 16, have %d", len(data))
+	}
 	// Number of accounts
 	accountCount := common.GetInt64FromByte(data[:8])
 

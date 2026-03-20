@@ -52,7 +52,7 @@ func TestGetReward(t *testing.T) {
 	})
 
 	t.Run("reward is positive for normal supply", func(t *testing.T) {
-		supply := common.InitialSupply
+		supply := common.InitSupply
 		reward := GetReward(supply)
 		assert.Greater(t, reward, int64(0))
 	})
@@ -71,16 +71,16 @@ func TestRewardRatioIntegration(t *testing.T) {
 
 	t.Run("reward ratio produces reasonable rewards", func(t *testing.T) {
 		// At initial supply, reward should be meaningful
-		reward := GetReward(common.InitialSupply)
+		reward := GetReward(common.InitSupply)
 
 		// Reward should be a fraction of remaining supply
-		remaining := getRemainingSupply(common.InitialSupply)
+		remaining := getRemainingSupply(common.InitSupply)
 		assert.Less(t, reward, remaining)
 		assert.Greater(t, reward, int64(0))
 	})
 
 	t.Run("cumulative rewards approach max supply", func(t *testing.T) {
-		supply := common.InitialSupply
+		supply := common.InitSupply
 		totalRewards := int64(0)
 
 		// Simulate many blocks
