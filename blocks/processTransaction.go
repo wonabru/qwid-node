@@ -14,10 +14,15 @@ import (
 
 var ZerosHash = make([]byte, common.HashLength)
 
-func CheckStakingTransaction(tx transactionsDefinition.Transaction, sumAmount int64, sumFee int64) bool {
+func CheckStakingTransaction(tx transactionsDefinition.Transaction, sumAmount int64, sumFee int64, block Block) bool {
 	fee := tx.GasPrice * tx.GasUsage
 	amount := tx.TxData.Amount
 	address := tx.GetSenderAddress()
+	opacc := block.BaseBlock.BaseHeader.OperatorAccount
+	operational := len(tx.TxData.OptData) > 0
+	if bytes.Equal(address.GetBytes(), opacc.GetBytes()) && operational {
+		return false
+	}
 	acc, exist := account.GetAccountByAddressBytes(address.GetBytes())
 	if !exist || !bytes.Equal(acc.Address[:], address.GetBytes()) {
 		logger.GetLogger().Println("no account found in check staking transaction: CheckStakingTransaction")
@@ -45,7 +50,7 @@ func CheckStakingTransaction(tx transactionsDefinition.Transaction, sumAmount in
 	}
 	if n > 0 && n < 256 {
 		// If the sender intends to be an operator, verify both pubkeys are registered
-		operational := len(tx.TxData.OptData) > 0
+
 		if operational && amount > 0 && !common.IsSyncing.Load() {
 			senderAddr := tx.GetSenderAddress()
 			addresses, err := pubkeys.LoadAddresses(senderAddr)
