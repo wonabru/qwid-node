@@ -47,12 +47,25 @@ func RemoveBadTransactionByHash(hash []byte, height int64, tree *MerkleTree) err
 	return nil
 }
 
+// RemoveDuplicateTransactionByHash removes a confirmed transaction from all
+// pending pools and bans it so it cannot be re-included in future blocks.
+// The confirmed-DB record (TransactionDBPrefix) is preserved for sync.
+func RemoveDuplicateTransactionByHash(hash []byte) {
+	PoolsTx.RemoveTransactionByHash(hash)
+	PoolTxEscrow.RemoveTransactionByHash(hash)
+	PoolTxMultiSign.RemoveTransactionByHash(hash)
+	if err := transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionPoolHashesDBPrefix[:], hash); err != nil {
+		logger.GetLogger().Println("RemoveDuplicateTransactionByHash pool DB:", err)
+	}
+	PoolsTx.BanTransactionByHash(hash)
+	PoolTxEscrow.BanTransactionByHash(hash)
+	PoolTxMultiSign.BanTransactionByHash(hash)
+}
+
 func CheckTransactionInDBAndInMarkleTrie(hash []byte, tree *MerkleTree) error {
 	if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], hash) {
 		dbTx, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hash)
 		if err != nil {
-			//TODO
-			//transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], hash)
 			return err
 		}
 		h := dbTx.Height
@@ -68,6 +81,9 @@ func CheckTransactionInDBAndInMarkleTrie(hash []byte, tree *MerkleTree) error {
 		if txHeight <= 0 {
 			logger.GetLogger().Println("transaction not in merkle tree. removing transaction: checkTransactionInDBAndInMarkleTrie")
 		} else {
+			// Remove from all pending pools and ban — confirmed transactions must
+			// never appear in a new block proposal.
+			RemoveDuplicateTransactionByHash(hash)
 			return fmt.Errorf("transaction was previously added in chain: checkTransactionInDBAndInMarkleTrie")
 		}
 	}
