@@ -192,6 +192,10 @@ func OnMessage(addr [4]byte, m []byte) {
 		common.BlockMutex.Lock()
 		defer common.BlockMutex.Unlock()
 
+		// Re-read height under the lock: another goroutine may have advanced it
+		// between the top-of-OnMessage read and acquiring BlockMutex.
+		h = common.GetHeight()
+
 		lastBlock, err := blocks.LoadBlock(h)
 		if err != nil {
 			logger.GetLogger().Println(err)
@@ -210,16 +214,6 @@ func OnMessage(addr [4]byte, m []byte) {
 					logger.GetLogger().Println("cannot load blocks from bytes")
 					tcpip.ReduceAndCheckIfBanIP(addr)
 					return
-				}
-
-				// Special logging for second block in nonce service
-				if newBlock.GetHeader().Height == 1 {
-					logger.GetLogger().Printf("=== Processing second block in nonce service ===")
-					logger.GetLogger().Printf("Current height: %d", h)
-					logger.GetLogger().Printf("Second block hash: %x", newBlock.BlockHash.GetBytes())
-					logger.GetLogger().Printf("Second block previous hash: %x", newBlock.GetHeader().PreviousHash.GetBytes())
-					logger.GetLogger().Printf("Genesis block hash: %x", lastBlock.BlockHash.GetBytes())
-					logger.GetLogger().Printf("Is initial sync: %v", h == 0)
 				}
 
 				if newBlock.GetHeader().Height != h+1 {
