@@ -134,7 +134,20 @@ func OnMessage(addr [4]byte, m []byte) {
 			return
 		}
 
-		txs := transactionsPool.PoolsTx.PeekTransactions(int(common.MaxTransactionsPerBlock), nonceHeight)
+		rawTxs := transactionsPool.PoolsTx.PeekTransactions(int(common.MaxTransactionsPerBlock), nonceHeight)
+		// Filter out transactions that are already confirmed in the blockchain.
+		// Under concurrent load, the memory pool can still hold transactions that
+		// were confirmed moments ago by a parallel block handler, causing
+		// CheckBlockTransfers to fail with "previously added in chain".
+		txs := rawTxs[:0]
+		for _, tx := range rawTxs {
+			if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], tx.Hash.GetBytes()) {
+				// Already confirmed — clean it out of the memory pool proactively.
+				transactionsPool.PoolsTx.RemoveTransactionByHash(tx.Hash.GetBytes())
+				continue
+			}
+			txs = append(txs, tx)
+		}
 		txsBytes := make([][]byte, len(txs))
 		transactionsHashes := []common.Hash{}
 		for _, tx := range txs {
