@@ -2,7 +2,6 @@ package tcpip
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"net"
 	"time"
@@ -33,13 +32,22 @@ func StartNewListener(topic [2]byte) {
 			logger.GetLogger().Println("Should exit StartNewListener")
 			return
 		default:
+			conn.SetDeadline(time.Now().Add(time.Second))
 			_, err := Accept(topic, conn)
 			if err != nil {
+				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+					continue
+				}
 				logger.GetLogger().Println(err)
 				continue
 			}
 		}
 	}
+}
+
+type connEntry struct {
+	ip   [4]byte
+	conn *net.TCPConn
 }
 
 func LoopSend(sendChan <-chan []byte, topic [2]byte) {
@@ -53,56 +61,39 @@ func LoopSend(sendChan <-chan []byte, topic [2]byte) {
 				logger.GetLogger().Println("wrong message", topic)
 				continue
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 
-			var deletedIPs [][]byte
-
-			PeersMutex.Lock()
-			select {
-			case <-ctx.Done():
-				// Handle timeout
-				PeersMutex.Unlock()
-				logger.GetLogger().Println("timeout in sending")
-				cancel()
-				continue
-			default:
-
-				if bytes.Equal(ipr[:], []byte{0, 0, 0, 0}) {
-
-					tmpConn := tcpConnections[topic]
-					for k, tcpConn0 := range tmpConn {
-						if _, ok := validPeersConnected[k]; !ok {
-							logger.GetLogger().Println("when send to all, ignore connection", k)
-						} else if !bytes.Equal(k[:], MyIP[:]) {
-							err := Send(tcpConn0, s[4:])
-							if err != nil {
-								logger.GetLogger().Println("error in sending to all ", err)
-								deleted := CloseAndRemoveConnection(tcpConn0)
-								deletedIPs = append(deletedIPs, deleted...)
-							}
-						}
+			// Snapshot connections under RLock — do NOT hold the lock during I/O.
+			var targets []connEntry
+			PeersMutex.RLock()
+			if bytes.Equal(ipr[:], []byte{0, 0, 0, 0}) {
+				for k, tcpConn0 := range tcpConnections[topic] {
+					if _, ok := validPeersConnected[k]; ok && !bytes.Equal(k[:], MyIP[:]) {
+						targets = append(targets, connEntry{k, tcpConn0})
+					} else if !bytes.Equal(k[:], MyIP[:]) {
+						logger.GetLogger().Println("when send to all, ignore connection", k)
 					}
-				} else {
-					tcpConns := tcpConnections[topic]
-					tcpConn, ok := tcpConns[ipr]
-
-					if _, ok2 := validPeersConnected[ipr]; !ok2 {
-						logger.GetLogger().Println("ignore when send to ", ipr)
-					} else if ok {
-						err := Send(tcpConn, s[4:])
-						if err != nil {
-							logger.GetLogger().Printf("LoopSend: error sending to %v: %v", ipr, err)
-							deleted := CloseAndRemoveConnection(tcpConn)
-							deletedIPs = append(deletedIPs, deleted...)
-						}
-					}
-
 				}
-				PeersMutex.Unlock()
-				cancel()
+			} else {
+				if _, ok2 := validPeersConnected[ipr]; !ok2 {
+					logger.GetLogger().Println("ignore when send to ", ipr)
+				} else if tcpConn, ok := tcpConnections[topic][ipr]; ok {
+					targets = append(targets, connEntry{ipr, tcpConn})
+				}
+			}
+			PeersMutex.RUnlock()
+
+			// Send outside the lock — I/O must not hold PeersMutex.
+			var deletedIPs [][]byte
+			for _, t := range targets {
+				if err := Send(t.conn, s[4:]); err != nil {
+					logger.GetLogger().Printf("LoopSend: error sending to %v: %v", t.ip, err)
+					PeersMutex.Lock()
+					deleted := CloseAndRemoveConnection(t.conn)
+					PeersMutex.Unlock()
+					deletedIPs = append(deletedIPs, deleted...)
+				}
 			}
 
-			// Notify about deleted peers outside the lock to avoid blocking
 			for _, deletedIP := range deletedIPs {
 				ChanPeer <- deletedIP
 			}

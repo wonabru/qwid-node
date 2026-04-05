@@ -134,7 +134,20 @@ func OnMessage(addr [4]byte, m []byte) {
 			return
 		}
 
-		txs := transactionsPool.PoolsTx.PeekTransactions(int(common.MaxTransactionsPerBlock), nonceHeight)
+		rawTxs := transactionsPool.PoolsTx.PeekTransactions(int(common.MaxTransactionsPerBlock), nonceHeight)
+		// Filter out transactions that are already confirmed in the blockchain.
+		// Under concurrent load, the memory pool can still hold transactions that
+		// were confirmed moments ago by a parallel block handler, causing
+		// CheckBlockTransfers to fail with "previously added in chain".
+		txs := rawTxs[:0]
+		for _, tx := range rawTxs {
+			if transactionsDefinition.CheckFromDBPoolTx(common.TransactionDBPrefix[:], tx.Hash.GetBytes()) {
+				// Already confirmed — clean it out of the memory pool proactively.
+				transactionsPool.PoolsTx.RemoveTransactionByHash(tx.Hash.GetBytes())
+				continue
+			}
+			txs = append(txs, tx)
+		}
 		txsBytes := make([][]byte, len(txs))
 		transactionsHashes := []common.Hash{}
 		for _, tx := range txs {
@@ -179,6 +192,10 @@ func OnMessage(addr [4]byte, m []byte) {
 		common.BlockMutex.Lock()
 		defer common.BlockMutex.Unlock()
 
+		// Re-read height under the lock: another goroutine may have advanced it
+		// between the top-of-OnMessage read and acquiring BlockMutex.
+		h = common.GetHeight()
+
 		lastBlock, err := blocks.LoadBlock(h)
 		if err != nil {
 			logger.GetLogger().Println(err)
@@ -197,16 +214,6 @@ func OnMessage(addr [4]byte, m []byte) {
 					logger.GetLogger().Println("cannot load blocks from bytes")
 					tcpip.ReduceAndCheckIfBanIP(addr)
 					return
-				}
-
-				// Special logging for second block in nonce service
-				if newBlock.GetHeader().Height == 1 {
-					logger.GetLogger().Printf("=== Processing second block in nonce service ===")
-					logger.GetLogger().Printf("Current height: %d", h)
-					logger.GetLogger().Printf("Second block hash: %x", newBlock.BlockHash.GetBytes())
-					logger.GetLogger().Printf("Second block previous hash: %x", newBlock.GetHeader().PreviousHash.GetBytes())
-					logger.GetLogger().Printf("Genesis block hash: %x", lastBlock.BlockHash.GetBytes())
-					logger.GetLogger().Printf("Is initial sync: %v", h == 0)
 				}
 
 				if newBlock.GetHeader().Height != h+1 {

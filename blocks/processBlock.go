@@ -170,7 +170,6 @@ func CheckBlockTransfers(block Block, lastBlock Block, tree *transactionsPool.Me
 		poolTx, err := transactionsDefinition.LoadFromDBPoolTx(common.TransactionPoolHashesDBPrefix[:], hash)
 		if err != nil {
 			transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionPoolHashesDBPrefix[:], hash)
-			// if common.IsSyncing.Load() {
 			poolTx, err = transactionsDefinition.LoadFromDBPoolTx(common.TransactionDBPrefix[:], hash)
 			if err != nil {
 				// Try to recover from bad transaction DB during sync
@@ -184,24 +183,24 @@ func CheckBlockTransfers(block Block, lastBlock Block, tree *transactionsPool.Me
 					logger.GetLogger().Printf("  tx[%d] %x from badTx FAILED validation", i, hash[:8])
 					return 0, 0, fmt.Errorf("bad transaction failed validation: %x", hash[:8])
 				}
-				// Store to confirmed DB
+				// Store to confirmed DB so re-adding to pool DB below succeeds
 				err = poolTx.StoreToDBPoolTx(common.TransactionDBPrefix[:])
 				if err != nil {
 					return 0, 0, err
 				}
+			} else {
+				// TX was found in confirmed DB — check if it is already in a Merkle tree.
+				// If so, return the error immediately WITHOUT re-adding to pool DB.
+				// Re-adding first (old behaviour) left a stale pool DB entry that caused
+				// every subsequent block containing the same tx to also fail.
+				if checkErr := transactionsPool.CheckTransactionInDBAndInMarkleTrie(hash, tree); checkErr != nil {
+					return 0, 0, checkErr
+				}
 			}
-			//TODO
-			//err = transactionsDefinition.RemoveTransactionFromDBbyHash(common.TransactionDBPrefix[:], hash)
-			//if err != nil {
-			//	return 0, 0, err
-			//}
 			err = poolTx.StoreToDBPoolTx(common.TransactionPoolHashesDBPrefix[:])
 			if err != nil {
 				return 0, 0, err
 			}
-			// } else {
-			// return 0, 0, err
-			// }
 		}
 		err = transactionsPool.CheckTransactionInDBAndInMarkleTrie(hash, tree)
 		if err != nil {

@@ -9,7 +9,6 @@ import (
 	"net"
 	"net/rpc"
 	"strconv"
-	"sync"
 
 	"github.com/wonabru/qwid-node/account"
 	"github.com/wonabru/qwid-node/blocks"
@@ -27,8 +26,6 @@ import (
 	"github.com/wonabru/qwid-node/wallet"
 )
 
-var listenerMutex sync.Mutex
-var activeWallet *wallet.Wallet
 
 type Listener []byte
 
@@ -48,8 +45,6 @@ func ListenRPC() {
 }
 
 func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
-	listenerMutex.Lock()
-	defer listenerMutex.Unlock()
 	if len(lineBeg) < 4 {
 		*reply = []byte("Error with message. Too small length calling server")
 		return nil
@@ -85,7 +80,7 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 			*reply = []byte("Invalid signature with length 0")
 			return nil
 		}
-		activeWallet = wallet.GetActiveWallet()
+		activeWallet := wallet.GetActiveWallet()
 
 		pubKey := activeWallet.Account1.PublicKey
 		if signatureBytes[0] != 0 {
@@ -421,8 +416,8 @@ func handleACCT(line []byte, reply *[]byte) {
 	byt := [common.AddressLength]byte{}
 	copy(byt[:], line[:common.AddressLength])
 	account.AccountsRWMutex.RLock()
-	acc := account.Accounts.AllAccounts[byt]
-	defer account.AccountsRWMutex.RUnlock()
+	acc := account.Accounts.AllAccounts[byt] // value copy
+	account.AccountsRWMutex.RUnlock()
 	// Limit to last 50 transaction hashes
 	if len(acc.TransactionsSender) > 50 {
 		acc.TransactionsSender = acc.TransactionsSender[len(acc.TransactionsSender)-50:]
@@ -441,9 +436,10 @@ func handleSTAK(line []byte, reply *[]byte) {
 	copy(byt[:], line[:common.AddressLength])
 	n := int(line[common.AddressLength])
 	account.StakingRWMutex.RLock()
-	acc := account.StakingAccounts[n].AllStakingAccounts[byt]
+	acc := account.StakingAccounts[n].AllStakingAccounts[byt] // value copy
+	account.StakingRWMutex.RUnlock()
+	// GetLockedAmount acquires StakingRWMutex internally — must be called outside our lock
 	locked, _ := account.GetLockedAmount(byt[:], common.GetHeight(), n)
-	defer account.StakingRWMutex.RUnlock()
 	am := acc.Marshal()
 	*reply = append(am, common.GetByteInt64(locked)...)
 }
@@ -473,10 +469,11 @@ func handleCNCL(byt []byte, reply *[]byte) {
 	*reply = []byte("hash is not 32 bytes")
 
 	if len(byt) == common.HashLength {
+		w := wallet.GetActiveWallet()
 		//TODO nice to have cancelling for any user not only owner of node
 		if transactionsPool.PoolsTx.TransactionExists(byt) {
 			tx := transactionsPool.PoolsTx.PopTransactionByHash(byt)
-			if bytes.Equal(tx.TxParam.Sender.GetBytes(), activeWallet.MainAddress.GetBytes()) == false {
+			if bytes.Equal(tx.TxParam.Sender.GetBytes(), w.MainAddress.GetBytes()) == false {
 				transactionsPool.PoolsTx.AddTransaction(tx, tx.Hash)
 				*reply = []byte("you are not the owner of transaction")
 				return
@@ -485,7 +482,7 @@ func handleCNCL(byt []byte, reply *[]byte) {
 		}
 		if transactionsPool.PoolTxEscrow.TransactionExists(byt) {
 			tx := transactionsPool.PoolTxEscrow.PopTransactionByHash(byt)
-			if bytes.Equal(tx.TxParam.Sender.GetBytes(), activeWallet.MainAddress.GetBytes()) == false {
+			if bytes.Equal(tx.TxParam.Sender.GetBytes(), w.MainAddress.GetBytes()) == false {
 				transactionsPool.PoolTxEscrow.AddTransaction(tx, tx.Hash)
 				*reply = []byte("you are not the owner of transaction")
 				return
@@ -494,7 +491,7 @@ func handleCNCL(byt []byte, reply *[]byte) {
 		}
 		if transactionsPool.PoolTxMultiSign.TransactionExists(byt) {
 			tx := transactionsPool.PoolTxMultiSign.PopTransactionByHash(byt)
-			if bytes.Equal(tx.TxParam.Sender.GetBytes(), activeWallet.MainAddress.GetBytes()) == false {
+			if bytes.Equal(tx.TxParam.Sender.GetBytes(), w.MainAddress.GetBytes()) == false {
 				transactionsPool.PoolTxMultiSign.AddTransaction(tx, tx.Hash)
 				*reply = []byte("you are not the owner of transaction")
 				return
@@ -718,6 +715,7 @@ func handleVALS(line []byte, reply *[]byte) {
 		})
 	}
 	account.StakingRWMutex.RUnlock()
+	// Marshal outside the lock — JSON encoding can be slow for large data sets.
 
 	resp := VALSResponse{
 		TotalStaked: account.Int64toFloat64(totalStaked),
