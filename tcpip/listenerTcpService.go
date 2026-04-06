@@ -2,6 +2,7 @@ package tcpip
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net"
 	"time"
@@ -35,7 +36,8 @@ func StartNewListener(topic [2]byte) {
 			conn.SetDeadline(time.Now().Add(time.Second))
 			_, err := Accept(topic, conn)
 			if err != nil {
-				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				var netErr net.Error
+				if errors.As(err, &netErr) && netErr.Timeout() {
 					continue
 				}
 				logger.GetLogger().Println(err)
