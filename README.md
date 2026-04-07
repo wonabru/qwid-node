@@ -133,7 +133,7 @@ To create account and manage wallet:
 
 Run Node:
 
-    go run cmd/mining/main.go 46.205.244.17
+    go run cmd/mining/main.go 178.182.254.9
  
 Run GUI (requires Qt5):
 
