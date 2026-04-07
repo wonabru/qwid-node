@@ -193,7 +193,7 @@ func Listen(ip [4]byte, port int) (*net.TCPListener, error) {
 func Accept(topic [2]byte, conn *net.TCPListener) (*net.TCPConn, error) {
 	tcpConn, err := conn.AcceptTCP()
 	if err != nil {
-		return nil, fmt.Errorf("error accepting connection: %v", err.Error())
+		return nil, fmt.Errorf("error accepting connection: %w", err)
 	}
 
 	if !RegisterPeer(topic, tcpConn) {
