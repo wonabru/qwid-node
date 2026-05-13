@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -1468,17 +1469,29 @@ func CompileSmartContract(w http.ResponseWriter, r *http.Request) {
 		jsonError(w, "No Solidity code provided", http.StatusBadRequest)
 		return
 	}
-
-	os.MkdirAll("smartContracts", 0755)
-
-	err := os.WriteFile("smartContracts/contract.sol", []byte(req.Code), 0644)
-	if err != nil {
-		jsonError(w, "Failed to write contract file: "+err.Error(), http.StatusInternalServerError)
+	const maxCodeSize = 512 * 1024 // 512 KB
+	if len(req.Code) > maxCodeSize {
+		jsonError(w, "Contract code too large (max 512 KB)", http.StatusBadRequest)
 		return
 	}
 
+	tmpFile, err := os.CreateTemp("", "contract-*.sol")
+	if err != nil {
+		jsonError(w, "Failed to create temp file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpPath := tmpFile.Name()
+	defer os.Remove(tmpPath)
+
+	if _, err = tmpFile.WriteString(req.Code); err != nil {
+		tmpFile.Close()
+		jsonError(w, "Failed to write contract file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpFile.Close()
+
 	// Compile bytecode
-	cmd := exec.Command("solc", "--evm-version", "paris", "--bin", "smartContracts/contract.sol")
+	cmd := exec.Command("solc", "--evm-version", "paris", "--bin", tmpPath)
 	var binOut bytes.Buffer
 	var binErr bytes.Buffer
 	cmd.Stdout = &binOut
@@ -1500,7 +1513,7 @@ func CompileSmartContract(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Compile ABI
-	cmd = exec.Command("solc", "--evm-version", "paris", "--abi", "smartContracts/contract.sol")
+	cmd = exec.Command("solc", "--evm-version", "paris", "--abi", tmpPath)
 	var abiOut bytes.Buffer
 	var abiErr bytes.Buffer
 	cmd.Stdout = &abiOut
@@ -1524,8 +1537,6 @@ func CompileSmartContract(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-
-	os.WriteFile("smartContracts/contract.abi", []byte(abiStr), 0644)
 
 	jsonResponse(w, map[string]string{
 		"bytecode": bytecode,
@@ -1916,7 +1927,14 @@ func GetLogs(w http.ResponseWriter, r *http.Request) {
 		fileName = "mining-" + getCurrentDate() + ".log"
 	}
 
-	filePath := logsDir + fileName
+	// Prevent path traversal: strip all directory components, then verify the
+	// resolved path stays inside logsDir.
+	cleanedLogsDir := filepath.Clean(logsDir)
+	filePath := filepath.Join(cleanedLogsDir, filepath.Base(fileName))
+	if !strings.HasPrefix(filePath, cleanedLogsDir+string(filepath.Separator)) {
+		jsonError(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
 
 	// Read log file
 	content, totalLines, err := readLogFile(filePath, filter, offset, limit)

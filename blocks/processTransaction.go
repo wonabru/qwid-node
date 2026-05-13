@@ -21,6 +21,7 @@ func CheckStakingTransaction(tx transactionsDefinition.Transaction, sumAmount in
 	opacc := block.BaseBlock.BaseHeader.OperatorAccount
 	operational := len(tx.TxData.OptData) > 0
 	if bytes.Equal(address.GetBytes(), opacc.GetBytes()) && operational {
+		logger.GetLogger().Println("operational account cannot set transactions with set to be operational account second time: CheckStakingTransaction")
 		return false
 	}
 	acc, exist := account.GetAccountByAddressBytes(address.GetBytes())

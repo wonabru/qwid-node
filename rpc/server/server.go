@@ -27,7 +27,17 @@ import (
 )
 
 
-type Listener []byte
+type Listener struct {
+	remoteIP string
+}
+
+func extractRemoteIP(addr string) string {
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return ""
+	}
+	return host
+}
 
 func ListenRPC() {
 	var address = "0.0.0.0:" + strconv.Itoa(tcpip.Ports[tcpip.RPCTopic])
@@ -36,12 +46,20 @@ func ListenRPC() {
 		logger.GetLogger().Fatalf("Error resolving TCP address: %v", err)
 	}
 	defer listener.Close()
-	err = rpc.Register(new(Listener))
-	if err != nil {
-		logger.GetLogger().Fatalf("Error registering RPC listener: %v", err)
-	}
 	logger.GetLogger().Printf("RPC server listening on %s", address)
-	rpc.Accept(listener)
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			logger.GetLogger().Printf("RPC accept error: %v", err)
+			continue
+		}
+		remoteIP := extractRemoteIP(conn.RemoteAddr().String())
+		go func(c net.Conn, ip string) {
+			srv := rpc.NewServer()
+			srv.Register(&Listener{remoteIP: ip})
+			srv.ServeConn(c)
+		}(conn, remoteIP)
+	}
 }
 
 func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
@@ -76,6 +94,10 @@ func (l *Listener) Send(lineBeg []byte, reply *[]byte) error {
 	}
 	signatureBytes = left
 	if verificationNeeded {
+		if l.remoteIP != "127.0.0.1" && l.remoteIP != "::1" {
+			*reply = []byte("Private operations only allowed from localhost")
+			return nil
+		}
 		if len(signatureBytes) == 0 {
 			*reply = []byte("Invalid signature with length 0")
 			return nil
