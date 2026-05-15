@@ -53,7 +53,7 @@ type BlockProducerStats struct {
 
 func GetValidatorBlocks(w http.ResponseWriter, r *http.Request) {
 	countStr := r.URL.Query().Get("count")
-	count := 100
+	count := 10
 	if countStr != "" {
 		c, err := strconv.Atoi(countStr)
 		if err == nil && c > 0 && c <= 500 {

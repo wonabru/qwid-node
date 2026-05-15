@@ -17,7 +17,7 @@ var (
 	Decimals                       uint8   = 8
 	MaxTotalSupply                 int64   = 230000000000000000
 	InitSupply                     int64   = 23000000000000000
-	RewardRatio                            = 1e-7
+	RewardRatio                            = 2e-8
 	ValidationTag                          = "validationTag"
 	DifficultyMultiplier           int32   = 10
 	BlockTimeInterval              float32 = 10 // 10 sec.

@@ -52,6 +52,7 @@ func main() {
 	mux.HandleFunc("/api/search", corsMiddleware(handlers.Search))
 	mux.HandleFunc("/api/validators", corsMiddleware(handlers.GetValidators))
 	mux.HandleFunc("/api/validators/blocks", corsMiddleware(handlers.GetValidatorBlocks))
+	mux.HandleFunc("/api/contact", corsMiddleware(handlers.SendContact))
 
 	staticFS, _ := fs.Sub(staticFiles, "static")
 	mux.Handle("/", http.FileServer(http.FS(staticFS)))
@@ -91,7 +92,7 @@ func main() {
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		w.Header().Set("Content-Type", "application/json")
 
