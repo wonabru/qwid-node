@@ -436,12 +436,15 @@ function truncHash(h, n) {
 
 function formatAmount(a) {
     if (a === undefined || a === null) return '0';
-    return Number(a).toFixed(8).replace(/\.?0+$/, '') || '0';
+    const s = Number(a).toFixed(8).replace(/\.?0+$/, '') || '0';
+    const parts = s.split('.');
+    parts[0] = Number(parts[0]).toLocaleString('en-US');
+    return parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0];
 }
 
 function fmt2(a) {
     if (a === undefined || a === null) return '0';
-    return Number(a).toFixed(2);
+    return Math.round(Number(a)).toLocaleString('en-US');
 }
 
 function locationBadge(loc) {

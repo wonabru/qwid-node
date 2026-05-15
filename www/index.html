@@ -252,7 +252,9 @@ img{max-width:100%}
 }
 .hero-radial{
   position:absolute;inset:0;
-  background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(0,85,255,0.08) 0%,transparent 70%);
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 42%, rgba(2,8,16,0.72) 0%, rgba(2,8,16,0.45) 45%, transparent 75%),
+    radial-gradient(ellipse 70% 60% at 50% 40%, rgba(0,85,255,0.06) 0%, transparent 70%);
   pointer-events:none;
 }
 .hero-content{
@@ -2025,132 +2027,152 @@ img{max-width:100%}
 (function(){
   const canvas = document.getElementById('qCanvas');
   const ctx = canvas.getContext('2d');
-  const NODE_COUNT = 65;
-  const CONNECT_DIST = 160;
-  const MOUSE_RADIUS = 100;
-  const MOUSE_FORCE = 1.5;
-  let W, H, nodes = [];
-  let mouse = {x:-9999, y:-9999};
+  const S = 38; // hex size
+  let W, H, hexes = [];
+  let mouse = {x:-9999, y:-9999, active:false};
+  let t = 0, lastPulse = 0;
 
-  function resize(){
-    const hero = canvas.parentElement;
-    W = canvas.width = hero.offsetWidth;
-    H = canvas.height = hero.offsetHeight;
+  function buildGrid(){
+    hexes = [];
+    const colW = S * 1.5;
+    const rowH = S * Math.sqrt(3);
+    const cols = Math.ceil(W / colW) + 3;
+    const rows = Math.ceil(H / rowH) + 3;
+    for(let c = -1; c < cols; c++){
+      for(let r = -1; r < rows; r++){
+        const x = c * colW;
+        const y = r * rowH + (c & 1 ? rowH * 0.5 : 0);
+        hexes.push({x, y, e:Math.random()*0.2, phase:Math.random()*Math.PI*2, spd:0.006+Math.random()*0.01, nb:[]});
+      }
+    }
+    // Precompute neighbours
+    const thresh = S * 2.1;
+    for(let i = 0; i < hexes.length; i++){
+      for(let j = i+1; j < hexes.length; j++){
+        const dx = hexes[i].x-hexes[j].x, dy = hexes[i].y-hexes[j].y;
+        if(dx*dx+dy*dy < thresh*thresh){
+          hexes[i].nb.push(j);
+          hexes[j].nb.push(i);
+        }
+      }
+    }
   }
 
-  function randBetween(a,b){return a + Math.random()*(b-a)}
-
-  function initNodes(){
-    nodes = [];
-    for(let i=0;i<NODE_COUNT;i++){
-      nodes.push({
-        x: Math.random()*W,
-        y: Math.random()*H,
-        vx: randBetween(-0.25, 0.25),
-        vy: randBetween(-0.25, 0.25),
-        r: randBetween(1.5, 3),
-        phase: Math.random()*Math.PI*2,
-        speed: randBetween(0.012, 0.025)
-      });
+  function hexPath(x, y, r){
+    ctx.beginPath();
+    for(let i=0;i<6;i++){
+      const a = Math.PI/3*i;
+      const px = x + r*Math.cos(a), py = y + r*Math.sin(a);
+      i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
     }
+    ctx.closePath();
   }
 
   function draw(){
-    ctx.clearRect(0,0,W,H);
+    t += 0.016;
+    ctx.clearRect(0, 0, W, H);
 
-    // Update positions
-    for(let i=0;i<nodes.length;i++){
-      const n = nodes[i];
-      n.phase += n.speed;
-
-      // Mouse repulsion
-      const dx = n.x - mouse.x;
-      const dy = n.y - mouse.y;
-      const dist = Math.sqrt(dx*dx+dy*dy);
-      if(dist < MOUSE_RADIUS && dist > 0){
-        const force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS * MOUSE_FORCE;
-        n.vx += (dx/dist)*force*0.05;
-        n.vy += (dy/dist)*force*0.05;
-      }
-
-      // Speed limit
-      const spd = Math.sqrt(n.vx*n.vx+n.vy*n.vy);
-      if(spd > 0.8){n.vx*=0.8/spd;n.vy*=0.8/spd}
-
-      n.x += n.vx;
-      n.y += n.vy;
-
-      // Bounce
-      if(n.x < 0){n.x=0;n.vx=Math.abs(n.vx)}
-      if(n.x > W){n.x=W;n.vx=-Math.abs(n.vx)}
-      if(n.y < 0){n.y=0;n.vy=Math.abs(n.vy)}
-      if(n.y > H){n.y=H;n.vy=-Math.abs(n.vy)}
+    // Periodic lattice pulse (simulates new block)
+    if(t - lastPulse > 0.8 + Math.random()*0.4){
+      lastPulse = t;
+      const h = hexes[Math.floor(Math.random()*hexes.length)];
+      if(h){ h.e = 1.0; h.gold = 1.0; }
     }
 
-    // Draw connections
-    for(let i=0;i<nodes.length;i++){
-      for(let j=i+1;j<nodes.length;j++){
-        const a = nodes[i], b = nodes[j];
-        const dx = a.x-b.x, dy = a.y-b.y;
-        const dist = Math.sqrt(dx*dx+dy*dy);
-        if(dist < CONNECT_DIST){
-          const alpha = (1 - dist/CONNECT_DIST) * 0.35;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = `rgba(0,229,255,${alpha})`;
-          ctx.lineWidth = 0.8;
-          ctx.stroke();
+    // Mouse excitation
+    if(mouse.active){
+      for(let i=0;i<hexes.length;i++){
+        const h = hexes[i];
+        const dx = h.x-mouse.x, dy = h.y-mouse.y;
+        const d2 = dx*dx+dy*dy;
+        if(d2 < 14400){ // 120px radius
+          h.e = Math.min(1, h.e + (1 - Math.sqrt(d2)/120)*0.06);
         }
       }
     }
 
-    // Draw nodes
-    for(let i=0;i<nodes.length;i++){
-      const n = nodes[i];
-      const pulse = 0.6 + Math.sin(n.phase)*0.4;
+    // Update energy — each hex is independent, no propagation
+    for(let i=0;i<hexes.length;i++){
+      const h = hexes[i];
+      h.e = Math.max(0, h.e * 0.97);
+      h.phase += h.spd + h.e * 0.02;
+      if(h.gold) h.gold = Math.max(0, h.gold - 0.018);
+    }
 
-      // Outer glow
-      const grad = ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r*4);
-      grad.addColorStop(0, `rgba(0,229,255,${0.25*pulse})`);
-      grad.addColorStop(1, 'rgba(0,229,255,0)');
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r*4, 0, Math.PI*2);
-      ctx.fillStyle = grad;
+    // Draw hexes
+    for(let i=0;i<hexes.length;i++){
+      const h = hexes[i];
+      const pulse = (Math.sin(h.phase) + 1) * 0.5;
+      const e = h.e;
+      const g = h.gold || 0;
+
+      // Hex fill
+      const brightness = 0.06 + pulse*0.07 + e*0.18 + g*0.15;
+      const r = Math.round(g*180 + e*8);
+      const gv = Math.round(60 + pulse*70 + e*100 + g*120);
+      const b = Math.round(90 + pulse*90 + e*40);
+      hexPath(h.x, h.y, S - 1);
+      ctx.fillStyle = `rgba(${r},${gv},${b},${brightness})`;
       ctx.fill();
 
-      // Core
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r*pulse, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(0,229,255,${0.7*pulse})`;
-      ctx.fill();
+      // Edge glow
+      const edgeA = 0.08 + e*0.18 + pulse*0.07 + g*0.3;
+      hexPath(h.x, h.y, S - 1);
+      ctx.strokeStyle = g > 0.05
+        ? `rgba(240,180,41,${edgeA})`
+        : `rgba(0,229,255,${edgeA})`;
+      ctx.lineWidth = 0.6 + e*0.8;
+      ctx.stroke();
+
+      // Centre dot for energised hexes
+      if(e > 0.12 || g > 0.05){
+        const dotR = 1.5 + e*5 + g*4;
+        const grad = ctx.createRadialGradient(h.x,h.y,0,h.x,h.y,dotR);
+        if(g > 0.05){
+          grad.addColorStop(0, `rgba(240,180,41,${(e+g)*0.9})`);
+          grad.addColorStop(1, 'rgba(240,180,41,0)');
+        } else {
+          grad.addColorStop(0, `rgba(0,229,255,${e*0.85})`);
+          grad.addColorStop(1, 'rgba(0,229,255,0)');
+        }
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, dotR, 0, Math.PI*2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+      }
     }
 
     requestAnimationFrame(draw);
   }
 
-  // Mouse tracking
+  function resize(){
+    const hero = canvas.parentElement;
+    W = canvas.width = hero.offsetWidth;
+    H = canvas.height = hero.offsetHeight;
+    buildGrid();
+  }
+
   document.addEventListener('mousemove', e=>{
     const rect = canvas.getBoundingClientRect();
     mouse.x = e.clientX - rect.left;
     mouse.y = e.clientY - rect.top;
+    mouse.active = true;
   });
-  document.addEventListener('mouseleave', ()=>{mouse.x=-9999;mouse.y=-9999});
+  document.addEventListener('mouseleave', ()=>{ mouse.active = false; });
 
-  // Touch tracking
   canvas.addEventListener('touchmove', e=>{
-    const t = e.touches[0];
+    const touch = e.touches[0];
     const rect = canvas.getBoundingClientRect();
-    mouse.x = t.clientX - rect.left;
-    mouse.y = t.clientY - rect.top;
+    mouse.x = touch.clientX - rect.left;
+    mouse.y = touch.clientY - rect.top;
+    mouse.active = true;
   },{passive:true});
+  canvas.addEventListener('touchend', ()=>{ mouse.active = false; });
 
-  // Resize observer
-  const ro = new ResizeObserver(()=>{resize();initNodes()});
+  const ro = new ResizeObserver(()=>resize());
   ro.observe(canvas.parentElement);
 
   resize();
-  initNodes();
   draw();
 })();
 
@@ -2159,10 +2181,7 @@ const API_BASE = 'https://explorer.qwid.org';
 
 function formatNumber(n){
   if(typeof n !== 'number') n = parseFloat(n)||0;
-  if(n >= 1e9) return (n/1e9).toFixed(2)+'B';
-  if(n >= 1e6) return (n/1e6).toFixed(2)+'M';
-  if(n >= 1e3) return (n/1e3).toFixed(1)+'K';
-  return n.toLocaleString();
+  return n.toLocaleString('en-US', {maximumFractionDigits:2});
 }
 
 function setEl(id, val){
