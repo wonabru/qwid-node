@@ -1854,8 +1854,13 @@ img{max-width:100%}
 
     <div class="team-card">
       <div class="team-photo-wrap">
-        <img src="KU_pic.png" alt="Founder" class="team-photo">
+        <img src="KU_pic.png" alt="Krzysztof Urbanowicz" class="team-photo">
         <div class="team-photo-glow"></div>
+        <div class="team-name">Dr. Krzysztof Urbanowicz</div>
+        <a href="https://linkedin.com/in/wonabru" target="_blank" rel="noopener" class="team-linkedin">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          LinkedIn
+        </a>
       </div>
       <div class="team-bio">
         <div class="team-headline">20+ years across the disciplines QWID needs</div>
@@ -1937,6 +1942,27 @@ img{max-width:100%}
   background:radial-gradient(circle,rgba(0,229,255,.12) 0%,transparent 70%);
   pointer-events:none;
 }
+.team-name{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700;
+  font-size:.9rem;
+  color:#e8f4ff;
+  text-align:center;
+  margin-top:.85rem;
+  letter-spacing:.03em;
+}
+.team-linkedin{
+  display:flex;align-items:center;justify-content:center;gap:.4rem;
+  margin-top:.45rem;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:.75rem;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  transition:color var(--transition);
+}
+.team-linkedin:hover{color:var(--cyan)}
 .team-headline{
   font-family:'Barlow Condensed',sans-serif;
   font-size:1.35rem;
