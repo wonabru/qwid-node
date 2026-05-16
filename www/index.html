@@ -1047,6 +1047,7 @@ img{max-width:100%}
     <li><a href="#tokenomics">Tokenomics</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#faq">FAQ</a></li>
+    <li><a href="#team">Team</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="https://explorer.qwid.org" target="_blank" rel="noopener" class="external">Explorer</a></li>
   </ul>
@@ -1071,7 +1072,7 @@ img{max-width:100%}
     <p class="hero-sub">QWID combines NIST-approved post-quantum cryptography, EVM smart contracts, and Proof-of-Synergy consensus — built to secure digital value long after quantum computers arrive.</p>
     <div class="hero-actions">
       <a href="#get-started" class="btn btn-primary">Get Started</a>
-      <a href="GreenPaper_1.0.pdf" target="_blank" rel="noopener" class="btn btn-outline">Read GreenPaper</a>
+      <a href="WhitePaper_1.0.pdf" target="_blank" rel="noopener" class="btn btn-outline">Read WhitePaper</a>
       <a href="https://explorer.qwid.org" target="_blank" rel="noopener" class="btn btn-ghost">Live Explorer ↗</a>
     </div>
   </div>
@@ -1611,7 +1612,7 @@ img{max-width:100%}
             <span class="timeline-badge badge-done">Completed</span>
           </div>
           <div class="timeline-title">Phase 5 — Tooling &amp; Developer Experience</div>
-          <p class="timeline-desc">Web UI wallet, Qt desktop wallet, and open-source blockchain explorer. JSON-RPC interface for wallet-node communication. Public repository released at github.com/wonabru/qwid-node. GreenPaper v1.0 published.</p>
+          <p class="timeline-desc">Web UI wallet, Qt desktop wallet, and open-source blockchain explorer. JSON-RPC interface for wallet-node communication. Public repository released at github.com/wonabru/qwid-node. WhitePaper v1.0 published.</p>
         </div>
 
         <div class="timeline-item active">
@@ -1845,6 +1846,179 @@ img{max-width:100%}
   </div>
 </section>
 
+<!-- ===================== TEAM ===================== -->
+<section class="section section--deep reveal" id="team">
+  <div class="container" style="max-width:900px">
+    <div class="section-eyebrow" style="text-align:center">The Builder</div>
+    <h2 class="section-title" style="text-align:center;margin-bottom:3rem">Built by a Deeptech Veteran</h2>
+
+    <div class="team-card">
+      <div class="team-photo-wrap">
+        <img src="KU_pic.png" alt="Founder" class="team-photo">
+        <div class="team-photo-glow"></div>
+      </div>
+      <div class="team-bio">
+        <div class="team-headline">20+ years across the disciplines QWID needs</div>
+
+        <div class="team-domains">
+          <div class="team-domain-label">Domain expertise</div>
+          <div class="team-tags">
+            <span class="team-tag">Blockchain</span>
+            <span class="team-tag">Post-Quantum Cryptography</span>
+            <span class="team-tag">ML / AI</span>
+            <span class="team-tag">Financial Derivatives</span>
+            <span class="team-tag">Applied Mathematics</span>
+          </div>
+        </div>
+
+        <div class="team-stats-row">
+          <div class="team-stat">
+            <span class="team-stat-val">20</span>
+            <span class="team-stat-lbl">Publications</span>
+          </div>
+          <div class="team-stat">
+            <span class="team-stat-val">1</span>
+            <span class="team-stat-lbl">Book</span>
+          </div>
+          <div class="team-stat">
+            <span class="team-stat-val">600+</span>
+            <span class="team-stat-lbl">Citations</span>
+          </div>
+          <div class="team-stat">
+            <span class="team-stat-val">9</span>
+            <span class="team-stat-lbl">h-index</span>
+          </div>
+        </div>
+
+        <blockquote class="team-quote">
+          "QWID sits at the intersection of cryptography, distributed systems, and chaotic-signal ML — a combination that requires a physicist who codes. That's a rare profile, and it's been my career."
+        </blockquote>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.team-card{
+  display:grid;
+  grid-template-columns:200px 1fr;
+  gap:3rem;
+  align-items:start;
+  background:var(--surface);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius-lg);
+  padding:2.5rem;
+  position:relative;
+  overflow:hidden;
+}
+.team-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:.5;
+}
+@media(max-width:680px){
+  .team-card{grid-template-columns:1fr;gap:2rem;text-align:center}
+  .team-tags{justify-content:center}
+  .team-stats-row{justify-content:center}
+  .team-role{justify-content:center;flex-direction:column;gap:.25rem}
+}
+.team-photo-wrap{position:relative;width:180px;margin:0 auto}
+.team-photo{
+  width:180px;height:180px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid rgba(0,229,255,.3);
+  display:block;
+  filter:grayscale(20%);
+}
+.team-photo-glow{
+  position:absolute;inset:-8px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(0,229,255,.12) 0%,transparent 70%);
+  pointer-events:none;
+}
+.team-headline{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.35rem;
+  font-weight:700;
+  color:#e8f4ff;
+  line-height:1.3;
+  margin-bottom:1.5rem;
+}
+.team-domains{margin-bottom:1.25rem}
+.team-domain-label{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:.5rem;
+}
+.team-tags{display:flex;flex-wrap:wrap;gap:.5rem}
+.team-tag{
+  background:rgba(0,229,255,.07);
+  border:1px solid rgba(0,229,255,.2);
+  border-radius:20px;
+  padding:.25rem .8rem;
+  font-size:.78rem;
+  color:var(--cyan);
+  font-family:'Barlow',sans-serif;
+}
+.team-stats-row{
+  display:flex;gap:2rem;
+  margin-bottom:1.25rem;
+  flex-wrap:wrap;
+}
+.team-stat{display:flex;flex-direction:column;align-items:center;min-width:50px}
+.team-stat-val{
+  font-family:'Orbitron',sans-serif;
+  font-size:1.4rem;
+  font-weight:700;
+  color:var(--cyan);
+  text-shadow:0 0 14px rgba(0,229,255,.4);
+  line-height:1;
+}
+.team-stat-lbl{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:.68rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-top:.25rem;
+}
+.team-role{
+  display:flex;
+  align-items:center;
+  gap:.75rem;
+  margin-bottom:1.25rem;
+}
+.team-role-label{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  white-space:nowrap;
+}
+.team-role-val{
+  font-family:'Barlow',sans-serif;
+  font-size:.9rem;
+  color:#e8f4ff;
+  font-weight:600;
+}
+.team-quote{
+  border-left:2px solid var(--cyan);
+  padding:.75rem 1rem;
+  margin:0;
+  font-style:italic;
+  font-size:.9rem;
+  color:var(--text);
+  background:rgba(0,229,255,.04);
+  border-radius:0 6px 6px 0;
+  line-height:1.6;
+}
+</style>
+
 <!-- ===================== GET STARTED ===================== -->
 <section class="get-started section--void reveal" id="get-started">
   <div class="get-started-bg"></div>
@@ -1980,13 +2154,13 @@ img{max-width:100%}
         <ul>
           <li><a href="https://explorer.qwid.org" target="_blank" rel="noopener">Block Explorer ↗</a></li>
           <li><a href="https://github.com/wonabru/qwid-node" target="_blank" rel="noopener">GitHub ↗</a></li>
-          <li><a href="GreenPaper_1.0.pdf" target="_blank" rel="noopener">GreenPaper v1.0</a></li>
+          <li><a href="WhitePaper_1.0.pdf" target="_blank" rel="noopener">WhitePaper v1.0</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>Developers</h4>
         <ul>
-          <li><a href="GreenPaper_1.0.pdf" target="_blank" rel="noopener">Documentation</a></li>
+          <li><a href="WhitePaper_1.0.pdf" target="_blank" rel="noopener">Documentation</a></li>
           <li><a href="https://explorer.qwid.org" target="_blank" rel="noopener">Explorer API ↗</a></li>
           <li><a href="https://github.com/wonabru/qwid-node" target="_blank" rel="noopener">Source Code ↗</a></li>
         </ul>
