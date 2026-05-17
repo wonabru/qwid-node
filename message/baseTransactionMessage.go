@@ -33,8 +33,8 @@ func (a TransactionsMessage) GetTransactionsFromBytes(sigName, sigName2 string, 
 				at, rest, err := tx.GetFromBytes(tb)
 				if err != nil || len(rest) > 0 {
 					logger.GetLogger().Println("warning: ", err)
-					continue
-					//return nil, err
+					// continue
+					return nil, err
 				}
 				if topic == tcpip.NonceTopic || topic == tcpip.SelfNonceTopic {
 					txn[topic] = append(txn[topic], at)
@@ -42,6 +42,7 @@ func (a TransactionsMessage) GetTransactionsFromBytes(sigName, sigName2 string, 
 					txn[topic] = append(txn[topic], at)
 				} else {
 					logger.GetLogger().Println("warning: transaction fail to verify")
+					return nil, fmt.Errorf("transaction fail to verify")
 				}
 			}
 		}
@@ -129,4 +130,3 @@ func (a TransactionsMessage) GetFromBytes(b []byte) (AnyMessage, error) {
 
 	return AnyMessage(a), nil
 }
-
