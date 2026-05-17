@@ -17,6 +17,7 @@ type StakingAccount struct {
 	DelegatedAccount   [common.AddressLength]byte `json:"delegated_account"`
 	Address            [common.AddressLength]byte `json:"address"`
 	OperationalAccount bool                       `json:"operational_account"`
+	LastStakeHeight    int64                      `json:last_stake_height,omitempty`
 	StakingDetails     map[int64][]StakingDetail  `json:"staking_details,omitempty"` // block number as key of map
 }
 
@@ -49,13 +50,7 @@ func GetLockedAmount(accb []byte, height int64, delegatedAccount int) (int64, er
 }
 
 func lastStakeBlock(accb StakingAccount) (hmax int64) {
-	hmax = -1
-	for h := range accb.StakingDetails {
-		if h > hmax {
-			hmax = h
-		}
-	}
-	return hmax
+	return accb.LastStakeHeight
 }
 
 func Stake(accb []byte, amount int64, height int64, delegatedAccount int, operational bool, lockedAmount int64, releasePerBlock int64) error {
@@ -92,6 +87,7 @@ func Stake(accb []byte, amount int64, height int64, delegatedAccount int, operat
 		acc.OperationalAccount = operational
 	}
 	acc.StakedBalance += amount
+	acc.LastStakeHeight = height
 	if lockedAmount > 0 {
 		acc.LockedInitBlock = append(acc.LockedInitBlock, height)
 		acc.LockedAmount = append(acc.LockedAmount, lockedAmount)
@@ -154,6 +150,7 @@ func Unstake(accb []byte, amount int64, height int64, delegatedAccount int) erro
 		acc.LockedInitBlock = append(acc.LockedInitBlock[:ind], acc.LockedInitBlock[ind+1:]...)
 	}
 	acc.StakedBalance += amount
+	acc.LastStakeHeight = height
 	if acc.StakedBalance == 0 {
 		acc.OperationalAccount = false
 	}
