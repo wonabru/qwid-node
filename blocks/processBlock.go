@@ -16,6 +16,10 @@ import (
 )
 
 func validateBlockTimestamp(newBlock Block, lastBlock Block, shouldCheck bool) error {
+
+	if newBlock.GetHeader().Height < 2 {
+		return nil
+	}
 	blockTime := newBlock.GetBlockTimeStamp()
 	lastTime := lastBlock.GetBlockTimeStamp()
 	currTime := common.GetCurrentTimeStampInSecond()
