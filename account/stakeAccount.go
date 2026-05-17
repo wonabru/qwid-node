@@ -3,8 +3,9 @@ package account
 import (
 	"bytes"
 	"fmt"
-	"github.com/wonabru/qwid-node/common"
 	"time"
+
+	"github.com/wonabru/qwid-node/common"
 )
 
 type StakingAccount struct {
@@ -47,6 +48,16 @@ func GetLockedAmount(accb []byte, height int64, delegatedAccount int) (int64, er
 	return locked, nil
 }
 
+func lastStakeBlock(accb StakingAccount) (hmax int64) {
+	hmax = -1
+	for h := range accb.StakingDetails {
+		if h > hmax {
+			hmax = h
+		}
+	}
+	return hmax
+}
+
 func Stake(accb []byte, amount int64, height int64, delegatedAccount int, operational bool, lockedAmount int64, releasePerBlock int64) error {
 	if len(accb) != common.AddressLength {
 		return fmt.Errorf("wrong address length, must be %v", common.AddressLength)
@@ -72,7 +83,10 @@ func Stake(accb []byte, amount int64, height int64, delegatedAccount int, operat
 	if lockedAmount > amount {
 		return fmt.Errorf("locked amount cannot be larger than amount")
 	}
-
+	hmax := lastStakeBlock(acc)
+	if height < hmax+common.MinNumberOfBlocksInStake {
+		return fmt.Errorf("staking must be delayed %v blocks", common.MinNumberOfBlocksInStake)
+	}
 	// in order for someone else not to spoil to be operator
 	if lockedAmount == 0 && acc.OperationalAccount == false {
 		acc.OperationalAccount = operational
@@ -113,7 +127,10 @@ func Unstake(accb []byte, amount int64, height int64, delegatedAccount int) erro
 	if amount >= 0 {
 		return fmt.Errorf("unstaked amount has to be larger than 0")
 	}
-
+	hmax := lastStakeBlock(acc)
+	if height < hmax+common.MinNumberOfBlocksInStake {
+		return fmt.Errorf("staking must be delayed %v blocks", common.MinNumberOfBlocksInStake)
+	}
 	if acc.StakedBalance+amount < 0 {
 		return fmt.Errorf("insufficient staked balance")
 	}
