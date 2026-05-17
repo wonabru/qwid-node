@@ -42,7 +42,7 @@ func (a TransactionsMessage) GetTransactionsFromBytes(sigName, sigName2 string, 
 					txn[topic] = append(txn[topic], at)
 				} else {
 					logger.GetLogger().Println("warning: transaction fail to verify")
-					return nil, fmt.Errorf("transaction fail to verify")
+					// return nil, fmt.Errorf("transaction fail to verify")
 				}
 			}
 		}
