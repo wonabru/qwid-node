@@ -15,6 +15,30 @@ import (
 	"github.com/wonabru/qwid-node/voting"
 )
 
+func validateBlockTimestamp(newBlock Block, lastBlock Block, shouldCheck bool) error {
+	blockTime := newBlock.GetBlockTimeStamp()
+	lastTime := lastBlock.GetBlockTimeStamp()
+	currTime := common.GetCurrentTimeStampInSecond()
+
+	// 1. Must increase
+	if blockTime <= lastTime {
+		return fmt.Errorf("timestamp must increase")
+	}
+
+	// 2. Not too far in future (allow 30s clock skew)
+	if shouldCheck && (blockTime > currTime+common.MaxBlockForwardInTime) {
+		return fmt.Errorf("timestamp too far in future")
+	}
+
+	// 3. Reasonable progression
+	maxTime := lastTime + common.MaxBlockTimeInterval
+	if blockTime > maxTime {
+		return fmt.Errorf("timestamp progression too large")
+	}
+
+	return nil
+}
+
 func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*transactionsPool.MerkleTree, error) {
 	blockHeight := newBlock.GetHeader().Height
 	if newBlock.GetBlockSupply() > common.MaxTotalSupply {
@@ -69,6 +93,10 @@ func CheckBaseBlock(newBlock Block, lastBlock Block, forceShouldCheck bool) (*tr
 	logger.GetLogger().Println("should check pausing:", shouldCheck)
 	if forceShouldCheck == false {
 		shouldCheck = false
+	}
+	err = validateBlockTimestamp(newBlock, lastBlock, forceShouldCheck)
+	if err != nil {
+		return nil, err
 	}
 	if !common.IsSyncing.Load() && !bytes.Equal(newBlock.BaseBlock.BaseHeader.Encryption1[:], lastBlock.BaseBlock.BaseHeader.Encryption1[:]) {
 		enc1, err := FromBytesToEncryptionConfig(newBlock.BaseBlock.BaseHeader.Encryption1[:], true)
