@@ -14,6 +14,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QWID Foundation — Blockchain Beyond Quantum</title>
 <meta name="description" content="QWID is a quantum-resistant blockchain — post-quantum cryptography, EVM compatibility, Proof-of-Synergy consensus, and built-in DEX and oracles.">
+<!-- Open Graph -->
+<meta property="og:title" content="QWID — Blockchain Beyond Quantum">
+<meta property="og:description" content="Post-quantum cryptography, EVM smart contracts, Proof-of-Synergy consensus. Public testnet live.">
+<meta property="og:image" content="https://qwid.org/og-1200x630.png">
+<meta property="og:url" content="https://qwid.org">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="QWID — Blockchain Beyond Quantum">
+<meta name="twitter:description" content="Post-quantum cryptography, EVM smart contracts, Proof-of-Synergy consensus. Public testnet live.">
+<meta name="twitter:image" content="https://qwid.org/og-1200x630.png">
+<!-- Schema.org -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Organization","name":"QWID Foundation","description":"Quantum-resistant blockchain with post-quantum cryptography, EVM smart contracts, and Proof-of-Synergy consensus","url":"https://qwid.org","sameAs":["https://github.com/wonabru/qwid-node","https://linkedin.com/in/wonabru"]}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -563,9 +577,9 @@ img{max-width:100%}
   cursor:default;
 }
 .feature-card:hover{
-  border-color:rgba(0,229,255,0.35);
-  box-shadow:0 8px 40px rgba(0,229,255,0.1);
-  transform:translateY(-4px);
+  border-color:rgba(0,229,255,0.4);
+  box-shadow:0 12px 50px rgba(0,229,255,0.15),0 0 0 1px rgba(0,229,255,0.08);
+  transform:translateY(-6px);
 }
 .feature-icon{
   width:52px;height:52px;
@@ -1023,13 +1037,213 @@ img{max-width:100%}
   color:var(--muted);
 }
 
+/* ===================== AUDIT CALLOUT ===================== */
+.audit-callout{
+  position:relative;overflow:hidden;
+  background:var(--surface);
+  border-top:1px solid rgba(0,229,255,.1);
+  border-bottom:1px solid rgba(0,229,255,.1);
+  padding:4rem 2rem;
+}
+.audit-callout::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 120% at 50% 0%,rgba(0,229,255,.06) 0%,transparent 70%);
+  pointer-events:none;
+}
+.audit-callout-inner{
+  max-width:900px;margin:0 auto;
+  display:grid;grid-template-columns:1fr auto;gap:3rem;align-items:center;
+}
+.audit-co-left{}
+.audit-co-label{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--cyan);margin-bottom:.6rem;
+}
+.audit-co-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:800;font-size:clamp(1.6rem,3.5vw,2.4rem);
+  color:#fff;line-height:1.1;margin-bottom:.9rem;
+}
+.audit-co-title span{color:var(--cyan)}
+.audit-co-desc{font-size:.9rem;color:var(--muted);max-width:480px;line-height:1.6;margin-bottom:1.5rem}
+.audit-co-badges{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.75rem}
+.audit-badge{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:.3rem .75rem;border-radius:20px;
+}
+.audit-badge--green{background:rgba(46,213,115,.12);border:1px solid rgba(46,213,115,.3);color:var(--green)}
+.audit-badge--cyan{background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);color:var(--cyan)}
+.audit-badge--gold{background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.3);color:var(--gold)}
+.audit-co-cats{display:flex;flex-direction:column;gap:.55rem}
+.audit-cat{display:flex;align-items:center;gap:.75rem}
+.audit-cat-name{
+  font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:600;
+  letter-spacing:.04em;color:var(--muted);width:150px;flex-shrink:0;
+}
+.audit-cat-bar{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.audit-cat-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cyan),var(--blue))}
+.audit-cat-score{
+  font-family:'JetBrains Mono',monospace;font-size:.78rem;
+  color:var(--cyan);width:38px;text-align:right;flex-shrink:0;
+}
+.audit-co-right{
+  display:flex;flex-direction:column;align-items:center;gap:.75rem;
+}
+.audit-score-ring{
+  width:160px;height:160px;position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.audit-score-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.audit-score-ring circle{fill:none;stroke-width:6;}
+.audit-score-ring .ring-bg{stroke:rgba(0,229,255,.1)}
+.audit-score-ring .ring-val{
+  stroke:var(--cyan);
+  stroke-dasharray:408;stroke-dashoffset:10;
+  stroke-linecap:round;
+  filter:drop-shadow(0 0 6px rgba(0,229,255,.5));
+}
+.audit-score-num{
+  font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:2.2rem;color:#fff;line-height:1;
+  position:relative;z-index:1;
+}
+.audit-score-denom{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;position:relative;z-index:1}
+.audit-ready{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;
+  font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;
+  background:rgba(46,213,115,.15);border:1px solid rgba(46,213,115,.35);
+  color:var(--green);padding:.4rem 1.1rem;border-radius:20px;
+}
+.audit-stats-row{display:flex;gap:1.5rem}
+.audit-s{text-align:center}
+.audit-s-val{
+  font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:500;
+  color:var(--green);display:block;
+}
+.audit-s-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.audit-co-cta{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--void);background:var(--cyan);
+  padding:.65rem 1.5rem;border-radius:6px;
+  transition:all .2s;text-decoration:none;
+}
+.audit-co-cta:hover{background:#fff;text-decoration:none;color:var(--void)}
+@media(max-width:720px){
+  .audit-callout-inner{grid-template-columns:1fr;gap:2rem}
+  .audit-co-right{flex-direction:row;flex-wrap:wrap;justify-content:center}
+  .audit-cat-name{width:120px}
+}
+
 /* ===================== RESPONSIVE MISC ===================== */
+/* Hero trust badges */
+.hero-trust{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.5rem 1.1rem;
+  margin-top:1.5rem;
+}
+.htrust-item{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:.75rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);
+  display:flex;align-items:center;gap:.3rem;
+  transition:color var(--transition);
+}
+a.htrust-item:hover{color:var(--cyan)}
+.htrust-check{color:var(--cyan)}
+.htrust-sep{color:rgba(82,100,128,.4);font-size:.8rem}
+
+/* TPS hint badge */
+.stat-hint{
+  font-size:.58rem;
+  background:rgba(0,229,255,.1);
+  border:1px solid rgba(0,229,255,.2);
+  border-radius:3px;
+  padding:.05rem .3rem;
+  color:var(--cyan);
+  font-weight:700;
+  letter-spacing:.06em;
+  vertical-align:middle;
+  margin-left:.2rem;
+}
+
+/* Math family visual */
+.math-family{
+  margin-top:1.5rem;
+  background:rgba(0,229,255,.04);
+  border:1px solid rgba(0,229,255,.12);
+  border-radius:var(--radius);
+  padding:1rem 1.25rem;
+}
+.mf-row{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem}
+.mf-scheme{display:flex;align-items:center;gap:.6rem;font-size:.875rem}
+.mf-name{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:.85rem;white-space:nowrap}
+.mf-arrow{color:var(--muted)}
+.mf-math{color:var(--text);font-size:.82rem}
+.mf-caption{
+  font-size:.82rem;color:var(--muted);
+  border-top:1px solid rgba(0,229,255,.08);
+  padding-top:.6rem;
+  font-style:italic;
+}
+
 @media(max-width:768px){
-  .section{padding:4rem 0}
-  .hero-h1{font-size:clamp(2.8rem,12vw,5rem)}
+  .section{padding:3.5rem 0}
+  .container{padding:0 1.25rem}
+  .hero-h1{font-size:clamp(2.6rem,11vw,5rem)}
+  .hero-sub{font-size:1rem;padding:0 .5rem}
+  .hero-actions{gap:.75rem}
+  .hero-stats{padding:.85rem 1.25rem}
+  .hero-stats-inner{gap:.75rem}
+  .stat-value{font-size:.95rem}
+  .trust-bar{padding:.75rem 1.25rem}
+  .trust-bar-inner{gap:0 1.5rem}
+  .trust-item{font-size:.72rem;white-space:normal}
   .features-grid{grid-template-columns:1fr}
   .how-steps{grid-template-columns:1fr}
   .tokenomics-grid{grid-template-columns:1fr}
+  .timeline{padding-left:2rem}
+  .timeline-item{padding-left:1.5rem}
+  .timeline-dot{left:-2rem}
+  .get-started{padding:4rem 1.25rem}
+  .section-title{font-size:clamp(1.6rem,7vw,2.5rem)}
+  .footer{padding:3rem 1.25rem 1.5rem}
+  .cf-submit{width:100%;text-align:center;justify-content:center}
+}
+
+@media(max-width:480px){
+  .container{padding:0 1rem}
+  .hero-eyebrow{font-size:.68rem;padding:.35rem .85rem;text-align:center}
+  .hero-h1{font-size:clamp(2.2rem,13vw,3.5rem)}
+  .hero-sub{font-size:.95rem}
+  .hero-stats-inner{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:.5rem .25rem;
+  }
+  .stats-live{grid-column:1/-1;justify-content:center;margin-bottom:.25rem}
+  .stat-item{align-items:center}
+  .stat-value{font-size:.9rem}
+  .trust-item{font-size:.68rem}
+  .section{padding:2.5rem 0}
+  .section-eyebrow{font-size:.68rem}
+  .section-title{font-size:clamp(1.4rem,8vw,2rem)}
+  .btn{padding:.6rem 1.1rem;font-size:.8rem}
+  .hero-actions .btn{width:100%;justify-content:center;text-align:center}
+  .faq-q{font-size:.9rem;padding:1rem 1.1rem}
+  .timeline-title{font-size:1rem}
+  .timeline-desc{font-size:.82rem}
+  .get-started h2{font-size:1.6rem}
+  .get-started p{font-size:.95rem}
+  .get-started-actions{flex-direction:column;align-items:stretch}
+  .get-started-actions .btn{text-align:center;justify-content:center}
+  .footer-top{gap:1.5rem}
+  .comparison-table th,.comparison-table td{padding:.5rem .6rem;font-size:.78rem}
+  .team-card{padding:1.5rem}
+  .team-headline{font-size:1.1rem}
+  .team-stat-val{font-size:1.1rem}
 }
 </style>
 </head>
@@ -1075,6 +1289,15 @@ img{max-width:100%}
       <a href="WhitePaper_1.0.pdf" target="_blank" rel="noopener" class="btn btn-outline">Read WhitePaper</a>
       <a href="https://explorer.qwid.org" target="_blank" rel="noopener" class="btn btn-ghost">Live Explorer ↗</a>
     </div>
+    <div class="hero-trust">
+      <a href="audit.html" target="_blank" rel="noopener" class="htrust-item"><span class="htrust-check">✓</span> Security Audited</a>
+      <span class="htrust-sep">·</span>
+      <span class="htrust-item"><span class="htrust-check">✓</span> NIST-Approved PQC</span>
+      <span class="htrust-sep">·</span>
+      <a href="https://github.com/wonabru/qwid-node" target="_blank" rel="noopener" class="htrust-item"><span class="htrust-check">✓</span> 100% Open Source</a>
+      <span class="htrust-sep">·</span>
+      <span class="htrust-item"><span class="htrust-check">✓</span> Public Testnet Live</span>
+    </div>
   </div>
 
   <div class="hero-stats">
@@ -1087,8 +1310,8 @@ img{max-width:100%}
         <span class="stat-label">Block Height</span>
         <span class="stat-value font-mono" id="statHeight">—</span>
       </div>
-      <div class="stat-item">
-        <span class="stat-label">TPS</span>
+      <div class="stat-item" title="Testnet with 3 validators. Mainnet capacity: 500+ TPS">
+        <span class="stat-label">TPS <span class="stat-hint">testnet</span></span>
         <span class="stat-value font-mono" id="statTps">—</span>
       </div>
       <div class="stat-item">
@@ -1102,6 +1325,10 @@ img{max-width:100%}
       <div class="stat-item">
         <span class="stat-label">Validators</span>
         <span class="stat-value font-mono" id="statValidators">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Block Time</span>
+        <span class="stat-value font-mono">~10s</span>
       </div>
     </div>
   </div>
@@ -1133,6 +1360,21 @@ img{max-width:100%}
           <li>Users can optimise for speed with Falcon-512 or for the highest security level with MAYO-5, depending on the value and sensitivity of each transaction.</li>
           <li>The result: up to 5,000 transactions per 10-second block with quantum-resistant signatures, secured by Proof-of-Synergy consensus.</li>
         </ul>
+        <div class="math-family">
+          <div class="mf-row">
+            <div class="mf-scheme">
+              <span class="mf-name" style="color:var(--cyan)">Falcon-512</span>
+              <span class="mf-arrow">←</span>
+              <span class="mf-math">Lattice-based math (NTRU)</span>
+            </div>
+            <div class="mf-scheme">
+              <span class="mf-name" style="color:#7aadff">MAYO-5</span>
+              <span class="mf-arrow">←</span>
+              <span class="mf-math">Multivariate polynomial math</span>
+            </div>
+          </div>
+          <p class="mf-caption">Two entirely different mathematical problems — if one is broken, the other still protects you.</p>
+        </div>
       </div>
       <div class="arch-right">
         <div class="chain-viz chain-viz--single">
@@ -1364,6 +1606,12 @@ img{max-width:100%}
             <td><span class="check-na">Limited (OP_CHECKMULTISIG)</span></td>
           </tr>
           <tr>
+            <td>Time to Finality</td>
+            <td class="td-qwid">~5s</td>
+            <td>~15 min</td>
+            <td>~60 min</td>
+          </tr>
+          <tr>
             <td>Max Supply</td>
             <td class="td-qwid">2.3B QWD</td>
             <td>Unlimited</td>
@@ -1380,6 +1628,68 @@ img{max-width:100%}
     </div>
   </div>
 </section>
+
+<!-- ===================== AUDIT CALLOUT ===================== -->
+<div class="audit-callout reveal">
+  <div class="audit-callout-inner">
+    <div class="audit-co-left">
+      <div class="audit-co-label">Independent Security Audit · May 2026</div>
+      <h2 class="audit-co-title">Zero Critical Issues.<br><span>Mainnet Ready.</span></h2>
+      <p class="audit-co-desc">QWID's codebase has been subjected to a comprehensive security audit covering cryptography, consensus, transaction validation, network security, and state management.</p>
+      <div class="audit-co-badges">
+        <span class="audit-badge audit-badge--green">✓ 0 Critical</span>
+        <span class="audit-badge audit-badge--green">✓ 0 High</span>
+        <span class="audit-badge audit-badge--green">✓ 0 Medium</span>
+        <span class="audit-badge audit-badge--cyan">NIST PQC Verified</span>
+        <span class="audit-badge audit-badge--gold">100% Open Source</span>
+      </div>
+      <div class="audit-co-cats">
+        <div class="audit-cat">
+          <span class="audit-cat-name">Cryptography</span>
+          <div class="audit-cat-bar"><div class="audit-cat-fill" style="width:100%"></div></div>
+          <span class="audit-cat-score">10/10</span>
+        </div>
+        <div class="audit-cat">
+          <span class="audit-cat-name">State Management</span>
+          <div class="audit-cat-bar"><div class="audit-cat-fill" style="width:100%"></div></div>
+          <span class="audit-cat-score">10/10</span>
+        </div>
+        <div class="audit-cat">
+          <span class="audit-cat-name">Tx Validation</span>
+          <div class="audit-cat-bar"><div class="audit-cat-fill" style="width:98%"></div></div>
+          <span class="audit-cat-score">9.8</span>
+        </div>
+        <div class="audit-cat">
+          <span class="audit-cat-name">Consensus</span>
+          <div class="audit-cat-bar"><div class="audit-cat-fill" style="width:95%"></div></div>
+          <span class="audit-cat-score">9.5</span>
+        </div>
+        <div class="audit-cat">
+          <span class="audit-cat-name">Network Security</span>
+          <div class="audit-cat-bar"><div class="audit-cat-fill" style="width:95%"></div></div>
+          <span class="audit-cat-score">9.5</span>
+        </div>
+      </div>
+    </div>
+    <div class="audit-co-right">
+      <div class="audit-score-ring">
+        <svg viewBox="0 0 160 160" width="160" height="160">
+          <circle class="ring-bg" cx="80" cy="80" r="65"/>
+          <circle class="ring-val" cx="80" cy="80" r="65" stroke-dasharray="408" stroke-dashoffset="10"/>
+        </svg>
+        <div class="audit-score-num">9.75</div>
+        <div class="audit-score-denom">out of 10</div>
+      </div>
+      <span class="audit-ready">✓ Mainnet Ready</span>
+      <div class="audit-stats-row">
+        <div class="audit-s"><span class="audit-s-val">0</span><span class="audit-s-lbl">Critical</span></div>
+        <div class="audit-s"><span class="audit-s-val">0</span><span class="audit-s-lbl">High</span></div>
+        <div class="audit-s"><span class="audit-s-val">0</span><span class="audit-s-lbl">Medium</span></div>
+      </div>
+      <a href="audit.html" target="_blank" rel="noopener" class="audit-co-cta">View Full Report →</a>
+    </div>
+  </div>
+</div>
 
 <!-- ===================== HOW IT WORKS ===================== -->
 <section class="section section--void reveal" id="how-it-works">
@@ -1628,7 +1938,7 @@ img{max-width:100%}
         <div class="timeline-item upcoming">
           <div class="timeline-dot"></div>
           <div class="timeline-meta">
-            <span class="timeline-date">2026</span>
+            <span class="timeline-date">Q3 2026</span>
             <span class="timeline-badge badge-upcoming">Upcoming</span>
           </div>
           <div class="timeline-title">Mainnet Launch</div>
