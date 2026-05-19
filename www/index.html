@@ -84,7 +84,7 @@ img{max-width:100%}
 
 /* ===================== UTILITIES ===================== */
 .container{max-width:1180px;margin:0 auto;padding:0 2rem;width:100%}
-.section{padding:6rem 0;overflow-x:clip}
+.section{padding:6rem 0}
 .section--void{background:var(--void)}
 .section--deep{background:var(--deep)}
 .section--surface{background:var(--surface)}
@@ -96,14 +96,17 @@ img{max-width:100%}
   text-transform:uppercase;
   color:var(--cyan);
   margin-bottom:0.75rem;
+  overflow-wrap:break-word;
 }
 .section-title{
   font-family:'Barlow Condensed',sans-serif;
   font-weight:800;
-  font-size:clamp(2rem,4vw,3rem);
+  font-size:clamp(1.5rem,4vw,3rem);
   color:#fff;
   line-height:1.1;
   margin-bottom:1.25rem;
+  overflow-wrap:break-word;
+  word-break:break-word;
 }
 .section-sub{
   font-size:1.05rem;
@@ -423,7 +426,7 @@ img{max-width:100%}
   gap:4rem;
   align-items:center;
 }
-@media(max-width:768px){.arch-grid{grid-template-columns:1fr;gap:3rem}}
+@media(max-width:900px){.arch-grid{grid-template-columns:1fr;gap:2.5rem}}
 .arch-left .section-sub{max-width:100%}
 .arch-points{
   list-style:none;
@@ -1210,6 +1213,7 @@ a.htrust-item:hover{color:var(--cyan)}
 @media(max-width:768px){
   .section{padding:3.5rem 0}
   .container{padding:0 1.25rem}
+  .section-eyebrow{letter-spacing:.1em;font-size:.72rem}
   .hero-h1{font-size:clamp(2.6rem,11vw,5rem)}
   .hero-sub{font-size:1rem;padding:0 .5rem;max-width:100%}
   .hero-actions{gap:.75rem;flex-wrap:wrap}
@@ -1254,8 +1258,8 @@ a.htrust-item:hover{color:var(--cyan)}
   .trust-bar-inner{flex-wrap:wrap;gap:.4rem .8rem}
   .trust-item{font-size:.66rem;white-space:normal}
   .section{padding:2.5rem 0}
-  .section-eyebrow{font-size:.66rem}
-  .section-title{font-size:clamp(1.4rem,8vw,2rem)}
+  .section-eyebrow{letter-spacing:.07em;font-size:.66rem}
+  .section-title{font-size:clamp(1.3rem,8vw,2rem)}
   .btn{padding:.6rem 1rem;font-size:.8rem}
   .hero-actions .btn{width:100%;justify-content:center;text-align:center}
   .hero-trust{gap:.4rem .75rem}
@@ -1382,12 +1386,17 @@ a.htrust-item:hover{color:var(--cyan)}
   <div class="container">
     <div class="arch-grid">
       <div class="arch-left">
-        <div class="section-eyebrow">Two Independent PQC Schemes</div>
-        <h2 class="section-title">Built to Outlast<br>Quantum Computers</h2>
+        <div class="section-eyebrow">Post-Quantum Architecture</div>
+        <h2 class="section-title">Built to Outlast Quantum Computers</h2>
         <p class="section-sub">Post-quantum cryptography requires large public keys — Falcon-512 public keys are 897 bytes and MAYO-5 public keys are 5,554 bytes. A naive implementation into a network like Ethereum would reduce block validation rates by 14&times;, making the chain impractical.</p>
         <ul class="arch-points">
           <li>QWID solves this elegantly: <strong style="color:#fff">public keys are included optionally inside transactions</strong> — only on a user's first interaction with the network. All subsequent transactions reference the already-registered key.</li>
-          <li>QWID supports two <strong style="color:#00e5ff">independent</strong> post-quantum schemes: <strong style="color:#fff">Falcon-512</strong> (NIST Level 1 — faster, smaller signature) and <strong style="color:#a0c0ff">MAYO-5</strong> (NIST Level 5 — maximum security).</li>
+          <li>Two <strong style="color:#00e5ff">independent</strong> post-quantum schemes, each from a different mathematical family:
+            <span style="display:block;margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+              <span><strong style="color:#fff">Falcon-512</strong> &mdash; NIST Level 1 &middot; faster &middot; sig &lt;752 B</span>
+              <span><strong style="color:#a0c0ff">MAYO-5</strong> &mdash; NIST Level 5 &middot; maximum security &middot; sig &lt;838 B</span>
+            </span>
+          </li>
           <li>The second scheme is a <strong style="color:#f0b429">safety net</strong>: if one scheme is ever found to be broken, the network continues operating on the other while the community votes to replace the compromised one with a new, vetted algorithm — zero downtime, zero lost funds.</li>
           <li>Users can optimise for speed with Falcon-512 or for the highest security level with MAYO-5, depending on the value and sensitivity of each transaction.</li>
           <li>The result: up to 5,000 transactions per 10-second block with quantum-resistant signatures, secured by Proof-of-Synergy consensus.</li>
