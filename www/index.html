@@ -541,7 +541,7 @@ img{max-width:100%}
 .chain-viz--single{flex-direction:column;align-items:center;gap:1.5rem}
 .cb-txlist{display:flex;flex-direction:column;gap:0.3rem;margin-top:0.5rem}
 .cb-tx{display:flex;justify-content:space-between;align-items:center;gap:0.5rem;font-size:0.72rem}
-.cb-txid{font-family:'JetBrains Mono',monospace;color:var(--muted)}
+.cb-txid{font-family:'JetBrains Mono',monospace;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cb-tx--more{color:var(--muted);opacity:0.5;font-size:0.68rem;justify-content:center}
 .cb-badge{font-size:0.65rem;font-weight:600;padding:0.15rem 0.45rem;border-radius:4px;white-space:nowrap;flex-shrink:0}
 .cb-badge--key{background:rgba(0,229,255,0.12);color:var(--cyan);border:1px solid rgba(0,229,255,0.3)}
@@ -1410,7 +1410,7 @@ a.htrust-item:hover{color:var(--cyan)}
       </div>
       <div class="arch-right">
         <div class="chain-viz chain-viz--single">
-          <div class="chain chain-tx" style="max-width:340px;margin:0 auto">
+          <div class="chain chain-tx" style="width:100%;max-width:340px;margin:0 auto">
             <div class="chain-label" style="text-align:center;margin-bottom:1rem">QWID Chain &mdash; Single Chain, Dual Encryption</div>
             <div class="chain-block chain-block--active" style="margin-bottom:0.5rem">
               <span class="cb-id">Block #N &mdash; &#8804; 5,000 TX &middot; 10s</span>
